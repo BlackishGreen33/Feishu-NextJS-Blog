@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
-import { FileToken, MarkdownRenderer } from 'feishu-docx';
+import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
+import type { FileToken } from 'feishu-docx/dist/index.js';
 import matter from 'gray-matter';
 
 import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';

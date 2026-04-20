@@ -1,4 +1,4 @@
-import { Block, FileToken } from 'feishu-docx';
+import type { Block, FileToken } from 'feishu-docx/dist/index.js';
 
 import { wait } from './utils';
 
