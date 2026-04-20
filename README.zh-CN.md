@@ -39,7 +39,7 @@
 ### 1. 安装依赖
 
 ```bash
-yarn install
+pnpm install
 ```
 
 ### 2. 配置环境变量
@@ -53,7 +53,6 @@ SITE_URL=http://localhost:3000
 FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_SPACE_ID=
-FEISHU_ROOT_NODE_TOKEN=
 FEISHU_SYNC_TTL_SECONDS=600
 
 BLOB_READ_WRITE_TOKEN=
@@ -63,7 +62,7 @@ CRON_SECRET=
 ### 3. 手动同步飞书内容
 
 ```bash
-yarn feishu:sync
+pnpm feishu:sync
 ```
 
 如果本地没有配置飞书凭证，项目会回退到仓库内的示例数据。
@@ -71,19 +70,19 @@ yarn feishu:sync
 ### 4. 启动开发环境
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 若本地已配置飞书凭证，`predev` 会先尝试同步一次内容。
 
 ## 常用脚本
 
-- `yarn dev`
-- `yarn feishu:sync`
-- `yarn lint`
-- `yarn typecheck`
-- `yarn test`
-- `yarn build`
+- `pnpm dev`
+- `pnpm feishu:sync`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
 
 ## 飞书文档 Frontmatter
 
@@ -131,10 +130,10 @@ draft: false
 建议在提交前执行：
 
 ```bash
-yarn lint
-yarn typecheck
-yarn test
-yarn build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
 ## License

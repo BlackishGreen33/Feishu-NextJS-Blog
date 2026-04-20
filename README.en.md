@@ -39,7 +39,7 @@ The project follows a production-friendly pipeline: **Feishu documents → Markd
 ### 1. Install dependencies
 
 ```bash
-yarn install
+pnpm install
 ```
 
 ### 2. Configure environment variables
@@ -53,7 +53,6 @@ SITE_URL=http://localhost:3000
 FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_SPACE_ID=
-FEISHU_ROOT_NODE_TOKEN=
 FEISHU_SYNC_TTL_SECONDS=600
 
 BLOB_READ_WRITE_TOKEN=
@@ -63,7 +62,7 @@ CRON_SECRET=
 ### 3. Run a manual sync
 
 ```bash
-yarn feishu:sync
+pnpm feishu:sync
 ```
 
 If Feishu credentials are not available locally, the app falls back to the seed data stored in the repository.
@@ -71,19 +70,19 @@ If Feishu credentials are not available locally, the app falls back to the seed 
 ### 4. Start the dev server
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 When credentials are configured, `predev` attempts one sync before booting the dev server.
 
 ## Useful Scripts
 
-- `yarn dev`
-- `yarn feishu:sync`
-- `yarn lint`
-- `yarn typecheck`
-- `yarn test`
-- `yarn build`
+- `pnpm dev`
+- `pnpm feishu:sync`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
 
 ## Feishu Frontmatter
 
@@ -131,10 +130,10 @@ For Vercel deployment, configure:
 Recommended checks before shipping:
 
 ```bash
-yarn lint
-yarn typecheck
-yarn test
-yarn build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
 ## License

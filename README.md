@@ -13,7 +13,7 @@
 
 ## 特色
 
-- 以飛書知識庫指定子樹作為 Blog 內容來源
+- 以飛書知識庫空間作為 Blog 內容來源
 - 使用飛書官方 API 與自建應用憑證同步內容
 - 透過 `feishu-docx` 將 block JSON 轉為 Markdown
 - 支援圖片與附件下載，並重寫為站內可渲染資產
@@ -62,7 +62,7 @@ Next.js Pages Router
 ### 1. 安裝依賴
 
 ```bash
-yarn install
+pnpm install
 ```
 
 ### 2. 配置環境變量
@@ -76,7 +76,6 @@ SITE_URL=http://localhost:3000
 FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_SPACE_ID=
-FEISHU_ROOT_NODE_TOKEN=
 FEISHU_SYNC_TTL_SECONDS=600
 
 BLOB_READ_WRITE_TOKEN=
@@ -86,7 +85,7 @@ CRON_SECRET=
 ### 3. 手動同步飛書內容
 
 ```bash
-yarn feishu:sync
+pnpm feishu:sync
 ```
 
 若本地尚未提供飛書憑證，站點會回退到倉庫內的示例資料。
@@ -94,19 +93,19 @@ yarn feishu:sync
 ### 4. 啟動開發環境
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 開發模式下，若已配置飛書憑證，`predev` 會先嘗試同步一次內容。
 
 ## 常用腳本
 
-- `yarn dev`：啟動開發環境
-- `yarn feishu:sync`：手動同步飛書內容
-- `yarn lint`：執行 ESLint
-- `yarn typecheck`：執行 TypeScript 型別檢查
-- `yarn test`：執行 Jest 測試
-- `yarn build`：建立正式版構建
+- `pnpm dev`：啟動開發環境
+- `pnpm feishu:sync`：手動同步飛書內容
+- `pnpm lint`：執行 ESLint
+- `pnpm typecheck`：執行 TypeScript 型別檢查
+- `pnpm test`：執行 Jest 測試
+- `pnpm build`：建立正式版構建
 
 ## 飛書文檔 Frontmatter
 
@@ -164,10 +163,10 @@ draft: false
 建議在提交前至少執行：
 
 ```bash
-yarn lint
-yarn typecheck
-yarn test
-yarn build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
 ## 授權
