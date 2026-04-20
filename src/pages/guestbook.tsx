@@ -15,7 +15,10 @@ const GuestBookPage: NextPage = () => {
 
   return (
     <>
-      <NextSeo title={`${pageTitle} - ${site.name}`} description={pageDescription} />
+      <NextSeo
+        title={`${pageTitle} - ${site.name}`}
+        description={pageDescription}
+      />
       <Container data-aos='fade-up'>
         <PageHeading title={pageTitle} description={pageDescription} />
         <Chat />

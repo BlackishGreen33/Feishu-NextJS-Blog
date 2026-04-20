@@ -68,16 +68,16 @@ const ChatAuth = ({ isWidget = false }: { isWidget?: boolean }) => {
     try {
       await signInWithProvider(providerId);
     } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error, messages.guestbook.authErrors));
+      setErrorMessage(
+        getAuthErrorMessage(error, messages.guestbook.authErrors),
+      );
     }
   };
 
   return (
     <div className='flex flex-col border-t border-neutral-300 py-1 dark:border-neutral-900'>
       <div className='mb-1 space-y-5 px-4 py-3 text-center text-neutral-700 dark:text-neutral-400'>
-        <p className='text-sm'>
-          {messages.guestbook.pageAuthPrompt}
-        </p>
+        <p className='text-sm'>{messages.guestbook.pageAuthPrompt}</p>
         <div
           className={clsx(
             'flex flex-col items-center justify-center gap-4 lg:flex-row lg:gap-5',
@@ -99,12 +99,12 @@ const ChatAuth = ({ isWidget = false }: { isWidget?: boolean }) => {
               <Button
                 key={button.id}
                 onClick={() => handleSignIn(button.id as GuestbookProviderId)}
-              className={`flex w-full items-center justify-center border ${button.bgColor} py-2.5 shadow-sm transition duration-300 hover:scale-[101%] lg:w-fit ${isWidget && '!w-full'}`}
-              data-umami-event={`Sign In to Chat: ${button.label}`}
-            >
-              {button.icon}
-              <span className={button.textColor}>{button.label}</span>
-            </Button>
+                className={`flex w-full items-center justify-center border ${button.bgColor} py-2.5 shadow-sm transition duration-300 hover:scale-[101%] lg:w-fit ${isWidget && '!w-full'}`}
+                data-umami-event={`Sign In to Chat: ${button.label}`}
+              >
+                {button.icon}
+                <span className={button.textColor}>{button.label}</span>
+              </Button>
             ))}
         </div>
         {errorMessage ? (

@@ -52,8 +52,7 @@ const enMessages: Messages = {
     blogTitle: 'Blog',
     dashboardTitle: 'Dashboard',
     guestbookTitle: 'Guestbook',
-    guestbookDescription:
-      'Leave a note, say hi, or share feedback here.',
+    guestbookDescription: 'Leave a note, say hi, or share feedback here.',
     learnTitle: 'Learning Notes',
     learnDescription:
       'A collection of learning materials, notes, and topics I keep refining.',
@@ -61,7 +60,8 @@ const enMessages: Messages = {
     projectsDescription:
       'A curated list of projects, experiments, and longer-running work.',
     playgroundTitle: 'JavaScript Playground',
-    notFoundDescription: 'This page does not exist or has already been removed.',
+    notFoundDescription:
+      'This page does not exist or has already been removed.',
   },
   common: {
     loading: 'Loading',
@@ -266,7 +266,10 @@ const enMessages: Messages = {
     },
   },
   commandPalette: {
-    placeholders: ['Search or ask anything...', 'Press Cmd + K to open the command palette anytime'],
+    placeholders: [
+      'Search or ask anything...',
+      'Press Cmd + K to open the command palette anytime',
+    ],
     groups: {
       pages: 'Pages',
       socials: 'Socials',

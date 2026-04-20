@@ -57,9 +57,9 @@ const CodingActive = ({ lastUpdate }: CodingActiveProps) => {
   const isConfigured = data?.configured !== false;
   const hasActivityData = Boolean(
     data?.languages?.length ||
-      data?.categories?.length ||
-      data?.human_readable_total ||
-      data?.all_time_since_today?.text,
+    data?.categories?.length ||
+    data?.human_readable_total ||
+    data?.all_time_since_today?.text,
   );
 
   return (
@@ -69,7 +69,7 @@ const CodingActive = ({ lastUpdate }: CodingActiveProps) => {
         icon={<WakatimeIcon className='mr-1' />}
       />
       <SectionSubHeading>
-        <div className='dark:text-neutral-400 md:flex-row md:items-center'>
+        <div className='md:flex-row md:items-center dark:text-neutral-400'>
           <span>{messages.dashboard.weeklyStatsDescription}</span>
           {SITE_WAKATIME_URL ? (
             <>

@@ -33,7 +33,11 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
         type='button'
         onClick={() => setTheme(nextTheme)}
         aria-label={messages.theme.toggleLabel}
-        title={isDarkMode ? messages.theme.switchToLight : messages.theme.switchToDark}
+        title={
+          isDarkMode
+            ? messages.theme.switchToLight
+            : messages.theme.switchToDark
+        }
         className='inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100 text-neutral-700 transition-colors duration-200 hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:text-neutral-100'
         data-umami-event={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}
       >
@@ -45,7 +49,7 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
   return (
     <Listbox value={resolvedTheme} onChange={(value) => setTheme(value)}>
       <div className='relative mt-1'>
-        <Listbox.Button className='group relative w-full cursor-pointer rounded-lg border-[1.8px] bg-white py-2 pl-4 pr-10 text-left text-neutral-600 focus:outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-200 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:focus-visible:border-neutral-600 dark:focus-visible:ring-offset-neutral-950 sm:text-[15px]'>
+        <Listbox.Button className='group relative w-full cursor-pointer rounded-lg border-[1.8px] bg-white py-2 pr-10 pl-4 text-left text-neutral-600 focus:outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-200 sm:text-[15px] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:focus-visible:border-neutral-600 dark:focus-visible:ring-offset-neutral-950'>
           <span className='flex items-center gap-2 truncate'>
             {isDarkMode ? (
               <>
@@ -76,7 +80,7 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
           <Listbox.Options
             anchor='bottom start'
             portal
-            className='z-50 mt-2 max-h-60 w-(--button-width) overflow-auto rounded-md border border-neutral-200 bg-white py-1 text-base ring-1 ring-black/5 [--anchor-gap:8px] focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 sm:text-sm'
+            className='z-50 mt-2 max-h-60 w-(--button-width) overflow-auto rounded-md border border-neutral-200 bg-white py-1 text-base ring-1 ring-black/5 [--anchor-gap:8px] focus:outline-none sm:text-sm dark:border-neutral-800 dark:bg-neutral-900'
           >
             {[
               {
@@ -95,7 +99,7 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
                 value={option.value}
                 className={({ active, selected }) =>
                   clsx(
-                    'relative cursor-pointer select-none py-1.5 pl-11 pr-4 transition-colors duration-150',
+                    'relative cursor-pointer py-1.5 pr-4 pl-11 transition-colors duration-150 select-none',
                     active
                       ? 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100'
                       : 'text-neutral-600 dark:text-neutral-400',

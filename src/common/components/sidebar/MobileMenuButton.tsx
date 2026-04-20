@@ -22,7 +22,7 @@ const MobileMenuButton = ({
         <StyledMenuSpan
           key={item.index}
           className={clsx(
-            'bg-neutral-950 dark:bg-neutral-100 ',
+            'bg-neutral-950 dark:bg-neutral-100',
             expandMenu && 'active',
           )}
         />

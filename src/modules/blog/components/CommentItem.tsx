@@ -34,7 +34,7 @@ const CommentItem = ({ body_html, created_at, user }: CommentItemProps) => {
       <div className='flex w-full flex-col gap-2 rounded-md border border-neutral-300 px-5 py-4 dark:border-neutral-700'>
         <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
           <div className='font-medium dark:text-neutral-300'>{user?.name}</div>
-          <div className='hidden dark:text-neutral-700 sm:block'>•</div>
+          <div className='hidden sm:block dark:text-neutral-700'>•</div>
           <div className='text-xs dark:text-neutral-500'>
             {formatDate(created_at, 'MMM dd, yyyy, HH:mm')}
           </div>

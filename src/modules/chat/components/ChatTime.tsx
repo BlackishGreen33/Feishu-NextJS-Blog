@@ -34,7 +34,10 @@ const ChatTime = ({ datetime }: ChatTimeProps) => {
     <div className='text-xs text-neutral-500'>
       {isToday(new Date(datetime))
         ? formattedTime
-        : format(new Date(datetime), locale === 'en' ? 'MMM d, yyyy HH:mm' : 'yyyy/MM/dd HH:mm')}
+        : format(
+            new Date(datetime),
+            locale === 'en' ? 'MMM d, yyyy HH:mm' : 'yyyy/MM/dd HH:mm',
+          )}
     </div>
   );
 };

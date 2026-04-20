@@ -44,7 +44,7 @@ const BlogCardNew = ({
             {tags.slice(0, 3).map((tag) => (
               <span
                 key={tag.slug}
-                className='bg-white/15 rounded-full px-2.5 py-1 text-xs text-white backdrop-blur'
+                className='rounded-full bg-white/15 px-2.5 py-1 text-xs text-white backdrop-blur'
               >
                 #{tag.name}
               </span>

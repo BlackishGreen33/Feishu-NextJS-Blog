@@ -18,12 +18,12 @@ const LearnSubContentItem = ({
     <Link href={`/learn/${contentSlug}/${subContentSlug}`}>
       <Card
         className={cn(
-          'flex w-full cursor-pointer flex-row items-center justify-between border border-neutral-300 px-5 py-4 dark:border-neutral-900 lg:hover:scale-[102%]',
+          'flex w-full cursor-pointer flex-row items-center justify-between border border-neutral-300 px-5 py-4 lg:hover:scale-[102%] dark:border-neutral-900',
         )}
       >
         <div className='flex items-center gap-3'>
           <SubContentIcon size={18} className='hidden md:flex' />
-          <h5 className=' font-[15px]'>{title}</h5>
+          <h5 className='font-[15px]'>{title}</h5>
         </div>
         <div className='hidden items-center gap-5 md:flex'>
           {difficulty && (

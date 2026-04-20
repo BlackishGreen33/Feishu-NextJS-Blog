@@ -14,7 +14,9 @@ describe('blog repository', () => {
 
   it('filters featured articles', async () => {
     const index = await getArticleIndex(false);
-    const expectedFeatured = index.articles.filter((article) => article.featured);
+    const expectedFeatured = index.articles.filter(
+      (article) => article.featured,
+    );
     const result = await listArticles({ featured: true });
 
     expect(result.totalPosts).toBe(expectedFeatured.length);

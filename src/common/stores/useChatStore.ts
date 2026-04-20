@@ -6,8 +6,8 @@ interface ChatStoreProps {
 }
 
 const useChatStore = create<ChatStoreProps>()((set) => ({
-    isOpen: false,
-    toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
-  }));
+  isOpen: false,
+  toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
+}));
 
 export default useChatStore;

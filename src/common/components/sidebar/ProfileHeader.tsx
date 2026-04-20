@@ -33,17 +33,17 @@ const ProfileHeader = ({ expandMenu, imageSize }: ProfileHeaderProps) => {
         priority
         unoptimized
         rounded='rounded-full'
-        className='rotate-3 dark:border-neutral-600 lg:hover:scale-105'
+        className='rotate-3 lg:hover:scale-105 dark:border-neutral-600'
       />
       <>
         <div className='mt-1 flex items-center gap-2 lg:mt-4'>
           <Link href='/' passHref>
-            <h2 className='flex-grow  text-lg font-medium lg:text-xl'>
+            <h2 className='flex-grow text-lg font-medium lg:text-xl'>
               {site.profileName}
             </h2>
           </Link>
         </div>
-        <div className='hidden text-[15px] text-neutral-600 transition-all duration-300 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-400 lg:flex'>
+        <div className='hidden text-[15px] text-neutral-600 transition-all duration-300 hover:text-neutral-700 lg:flex dark:text-neutral-500 dark:hover:text-neutral-400'>
           {SITE_PROFILE_HANDLE}
         </div>
       </>

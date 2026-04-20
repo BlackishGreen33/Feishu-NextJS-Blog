@@ -12,7 +12,7 @@ const InfiniteLoopSlider = ({
 }: InfiniteLoopSliderProps) => {
   return (
     <StyledSlider
-      className='flex w-fit animate-looping-tag'
+      className='animate-looping-tag flex w-fit'
       isReverse={isReverse}
     >
       {children}

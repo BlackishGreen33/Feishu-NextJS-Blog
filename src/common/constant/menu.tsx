@@ -14,10 +14,7 @@ import {
 import { PiChatCircleDotsBold as ChatIcon } from 'react-icons/pi';
 import { SiJavascript } from 'react-icons/si';
 
-import {
-  SITE_CONTACT_EMAIL,
-  SITE_GITHUB_URL,
-} from '@/common/config/site';
+import { SITE_CONTACT_EMAIL, SITE_GITHUB_URL } from '@/common/config/site';
 import type { MenuItemProps } from '@/common/types/menu';
 import { useI18n } from '@/i18n';
 

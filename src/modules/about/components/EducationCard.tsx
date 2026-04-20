@@ -23,7 +23,13 @@ const EducationCard = ({
   const { messages } = useI18n();
   const [isShowHighlights, setIsShowHighlights] = useState(false);
   const header = (
-    <h6 className={link ? 'cursor-pointer underline-offset-2 hover:text-dark hover:underline hover:dark:text-white' : ''}>
+    <h6
+      className={
+        link
+          ? 'hover:text-dark cursor-pointer underline-offset-2 hover:underline hover:dark:text-white'
+          : ''
+      }
+    >
       {school}
     </h6>
   );
@@ -70,7 +76,7 @@ const EducationCard = ({
               {summaryItems.map((item, index) => (
                 <div key={item} className='flex items-center gap-2'>
                   {index > 0 ? (
-                    <span className='hidden text-neutral-300 dark:text-neutral-700 md:flex'>
+                    <span className='hidden text-neutral-300 md:flex dark:text-neutral-700'>
                       •
                     </span>
                   ) : null}
@@ -87,7 +93,7 @@ const EducationCard = ({
                   className='flex gap-1 text-neutral-500 dark:text-neutral-500'
                 >
                   {index > 0 ? (
-                    <span className='hidden text-neutral-300 dark:text-neutral-700 lg:block'>
+                    <span className='hidden text-neutral-300 lg:block dark:text-neutral-700'>
                       •
                     </span>
                   ) : null}

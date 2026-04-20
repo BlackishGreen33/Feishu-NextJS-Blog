@@ -18,11 +18,11 @@ const QueryNotFound = ({
   const { messages } = useI18n();
 
   return (
-    <div className='flex flex-col items-center space-y-6 px-5 pb-10 pt-5 '>
+    <div className='flex flex-col items-center space-y-6 px-5 pt-5 pb-10'>
       <div className='space-y-2 text-center text-neutral-500'>
         <p>
           {messages.commandPalette.noResultIntro}
-          <span className='ml-1 mr-2 italic text-neutral-600 dark:text-neutral-400'>
+          <span className='mr-2 ml-1 text-neutral-600 italic dark:text-neutral-400'>
             `{query}`
           </span>
           {messages.commandPalette.noResultOutro}

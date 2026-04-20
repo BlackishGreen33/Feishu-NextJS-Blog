@@ -183,9 +183,7 @@ export const toIsoDate = (value?: string | number | null) => {
   const date =
     typeof normalizedValue === 'number'
       ? new Date(
-          normalizedValue > 1e12
-            ? normalizedValue
-            : normalizedValue * 1000,
+          normalizedValue > 1e12 ? normalizedValue : normalizedValue * 1000,
         )
       : new Date(normalizedValue);
 

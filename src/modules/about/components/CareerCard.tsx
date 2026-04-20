@@ -80,7 +80,7 @@ const CareerCard = ({
                   rel='noopener noreferrer'
                   data-umami-event={`Click Career Company Name: ${company}`}
                 >
-                  <span className='cursor-pointer underline-offset-2 hover:text-dark hover:underline hover:dark:text-white'>
+                  <span className='hover:text-dark cursor-pointer underline-offset-2 hover:underline hover:dark:text-white'>
                     {company}
                   </span>
                 </a>
@@ -89,7 +89,7 @@ const CareerCard = ({
               )}
               {companyMeta.map((item) => (
                 <div key={item} className='flex items-center gap-2'>
-                  <span className='hidden text-neutral-300 dark:text-neutral-700 lg:block'>
+                  <span className='hidden text-neutral-300 lg:block dark:text-neutral-700'>
                     •
                   </span>
                   <span className='text-neutral-500'>{item}</span>
@@ -104,7 +104,7 @@ const CareerCard = ({
               </div>
               {detailMeta.map((item) => (
                 <div key={item} className='flex items-center gap-2'>
-                  <span className='hidden text-neutral-300 dark:text-neutral-700 lg:block'>
+                  <span className='hidden text-neutral-300 lg:block dark:text-neutral-700'>
                     •
                   </span>
                   <span className='text-neutral-500 dark:text-neutral-500'>
@@ -118,7 +118,7 @@ const CareerCard = ({
         {hasResponsibilities ? (
           <button
             onClick={() => setIsShowResponsibility(!isShowResponsibility)}
-            className='-ml-1 mt-5 flex items-center gap-1 text-sm text-neutral-500'
+            className='mt-5 -ml-1 flex items-center gap-1 text-sm text-neutral-500'
           >
             <HiChevronRight
               size={18}

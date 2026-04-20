@@ -2,10 +2,7 @@ import Link from 'next/link';
 import { FiCalendar, FiClock, FiVideo } from 'react-icons/fi';
 
 import EmptyState from '@/common/components/elements/EmptyState';
-import {
-  SITE_BOOK_CALL_URL,
-  useSiteConfig,
-} from '@/common/config/site';
+import { SITE_BOOK_CALL_URL, useSiteConfig } from '@/common/config/site';
 import { useI18n } from '@/i18n';
 
 const BookACall = () => {
@@ -30,7 +27,7 @@ const BookACall = () => {
             <div className='flex items-center gap-2 text-base font-medium md:text-lg'>
               <span>{site.bookCallTitle}</span>
             </div>
-            <p className='text-sm dark:text-neutral-300 md:text-base'>
+            <p className='text-sm md:text-base dark:text-neutral-300'>
               {site.bookCallDescription}
             </p>
           </div>

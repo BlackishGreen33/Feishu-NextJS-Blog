@@ -55,7 +55,7 @@ const BlogHeader = ({
         </motion.h1>
       ) : (
         <motion.div
-          className='shadow-bottom top-0 z-10 border-b border-neutral-300 bg-light py-6 backdrop-blur dark:border-neutral-600 dark:bg-dark lg:sticky'
+          className='shadow-bottom bg-light dark:bg-dark top-0 z-10 border-b border-neutral-300 py-6 backdrop-blur lg:sticky dark:border-neutral-600'
           initial='initial'
           animate='animate'
           variants={titleVariants}
@@ -64,7 +64,7 @@ const BlogHeader = ({
           <h1 className='text-lg font-semibold lg:text-xl'>{title}</h1>
         </motion.div>
       )}
-      <div className='mb-6 flex flex-col justify-between gap-2 border-b border-dashed border-neutral-600 pb-6 pt-5 text-[14px] text-neutral-600 dark:text-neutral-400 sm:flex-row'>
+      <div className='mb-6 flex flex-col justify-between gap-2 border-b border-dashed border-neutral-600 pt-5 pb-6 text-[14px] text-neutral-600 sm:flex-row dark:text-neutral-400'>
         <div>
           {messages.blog.publishedAt}
           <span className='px-1 font-medium'>

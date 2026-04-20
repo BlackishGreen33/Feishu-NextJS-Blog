@@ -49,7 +49,7 @@ const Profile = ({ isScrolled = false }: ProfileProps) => {
     <MenuContext.Provider value={{ hideNavbar }}>
       <div
         className={clsx(
-          'fixed z-20 w-full bg-light p-5 shadow-sm dark:border-b dark:border-neutral-800 dark:bg-dark sm:shadow-none lg:relative lg:border-none lg:!bg-transparent lg:p-0',
+          'bg-light dark:bg-dark fixed z-20 w-full p-5 shadow-sm sm:shadow-none lg:relative lg:border-none lg:!bg-transparent lg:p-0 dark:border-b dark:border-neutral-800',
           expandMenu && 'pb-0',
         )}
       >

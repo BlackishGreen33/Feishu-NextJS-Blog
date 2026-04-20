@@ -25,7 +25,7 @@ const GiscusComment = ({ isEnableReaction = false }: GiscusComment) => {
   }
 
   return (
-    <div className='mb-2 mt-5'>
+    <div className='mt-5 mb-2'>
       <Giscus
         repo={SITE_GISCUS_REPO}
         repoId={SITE_GISCUS_REPO_ID}

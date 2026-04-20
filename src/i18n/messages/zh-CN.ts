@@ -4,7 +4,8 @@ const zhCNMessages: Messages = {
   site: {
     name: '墨绿B.G.',
     title: '墨绿B.G. 的个人网站',
-    description: '墨绿B.G. 的个人网站与笔记，文章会从飞书知识库同步整理后发布。',
+    description:
+      '墨绿B.G. 的个人网站与笔记，文章会从飞书知识库同步整理后发布。',
     profileGreeting: '你好！我是墨绿B.G.👋',
     profileBio:
       '就读于华中师范大学计算机学院软件工程专业。专注于现代 Web 开发与 AI 工程化落地，擅长复杂系统架构设计与工程治理，曾于字节跳动参与企业级系统开发与架构优化。未来会持续深耕软件工程与大模型 Agent 领域，致力于打造可靠、可演进的智能软件系统。',
@@ -17,9 +18,11 @@ const zhCNMessages: Messages = {
     homeServicesCardDescription:
       '我目前接受合作与开发项目，欢迎通过电子邮件联系我，一起看看我们可以如何合作。',
     aboutPageDescription: '这里会整理关于我的介绍、简历、经历与教育背景。',
-    contactPageDescription: '如果你想联系我，这里会放常用社群、预约链接与留言表单。',
+    contactPageDescription:
+      '如果你想联系我，这里会放常用社群、预约链接与留言表单。',
     bookCallTitle: '预约飞书会议',
-    bookCallDescription: '如果你想和我交流合作、聊聊技术或讨论项目，可以通过飞书会议预约时间。',
+    bookCallDescription:
+      '如果你想和我交流合作、聊聊技术或讨论项目，可以通过飞书会议预约时间。',
     bookCallDuration: 'UTC+8 每日 14:00 - 21:00',
     bookCallTool: '飞书会议',
     contactResponseTime: '半天之内',
@@ -50,7 +53,8 @@ const zhCNMessages: Messages = {
     guestbookTitle: '留言板',
     guestbookDescription: '如果你想留言、打招呼或留下建议，可以在这里写下来。',
     learnTitle: '学习笔记',
-    learnDescription: '这里收录我正在整理的学习内容、笔记与一些持续更新的主题。',
+    learnDescription:
+      '这里收录我正在整理的学习内容、笔记与一些持续更新的主题。',
     projectsTitle: '作品',
     projectsDescription: '这里收录我整理过的项目、实验与一些长期维护中的作品。',
     playgroundTitle: 'JavaScript Playground',

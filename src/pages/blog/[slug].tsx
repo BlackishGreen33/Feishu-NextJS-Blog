@@ -4,7 +4,11 @@ import { NextSeo } from 'next-seo';
 import BackButton from '@/common/components/elements/BackButton';
 import Container from '@/common/components/elements/Container';
 import { getCanonicalUrl } from '@/common/config/seo';
-import { SITE_DEFAULT_BLOG_COVER, SITE_URL, useSiteConfig } from '@/common/config/site';
+import {
+  SITE_DEFAULT_BLOG_COVER,
+  SITE_URL,
+  useSiteConfig,
+} from '@/common/config/site';
 import { BlogDetailProps } from '@/common/types/blog';
 import { useI18n } from '@/i18n';
 import BlogDetail from '@/modules/blog/components/BlogDetail';
@@ -33,7 +37,9 @@ const BlogDetailPage: NextPage<BlogDetailPageProps> = ({ blog }) => {
             authors: [site.name],
           },
           url: canonicalUrl,
-          images: [{ url: blog.cover || `${SITE_URL}${SITE_DEFAULT_BLOG_COVER}` }],
+          images: [
+            { url: blog.cover || `${SITE_URL}${SITE_DEFAULT_BLOG_COVER}` },
+          ],
           siteName: site.name,
         }}
       />

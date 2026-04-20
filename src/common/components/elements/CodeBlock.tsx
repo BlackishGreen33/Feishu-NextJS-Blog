@@ -1,4 +1,9 @@
-import { type HTMLAttributes, type ReactNode, useEffect, useState } from 'react';
+import {
+  type HTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import dynamic from 'next/dynamic';
 import {
   HiCheckCircle as CheckIcon,
@@ -64,7 +69,7 @@ const CodeBlock = ({
       {!inline ? (
         <div className='relative'>
           <button
-            className='absolute right-3 top-3 rounded-lg border border-neutral-700 p-2 hover:bg-neutral-800'
+            className='absolute top-3 right-3 rounded-lg border border-neutral-700 p-2 hover:bg-neutral-800'
             type='button'
             aria-label='Copy to Clipboard'
             onClick={() => handleCopy(String(children))}
@@ -102,7 +107,7 @@ const CodeBlock = ({
   );
 };
 
-const LoadingPlaceholder = () => <div className='mb-12 mt-12 h-36 w-full' />;
+const LoadingPlaceholder = () => <div className='mt-12 mb-12 h-36 w-full' />;
 
 export default dynamic(() => Promise.resolve(CodeBlock), {
   ssr: false,

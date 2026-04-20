@@ -11,7 +11,7 @@ const ProductCardSkeleton = () => {
           <Skeleton
             height={192}
             containerClassName='flex'
-            className='!rounded-b-none !rounded-t-xl'
+            className='!rounded-t-xl !rounded-b-none'
           />
         </div>
         <div className='flex h-[164px] flex-col space-y-3 p-5'>

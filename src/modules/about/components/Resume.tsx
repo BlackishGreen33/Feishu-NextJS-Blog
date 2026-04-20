@@ -3,10 +3,7 @@ import { LuDownload as DownloadIcon } from 'react-icons/lu';
 
 import EmptyState from '@/common/components/elements/EmptyState';
 import GoogleDocsEmbed from '@/common/components/elements/GoogleDocsEmbed';
-import {
-  SITE_RESUME_EMBED_URL,
-  SITE_RESUME_URL,
-} from '@/common/config/site';
+import { SITE_RESUME_EMBED_URL, SITE_RESUME_URL } from '@/common/config/site';
 import { useI18n } from '@/i18n';
 
 const Resume = () => {

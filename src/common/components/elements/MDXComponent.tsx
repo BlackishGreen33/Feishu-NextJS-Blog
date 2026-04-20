@@ -35,9 +35,9 @@ const getColumnLayoutClassName = (className?: string) => {
 const isColumnItem = (className?: string) =>
   Boolean(
     className &&
-      (className.includes('w-[33%]') ||
-        className.includes('w-[50%]') ||
-        className.includes('width-ratio')),
+    (className.includes('w-[33%]') ||
+      className.includes('w-[50%]') ||
+      className.includes('width-ratio')),
   );
 
 const MDXComponent = ({ children }: MarkdownRendererProps) => {
@@ -79,7 +79,7 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
         ),
         h3: (props) => (
           <h3
-            className='pt-4 text-[18px] font-medium leading-snug dark:text-neutral-300'
+            className='pt-4 text-[18px] leading-snug font-medium dark:text-neutral-300'
             {...props}
           />
         ),
@@ -107,7 +107,7 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
         code: (props) => <CodeBlock {...props} />,
         blockquote: (props) => (
           <blockquote
-            className='rounded-br-2xl border-l-[5px] border-neutral-700 border-l-cyan-500 bg-neutral-200 py-3 pl-6  text-lg font-medium text-cyan-800 dark:bg-neutral-800 dark:text-cyan-200'
+            className='rounded-br-2xl border-l-[5px] border-neutral-700 border-l-cyan-500 bg-neutral-200 py-3 pl-6 text-lg font-medium text-cyan-800 dark:bg-neutral-800 dark:text-cyan-200'
             {...props}
           />
         ),
@@ -137,7 +137,7 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
           </th>
         ),
         td: (props) => (
-          <td className='border px-3  py-1 dark:border-neutral-600'>
+          <td className='border px-3 py-1 dark:border-neutral-600'>
             {props.children}
           </td>
         ),

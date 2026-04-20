@@ -13,9 +13,7 @@ interface LanguageSwitcherProps {
 
 const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
 
-const LanguageSwitcher = ({
-  compact = false,
-}: LanguageSwitcherProps) => {
+const LanguageSwitcher = ({ compact = false }: LanguageSwitcherProps) => {
   const router = useRouter();
   const { locale, locales, messages } = useI18n();
   const { pathname, query, asPath } = router;
@@ -49,7 +47,7 @@ const LanguageSwitcher = ({
             onClick={() => handleSwitchLocale(option.value)}
             aria-pressed={option.value === locale}
             className={clsx(
-              'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-700',
+              'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:outline-none dark:focus-visible:ring-neutral-700',
               option.value === locale
                 ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50'
                 : 'border-neutral-300 bg-transparent text-neutral-600 hover:border-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-800 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:bg-neutral-900 dark:hover:text-neutral-100',
@@ -63,9 +61,12 @@ const LanguageSwitcher = ({
   }
 
   return (
-    <Listbox value={locale} onChange={(value) => void handleSwitchLocale(value)}>
+    <Listbox
+      value={locale}
+      onChange={(value) => void handleSwitchLocale(value)}
+    >
       <div className='relative mt-1'>
-        <Listbox.Button className='group relative w-full cursor-pointer rounded-lg border-[1.8px] bg-white py-2 pl-4 pr-10 text-left text-neutral-600 focus:outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-200 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:focus-visible:border-neutral-600 dark:focus-visible:ring-offset-neutral-950 sm:text-[15px]'>
+        <Listbox.Button className='group relative w-full cursor-pointer rounded-lg border-[1.8px] bg-white py-2 pr-10 pl-4 text-left text-neutral-600 focus:outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-200 sm:text-[15px] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:focus-visible:border-neutral-600 dark:focus-visible:ring-offset-neutral-950'>
           <span className='flex items-center gap-2 truncate'>
             <span>
               {localeOptions.find((option) => option.value === locale)?.label}
@@ -88,7 +89,7 @@ const LanguageSwitcher = ({
           <Listbox.Options
             anchor='bottom start'
             portal
-            className='z-50 mt-2 max-h-60 w-[var(--button-width)] overflow-auto rounded-md border border-neutral-200 bg-white py-1 text-base ring-1 ring-black/5 [--anchor-gap:8px] focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 sm:text-sm'
+            className='z-50 mt-2 max-h-60 w-[var(--button-width)] overflow-auto rounded-md border border-neutral-200 bg-white py-1 text-base ring-1 ring-black/5 [--anchor-gap:8px] focus:outline-none sm:text-sm dark:border-neutral-800 dark:bg-neutral-900'
           >
             {localeOptions.map((option) => (
               <Listbox.Option
@@ -96,7 +97,7 @@ const LanguageSwitcher = ({
                 value={option.value}
                 className={({ active, selected }) =>
                   clsx(
-                    'relative cursor-pointer select-none py-1.5 pl-4 pr-4 transition-colors duration-150',
+                    'relative cursor-pointer py-1.5 pr-4 pl-4 transition-colors duration-150 select-none',
                     active
                       ? 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100'
                       : 'text-neutral-600 dark:text-neutral-400',

@@ -25,7 +25,7 @@ const CareerList = () => {
 
   return (
     <section className='space-y-6'>
-      <div className='grid gap-3 '>
+      <div className='grid gap-3'>
         {sortedCareers.map((career, index) => (
           <CareerCard key={index} {...career} />
         ))}

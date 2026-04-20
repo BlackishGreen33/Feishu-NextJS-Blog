@@ -82,7 +82,7 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
 
   return (
     <>
-        <ChatList
+      <ChatList
         isWidget={isWidget}
         messages={chatMessages}
         onDeleteMessage={handleDeleteMessage}

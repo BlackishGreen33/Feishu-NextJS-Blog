@@ -22,9 +22,9 @@ const ProjectCard = ({
 
   return (
     <Link href={`/projects/${slug}`}>
-      <Card className='group relative cursor-pointer border border-neutral-200 dark:border-neutral-900 lg:hover:scale-[102%]'>
+      <Card className='group relative cursor-pointer border border-neutral-200 lg:hover:scale-[102%] dark:border-neutral-900'>
         {is_featured && (
-          <div className='absolute right-0 top-0 z-[2] flex items-center gap-1 rounded-bl-xl rounded-tr-xl bg-lime-300 px-2 py-1 text-[13px] font-medium text-emerald-950'>
+          <div className='absolute top-0 right-0 z-[2] flex items-center gap-1 rounded-tr-xl rounded-bl-xl bg-lime-300 px-2 py-1 text-[13px] font-medium text-emerald-950'>
             <PinIcon size={15} />
             <span>{messages.projects.featured}</span>
           </div>
@@ -37,14 +37,14 @@ const ProjectCard = ({
             alt={title}
             className='h-48 rounded-t-xl object-cover object-left'
           />
-          <div className='absolute left-0 top-0 flex flex h-full w-full items-center justify-center gap-1 rounded-t-xl bg-black text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-80'>
+          <div className='absolute top-0 left-0 flex h-full w-full items-center justify-center gap-1 rounded-t-xl bg-black text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-80'>
             <span>{messages.projects.viewProject}</span>
             <ViewIcon size={20} />
           </div>
         </div>
         <div className='space-y-2 p-5'>
           <div className='flex justify-between'>
-            <div className='cursor-pointer  text-lg text-neutral-700 transition-all duration-300 dark:text-neutral-300 dark:group-hover:text-teal-400 lg:group-hover:text-teal-600'>
+            <div className='cursor-pointer text-lg text-neutral-700 transition-all duration-300 lg:group-hover:text-teal-600 dark:text-neutral-300 dark:group-hover:text-teal-400'>
               {title}
             </div>
           </div>

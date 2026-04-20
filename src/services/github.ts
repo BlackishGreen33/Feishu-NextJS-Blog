@@ -31,12 +31,7 @@ const GITHUB_USER_QUERY = `query($username: String!) {
 const PUBLIC_GITHUB_CONTRIBUTIONS_ENDPOINT = (username: string) =>
   `https://github.com/users/${username}/contributions`;
 
-const GITHUB_CONTRIBUTION_COLORS = [
-  '#0e4429',
-  '#006d32',
-  '#26a641',
-  '#39d353',
-];
+const GITHUB_CONTRIBUTION_COLORS = ['#0e4429', '#006d32', '#26a641', '#39d353'];
 
 const createEmptyGithubData = (configured: boolean) => ({
   configured,
@@ -53,7 +48,9 @@ const parseContributionCount = (tooltip: string) => {
 };
 
 const parsePublicGithubContributions = async (username: string) => {
-  const response = await axios.get(PUBLIC_GITHUB_CONTRIBUTIONS_ENDPOINT(username));
+  const response = await axios.get(
+    PUBLIC_GITHUB_CONTRIBUTIONS_ENDPOINT(username),
+  );
   const html = response.data as string;
 
   const totalContributionsMatch = html.match(
@@ -63,17 +60,21 @@ const parsePublicGithubContributions = async (username: string) => {
     ? Number(totalContributionsMatch[1].replace(/,/g, ''))
     : 0;
 
-  const months = [...html.matchAll(
-    /<td class="ContributionCalendar-label" colspan="(\d+)"[^>]*>[\s\S]*?<span aria-hidden="true"[^>]*>([^<]+)<\/span>/g,
-  )].map((match) => ({
+  const months = [
+    ...html.matchAll(
+      /<td class="ContributionCalendar-label" colspan="(\d+)"[^>]*>[\s\S]*?<span aria-hidden="true"[^>]*>([^<]+)<\/span>/g,
+    ),
+  ].map((match) => ({
     name: match[2],
     totalWeeks: Number(match[1]),
     firstDay: '',
   }));
 
-  const cellMatches = [...html.matchAll(
-    /<td[^>]*data-date="([^"]+)"[^>]*id="contribution-day-component-(\d+)-(\d+)"[^>]*data-level="(\d+)"[^>]*class="ContributionCalendar-day"><\/td>\s*<tool-tip[^>]*>([^<]*)<\/tool-tip>/g,
-  )];
+  const cellMatches = [
+    ...html.matchAll(
+      /<td[^>]*data-date="([^"]+)"[^>]*id="contribution-day-component-(\d+)-(\d+)"[^>]*data-level="(\d+)"[^>]*class="ContributionCalendar-day"><\/td>\s*<tool-tip[^>]*>([^<]*)<\/tool-tip>/g,
+    ),
+  ];
 
   const weekMap = new Map<
     number,

@@ -1,6 +1,6 @@
-@config "../../../tailwind.config.js";
-@import "tailwindcss";
-@import "tailwind-scrollbar-hide/v4";
+@config '../../../tailwind.config.js';
+@import 'tailwindcss';
+@import 'tailwind-scrollbar-hide/v4';
 
 :root {
   --color-dark: #121212;

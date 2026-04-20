@@ -83,7 +83,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const parentContent = params?.content as string;
   const slug = params?.slug as string;
 
-  const parentExists = LEARN_CONTENTS.some((item) => item.slug === parentContent);
+  const parentExists = LEARN_CONTENTS.some(
+    (item) => item.slug === parentContent,
+  );
 
   if (!parentExists) {
     return {

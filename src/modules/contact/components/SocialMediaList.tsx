@@ -16,7 +16,7 @@ const SocialMediaList = () => {
         {socialMedia.map((item, index: number) => (
           <Button
             className={clsx(
-              'flex w-full items-center justify-center transition-all duration-300 hover:scale-105 md:min-w-[190px] md:w-auto',
+              'flex w-full items-center justify-center transition-all duration-300 hover:scale-105 md:w-auto md:min-w-[190px]',
               item?.className,
             )}
             key={index}

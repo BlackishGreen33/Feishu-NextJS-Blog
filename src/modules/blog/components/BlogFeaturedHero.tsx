@@ -60,7 +60,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
           sizes='100vw'
           className='h-full w-full object-cover'
         />
-        <div className='to-black/85 absolute inset-0 bg-gradient-to-b from-transparent via-black/50' />
+        <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black/85' />
       </div>
 
       <div className='absolute inset-0 z-10 flex w-full justify-between'>
@@ -73,7 +73,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
           <div className='flex flex-col justify-end gap-6'>
             <div className='flex flex-col space-y-3 text-white'>
               <Link href={`/blog/${currentFeatured.slug}`}>
-                <h3 className='max-w-3xl text-2xl font-bold leading-normal hover:underline hover:underline-offset-4 sm:text-4xl'>
+                <h3 className='max-w-3xl text-2xl leading-normal font-bold hover:underline hover:underline-offset-4 sm:text-4xl'>
                   {currentFeatured.title}
                 </h3>
               </Link>
@@ -90,7 +90,8 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
                 <div className='flex items-center gap-1'>
                   <ClockIcon size={15} />
                   <span className='ml-0.5 text-xs sm:text-sm'>
-                    {currentFeatured.readingTimeMinutes} {messages.blog.minutesRead}
+                    {currentFeatured.readingTimeMinutes}{' '}
+                    {messages.blog.minutesRead}
                   </span>
                 </div>
               </div>

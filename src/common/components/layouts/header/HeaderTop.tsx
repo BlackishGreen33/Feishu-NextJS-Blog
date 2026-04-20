@@ -6,10 +6,7 @@ import { FiMenu as MenuIcon } from 'react-icons/fi';
 import { MdClose as CloseIcon } from 'react-icons/md';
 
 import ThemeSwitcher from '@/common/components/elements/ThemeSwitcher';
-import {
-  SITE_PROFILE_IMAGE,
-  useSiteConfig,
-} from '@/common/config/site';
+import { SITE_PROFILE_IMAGE, useSiteConfig } from '@/common/config/site';
 import { useMenuData } from '@/common/constant/menu';
 
 import Image from '../../elements/Image';
@@ -36,12 +33,12 @@ const HeaderTop = () => {
             priority
             unoptimized
             rounded='rounded-full'
-            className='rotate-3 border-2 border-neutral-400 dark:border-neutral-600 lg:hover:scale-105'
+            className='rotate-3 border-2 border-neutral-400 lg:hover:scale-105 dark:border-neutral-600'
           />
           {!showMenu && (
             <div className='flex items-center gap-3'>
               <Link href='/' passHref>
-                <h2 className='grow  text-lg font-medium lg:text-xl'>
+                <h2 className='grow text-lg font-medium lg:text-xl'>
                   {site.profileName}
                 </h2>
               </Link>

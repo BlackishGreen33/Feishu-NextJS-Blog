@@ -35,11 +35,7 @@ export const getDateFnsLocale = (locale?: string) => {
   }[normalizedLocale];
 };
 
-export const formatDate = (
-  date: string,
-  type?: string,
-  locale?: string,
-) => {
+export const formatDate = (date: string, type?: string, locale?: string) => {
   if (!date) {
     return '';
   }

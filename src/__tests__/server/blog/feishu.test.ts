@@ -15,7 +15,9 @@ describe('formatFeishuApiErrorMessage', () => {
     );
 
     expect(message).toContain('Feishu API error 400: code=131006');
-    expect(message).toContain('Grant the app access to the target Feishu wiki space before syncing.');
+    expect(message).toContain(
+      'Grant the app access to the target Feishu wiki space before syncing.',
+    );
     expect(message).toContain('log_id=log-123');
   });
 });

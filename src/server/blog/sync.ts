@@ -113,8 +113,7 @@ const parseArticle = (raw: RawArticle, slug: string): Article => {
     raw.frontmatter.draft ||
     raw.frontmatter.hide ||
     isHiddenTitle(raw.node.title || '');
-  const cover =
-    raw.documentCoverUrl || SITE_DEFAULT_BLOG_COVER;
+  const cover = raw.documentCoverUrl || SITE_DEFAULT_BLOG_COVER;
 
   return {
     id: raw.node.node_token,
@@ -183,7 +182,10 @@ const downloadAssets = async (
   const assetEntries: Record<string, string> = {};
 
   for (const fileToken of Object.values(fileTokens)) {
-    assetEntries[fileToken.token] = await writeAssetFromToken(client, fileToken);
+    assetEntries[fileToken.token] = await writeAssetFromToken(
+      client,
+      fileToken,
+    );
 
     await wait(80);
   }
@@ -286,7 +288,8 @@ export const syncFeishuArticles = async (
 
   for (const node of nodes) {
     try {
-      const latestNode = (await client.getNode(node.space_id, node.node_token)) || node;
+      const latestNode =
+        (await client.getNode(node.space_id, node.node_token)) || node;
       const documentInfo = await client.getDocumentInfo(latestNode.obj_token);
       const blocks = await client.getDocumentBlocks(latestNode.obj_token);
       const { markdown, fileTokens, meta } = createMarkdownRenderer(

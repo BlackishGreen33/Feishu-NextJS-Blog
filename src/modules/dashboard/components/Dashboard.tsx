@@ -8,7 +8,7 @@ const Dashboard = () => {
   return (
     <>
       <CodingActive />
-      <Breakline className='mb-8 mt-10' />
+      <Breakline className='mt-10 mb-8' />
       <div className='space-y-10'>
         {GITHUB_ACCOUNTS?.filter((account) => account?.is_active).map(
           (account, index) => (

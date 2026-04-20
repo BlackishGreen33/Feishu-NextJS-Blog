@@ -52,7 +52,7 @@
   - `pnpm feishu:sync`
   - `pnpm dev` 的 `predev`
   - `/api/cron/feishu-sync`
-  這三條路徑進入系統。
+    這三條路徑進入系統。
 - `syncFeishuArticles({ optional: true })` 的「缺憑證時安全跳過」行為必須保留。
 - 本地沒有飛書憑證時，專案應能繼續使用 repo 內的示例 / 已同步資料運作；不要破壞這個 fallback。
 - `data/feishu-blog/**` 與 `public/feishu-assets/**` 屬於同步輸出。除非任務明確要求更新 fixture 或同步結果，否則不要手動改這些檔案。

@@ -6,7 +6,8 @@ export const SITE_URL =
   process.env.SITE_URL ||
   'http://localhost:3000';
 export const SITE_PROFILE_HANDLE = '@BlackishGreen33';
-export const SITE_PROFILE_IMAGE = 'https://avatars.githubusercontent.com/u/103036558?v=4';
+export const SITE_PROFILE_IMAGE =
+  'https://avatars.githubusercontent.com/u/103036558?v=4';
 export const SITE_GITHUB_URL = 'https://github.com/BlackishGreen33';
 export const SITE_CONTACT_EMAIL = 's5460703@gmail.com';
 export const SITE_DEFAULT_BLOG_COVER = '/images/blog-cover-personal.svg';

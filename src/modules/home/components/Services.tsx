@@ -15,7 +15,7 @@ const Services = () => {
     <section className='space-y-5'>
       <div className='space-y-3'>
         <SectionHeading title={site.homeServicesTitle} />
-        <p className='leading-[1.8] text-neutral-800 dark:text-neutral-300 md:leading-loose'>
+        <p className='leading-[1.8] text-neutral-800 md:leading-loose dark:text-neutral-300'>
           {site.homeServicesDescription}
         </p>
       </div>
@@ -24,7 +24,7 @@ const Services = () => {
           <RocketIcon size={24} />
           <h3 className='text-xl font-medium'>{site.homeServicesCardTitle}</h3>
         </div>
-        <p className='pl-2 leading-[1.8] text-neutral-800 dark:text-neutral-300 md:leading-loose'>
+        <p className='pl-2 leading-[1.8] text-neutral-800 md:leading-loose dark:text-neutral-300'>
           {site.homeServicesCardDescription}
         </p>
         <Button

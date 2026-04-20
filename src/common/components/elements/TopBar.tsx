@@ -6,7 +6,7 @@ const TopBar = () => {
   const site = useSiteConfig();
 
   return (
-    <div className='hidden items-center justify-center gap-x-2 bg-cover bg-no-repeat p-2.5 text-sm shadow-lg backdrop-blur-2xl dark:border-b dark:border-neutral-800 dark:text-neutral-300 xl:flex'>
+    <div className='hidden items-center justify-center gap-x-2 bg-cover bg-no-repeat p-2.5 text-sm shadow-lg backdrop-blur-2xl xl:flex dark:border-b dark:border-neutral-800 dark:text-neutral-300'>
       <span>🚀</span>
       <span>{site.profileName} 的個人網站正在整理中，內容會陸續補上：</span>
       <a

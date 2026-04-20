@@ -44,7 +44,7 @@ const ChatWidgetHeader = () => {
             />
           </div>
         </div>
-        <h4 className=' text-base'>{messages.guestbook.widgetTitle}</h4>
+        <h4 className='text-base'>{messages.guestbook.widgetTitle}</h4>
       </div>
       {user && (
         <SignOutIcon

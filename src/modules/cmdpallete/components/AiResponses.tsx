@@ -41,19 +41,19 @@ const AiResponses = ({
           />
         )
       ) : (
-          <Typewriter
-            onInit={(typewriter) => {
-              typewriter
-                .typeString(`${messages.commandPalette.aiFallback.title} \u00A0`)
-                .pauseFor(1000)
-                .typeString('<br/><br/>')
-                .typeString(`${messages.commandPalette.aiFallback.body} \u00A0`)
-                .pauseFor(1000)
-                .typeString('<br/><br/>')
-                .typeString(`${messages.commandPalette.aiFallback.retry} \u00A0`)
-                .callFunction(() => {
-                  onAiFinished();
-                })
+        <Typewriter
+          onInit={(typewriter) => {
+            typewriter
+              .typeString(`${messages.commandPalette.aiFallback.title} \u00A0`)
+              .pauseFor(1000)
+              .typeString('<br/><br/>')
+              .typeString(`${messages.commandPalette.aiFallback.body} \u00A0`)
+              .pauseFor(1000)
+              .typeString('<br/><br/>')
+              .typeString(`${messages.commandPalette.aiFallback.retry} \u00A0`)
+              .callFunction(() => {
+                onAiFinished();
+              })
               .start();
           }}
           options={{

@@ -74,7 +74,8 @@ const normalizeProject = (value: unknown): ProjectItemProps | null => {
     slug,
     description: typeof value.description === 'string' ? value.description : '',
     image: typeof value.image === 'string' ? value.image : '',
-    link_demo: typeof value.link_demo === 'string' ? value.link_demo : undefined,
+    link_demo:
+      typeof value.link_demo === 'string' ? value.link_demo : undefined,
     link_github:
       typeof value.link_github === 'string' ? value.link_github : undefined,
     stacks: normalizeStacks(value.stacks),

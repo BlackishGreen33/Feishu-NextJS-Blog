@@ -109,14 +109,18 @@ const ContactForm = () => {
           data-umami-event='Send Contact Message'
           disabled={isSubmitDisabled}
         >
-          {isLoading ? messages.contact.form.sending : messages.contact.form.send}
+          {isLoading
+            ? messages.contact.form.sending
+            : messages.contact.form.send}
         </Button>
       </div>
 
       <div className='my-5 flex items-center gap-2 dark:text-neutral-400'>
         <ClockIcon />
         <div className='text-sm'>
-          <span className='font-medium'>{messages.contact.averageResponseTime}</span>
+          <span className='font-medium'>
+            {messages.contact.averageResponseTime}
+          </span>
           {site.contactResponseTime}
         </div>
       </div>

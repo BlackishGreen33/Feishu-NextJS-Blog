@@ -93,9 +93,7 @@ export const STACKS: StacksProps = {
   Zustand: <FiLayers size={iconSize} className={genericClassName} />,
   Jotai: <BsStars size={iconSize} className='text-violet-400' />,
   Bunshi: <BsDiagram3 size={iconSize} className='text-indigo-400' />,
-  'React Query': (
-    <SiReactquery size={iconSize} className='text-rose-500' />
-  ),
+  'React Query': <SiReactquery size={iconSize} className='text-rose-500' />,
   SWR: <SiSwr size={iconSize} className='text-emerald-400' />,
   Formily: <FiEdit3 size={iconSize} className={genericClassName} />,
   'React Hook Form': (

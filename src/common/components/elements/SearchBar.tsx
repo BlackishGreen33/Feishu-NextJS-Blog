@@ -16,23 +16,23 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const { messages } = useI18n();
 
   return (
-    <div className='flex w-full items-center sm:w-auto '>
+    <div className='flex w-full items-center sm:w-auto'>
       <div className='relative w-full'>
         <SearchIcon
           size={18}
-          className='absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400'
+          className='absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400'
         />
         <input
           type='text'
           placeholder={`${messages.common.searchArticles}...`}
-          className='w-full rounded-lg border-2 px-10 py-2  text-sm transition-all duration-300 dark:border-neutral-600'
+          className='w-full rounded-lg border-2 px-10 py-2 text-sm transition-all duration-300 dark:border-neutral-600'
           value={searchTerm}
           onChange={onSearchChange}
         />
         {searchTerm && (
           <ClearIcon
             size={20}
-            className='absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer text-gray-400'
+            className='absolute top-1/2 right-3 -translate-y-1/2 transform cursor-pointer text-gray-400'
             onClick={onClearSearch}
           />
         )}

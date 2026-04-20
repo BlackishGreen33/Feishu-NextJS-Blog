@@ -41,19 +41,31 @@ const Overview = ({ data }: OverviewProps) => {
   return (
     <div className='grid grid-cols-2 gap-3 py-2 sm:grid-cols-4'>
       <OverviewItem
-        label={locale === 'en' ? 'Total' : locale === 'zh-CN' ? '总贡献' : '總貢獻'}
+        label={
+          locale === 'en' ? 'Total' : locale === 'zh-CN' ? '总贡献' : '總貢獻'
+        }
         value={totalContributions}
       />
       <OverviewItem
-        label={locale === 'en' ? 'This week' : locale === 'zh-CN' ? '本周' : '本週'}
+        label={
+          locale === 'en' ? 'This week' : locale === 'zh-CN' ? '本周' : '本週'
+        }
         value={totalThisWeekContribution}
       />
       <OverviewItem
-        label={locale === 'en' ? 'Best day' : locale === 'zh-CN' ? '最佳单日' : '最佳單日'}
+        label={
+          locale === 'en'
+            ? 'Best day'
+            : locale === 'zh-CN'
+              ? '最佳单日'
+              : '最佳單日'
+        }
         value={bestContribution}
       />
       <OverviewItem
-        label={locale === 'en' ? 'Daily avg' : locale === 'zh-CN' ? '日均' : '日均'}
+        label={
+          locale === 'en' ? 'Daily avg' : locale === 'zh-CN' ? '日均' : '日均'
+        }
         value={averageContribution}
         unit={locale === 'en' ? '/ day' : locale === 'zh-CN' ? '/ 天' : '/ 天'}
       />

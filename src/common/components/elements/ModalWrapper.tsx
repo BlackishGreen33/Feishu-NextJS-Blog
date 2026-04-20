@@ -20,7 +20,7 @@ const ModalWrapper = ({ isOpen, onClose, children }: ModalWrapperProps) => {
           leaveFrom='opacity-100'
           leaveTo='opacity-0'
         >
-          <div className='fixed inset-0 bg-black bg-opacity-80' />
+          <div className='bg-opacity-80 fixed inset-0 bg-black' />
         </Transition.Child>
 
         <div className='fixed inset-0 overflow-y-auto'>

@@ -23,7 +23,7 @@ const BlogDetail = ({
         published_at={publishedAt}
         updated_at={updatedAt}
       />
-      <div className='space-y-6 leading-[1.8] dark:text-neutral-300 '>
+      <div className='space-y-6 leading-[1.8] dark:text-neutral-300'>
         {content && <MDXComponent>{content}</MDXComponent>}
       </div>
       {tags?.length >= 1 && (

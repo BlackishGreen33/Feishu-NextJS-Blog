@@ -4,7 +4,8 @@ const zhTWMessages: Messages = {
   site: {
     name: '墨綠B.G.',
     title: '墨綠B.G. 的個人網站',
-    description: '墨綠B.G. 的個人網站與筆記，文章會從飛書知識庫同步整理後發佈。',
+    description:
+      '墨綠B.G. 的個人網站與筆記，文章會從飛書知識庫同步整理後發佈。',
     profileGreeting: '你好！我是墨綠B.G.👋',
     profileBio:
       '就讀於華中師範大學計算機學院軟件工程專業。專注於現代 Web 開發與 AI 工程化落地，擅長複雜系統架構設計與工程治理，曾於字節跳動參與企業級系統開發與架構優化。未來持續深耕軟體工程與大模型 Agent 領域，致力於打造可靠、可演進的智慧軟體系統。',
@@ -17,7 +18,8 @@ const zhTWMessages: Messages = {
     homeServicesCardDescription:
       '我目前接受合作與開發項目，歡迎透過電子郵件與我聯繫，一起看看我們可以如何合作。',
     aboutPageDescription: '這裡會整理關於我的介紹、履歷、經歷與教育背景。',
-    contactPageDescription: '如果你想聯絡我，這裡會放常用社群、預約連結與留言表單。',
+    contactPageDescription:
+      '如果你想聯絡我，這裡會放常用社群、預約連結與留言表單。',
     bookCallTitle: '預約飛書會議',
     bookCallDescription:
       '如果你想和我交流合作、聊聊技術或討論項目，之後可以透過飛書會議預約時間。',
@@ -51,7 +53,8 @@ const zhTWMessages: Messages = {
     guestbookTitle: '留言板',
     guestbookDescription: '如果你想留言、打招呼或留下建議，可以在這裡寫下來。',
     learnTitle: '學習筆記',
-    learnDescription: '這裡收錄我正在整理的學習內容、筆記與一些持續更新的主題。',
+    learnDescription:
+      '這裡收錄我正在整理的學習內容、筆記與一些持續更新的主題。',
     projectsTitle: '作品',
     projectsDescription: '這裡收錄我整理過的項目、實驗與一些長期維護中的作品。',
     playgroundTitle: 'JavaScript Playground',
@@ -250,10 +253,7 @@ const zhTWMessages: Messages = {
     },
   },
   commandPalette: {
-    placeholders: [
-      '搜尋或提問任何內容...',
-      '隨時按下 Cmd + K 開啟指令面板',
-    ],
+    placeholders: ['搜尋或提問任何內容...', '隨時按下 Cmd + K 開啟指令面板'],
     groups: {
       pages: '頁面',
       socials: '社群',

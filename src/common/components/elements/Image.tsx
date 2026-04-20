@@ -12,7 +12,8 @@ type ImageProps = {
 } & NextImageProps;
 
 const Image = (props: ImageProps) => {
-  const { alt, src, className, rounded, priority, fallbackSrc, ...rest } = props;
+  const { alt, src, className, rounded, priority, fallbackSrc, ...rest } =
+    props;
   const [isLoading, setLoading] = useState(true);
   const [currentSrc, setCurrentSrc] = useState(src);
   const isFillImage = Boolean(rest.fill);
@@ -36,7 +37,7 @@ const Image = (props: ImageProps) => {
           'duration-700 ease-in-out',
           isLoading
             ? 'scale-[1.02] blur-xl grayscale'
-            : 'scale-100 blur-0 grayscale-0',
+            : 'blur-0 scale-100 grayscale-0',
           rounded,
           className,
         )}

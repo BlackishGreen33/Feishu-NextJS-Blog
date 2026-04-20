@@ -7,7 +7,7 @@ const Story = () => {
   return (
     <div className='space-y-4'>
       <section
-        className='space-y-4 leading-[1.8] text-neutral-800 dark:text-neutral-300 md:leading-loose'
+        className='space-y-4 leading-[1.8] text-neutral-800 md:leading-loose dark:text-neutral-300'
         dangerouslySetInnerHTML={{ __html: getAboutHtml(locale) }}
       />
     </div>

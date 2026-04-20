@@ -65,7 +65,7 @@ const Calendar = ({ data }: CalendarProps) => {
   return (
     <>
       <div className='relative flex flex-col'>
-        <ul className='flex justify-end gap-[3px] overflow-hidden text-xs dark:text-neutral-400 md:justify-start'>
+        <ul className='flex justify-end gap-[3px] overflow-hidden text-xs md:justify-start dark:text-neutral-400'>
           {months.map((month) => (
             <li
               key={month.firstDay}
@@ -155,7 +155,11 @@ const Calendar = ({ data }: CalendarProps) => {
           )}
         >
           {selectContribution?.count}{' '}
-          {locale === 'en' ? 'contributions' : locale === 'zh-CN' ? '次贡献' : '次貢獻'}{' '}
+          {locale === 'en'
+            ? 'contributions'
+            : locale === 'zh-CN'
+              ? '次贡献'
+              : '次貢獻'}{' '}
           ·{' '}
           {selectContribution?.date
             ? formatDate(selectContribution.date, undefined, locale)

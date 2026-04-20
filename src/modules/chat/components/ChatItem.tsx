@@ -69,7 +69,9 @@ const ChatItem = ({
             {authorEmail && email === authorEmail && (
               <div className='text-medium flex items-center gap-0.5 rounded-full bg-gradient-to-bl from-purple-800 via-violet-900 to-purple-800 px-1.5 py-0.5 text-violet-50'>
                 <AdminIcon size={13} />
-                <span className=' text-[10px]'>{messages.guestbook.authorBadge}</span>
+                <span className='text-[10px]'>
+                  {messages.guestbook.authorBadge}
+                </span>
               </div>
             )}
             <div className='hidden md:flex'>

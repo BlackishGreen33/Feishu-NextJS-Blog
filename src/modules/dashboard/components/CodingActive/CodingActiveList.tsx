@@ -51,10 +51,10 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
   const getLanguagesTotalTimeDisplay =
     locale === 'en'
       ? `${getLanguagesTotalHours}h ${getLanguagesTotalMinutes}m`
-      : formatDuration(getLanguagesTotalHours, getLanguagesTotalMinutes).replace(
-          '小時',
-          locale === 'zh-CN' ? '小时' : '小時',
-        );
+      : formatDuration(
+          getLanguagesTotalHours,
+          getLanguagesTotalMinutes,
+        ).replace('小時', locale === 'zh-CN' ? '小时' : '小時');
 
   const getEditorTotalHours = sumTotalFromArray<ItemProps>(
     data?.categories || [],
@@ -74,7 +74,8 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
 
   const actives = [
     {
-      title: locale === 'en' ? 'Languages' : locale === 'zh-CN' ? '语言' : '語言',
+      title:
+        locale === 'en' ? 'Languages' : locale === 'zh-CN' ? '语言' : '語言',
       total: getLanguagesTotalTimeDisplay,
       data: data?.languages,
       styles: {
@@ -82,7 +83,12 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
       },
     },
     {
-      title: locale === 'en' ? 'Activity type' : locale === 'zh-CN' ? '活动类型' : '活動類型',
+      title:
+        locale === 'en'
+          ? 'Activity type'
+          : locale === 'zh-CN'
+            ? '活动类型'
+            : '活動類型',
       total: getEditorTotalTimeDisplay,
       data: data?.categories,
       styles: {
@@ -105,8 +111,8 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
             'relative flex flex-1 flex-col gap-2 rounded-lg p-[2px]',
           )}
         >
-          <div className='h-full w-full rounded-lg bg-neutral-50 p-2 dark:bg-dark'>
-            <p className='absolute -top-3 left-3 bg-neutral-50 px-2 dark:bg-dark'>
+          <div className='dark:bg-dark h-full w-full rounded-lg bg-neutral-50 p-2'>
+            <p className='dark:bg-dark absolute -top-3 left-3 bg-neutral-50 px-2'>
               {item?.title}
             </p>
 

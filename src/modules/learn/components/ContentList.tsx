@@ -91,7 +91,11 @@ const ContentList = ({
       ) : (
         <div className='flex items-center justify-center py-5'>
           <div className='text-neutral-500'>
-            {locale === 'en' ? 'No lesson found.' : locale === 'zh-CN' ? '暂无课程。' : '尚無課程。'}
+            {locale === 'en'
+              ? 'No lesson found.'
+              : locale === 'zh-CN'
+                ? '暂无课程。'
+                : '尚無課程。'}
           </div>
         </div>
       )}
