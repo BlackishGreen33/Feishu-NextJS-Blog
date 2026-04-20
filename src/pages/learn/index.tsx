@@ -3,22 +3,24 @@ import { NextSeo } from 'next-seo';
 
 import Container from '@/common/components/elements/Container';
 import PageHeading from '@/common/components/elements/PageHeading';
-import { SITE_NAME } from '@/common/config/site';
+import { useSiteConfig } from '@/common/config/site';
 import { LEARN_CONTENTS } from '@/common/constant/learn';
+import { useI18n } from '@/i18n';
 import LearnModule from '@/modules/learn';
 
-const PAGE_TITLE = '學習筆記';
-const PAGE_DESCRIPTION = '這裡收錄專案內建的學習內容與示例筆記。';
-
 const LearnPage: NextPage = () => {
+  const { messages } = useI18n();
+  const site = useSiteConfig();
   const filteredContents =
     LEARN_CONTENTS.filter((content) => content.is_show) || [];
+  const pageTitle = messages.pages.learnTitle;
+  const pageDescription = messages.pages.learnDescription;
 
   return (
     <>
-      <NextSeo title={`${PAGE_TITLE} - ${SITE_NAME}`} />
+      <NextSeo title={`${pageTitle} - ${site.name}`} description={pageDescription} />
       <Container data-aos='fade-up'>
-        <PageHeading title={PAGE_TITLE} description={PAGE_DESCRIPTION} />
+        <PageHeading title={pageTitle} description={pageDescription} />
         <LearnModule contents={filteredContents} />
       </Container>
     </>

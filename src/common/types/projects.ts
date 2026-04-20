@@ -9,7 +9,7 @@ export interface ProjectItemProps {
   content?: string;
   is_show: boolean;
   is_featured: boolean;
-  updated_at: Date;
+  updated_at: string;
 }
 
 export interface ProjectsProps {

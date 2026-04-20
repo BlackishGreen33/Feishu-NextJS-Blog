@@ -3,6 +3,7 @@ import Typewriter from 'typewriter-effect';
 
 import Button from '@/common/components/elements/Button';
 import MDXComponent from '@/common/components/elements/MDXComponent';
+import { useI18n } from '@/i18n';
 
 interface AiResponsesProps {
   response: string;
@@ -17,6 +18,8 @@ const AiResponses = ({
   onAiFinished,
   onAiClose,
 }: AiResponsesProps) => {
+  const { messages } = useI18n();
+
   return (
     <>
       {response ? (
@@ -38,23 +41,19 @@ const AiResponses = ({
           />
         )
       ) : (
-        <Typewriter
-          onInit={(typewriter) => {
-            typewriter
-              .typeString(
-                'Oops! The AI seems to be lost. \u00A0 😵‍💫 \u00A0\u00A0',
-              )
-              .pauseFor(1000)
-              .typeString('<br/><br/>')
-              .typeString(
-                `Looks like the AI has gone on an unscheduled vacation to the Land of Confusion. Hope it brings back some souvenirs of clarity!. \u00A0\u00A0`,
-              )
-              .pauseFor(1000)
-              .typeString('<br/><br/>')
-              .typeString('Please try again later. \u00A0')
-              .callFunction(() => {
-                onAiFinished();
-              })
+          <Typewriter
+            onInit={(typewriter) => {
+              typewriter
+                .typeString(`${messages.commandPalette.aiFallback.title} \u00A0`)
+                .pauseFor(1000)
+                .typeString('<br/><br/>')
+                .typeString(`${messages.commandPalette.aiFallback.body} \u00A0`)
+                .pauseFor(1000)
+                .typeString('<br/><br/>')
+                .typeString(`${messages.commandPalette.aiFallback.retry} \u00A0`)
+                .callFunction(() => {
+                  onAiFinished();
+                })
               .start();
           }}
           options={{
@@ -70,7 +69,7 @@ const AiResponses = ({
             data-umami-event='Click Back from AI Response'
           >
             <BackButton />
-            Back
+            {messages.common.back}
           </Button>
         </div>
       )}

@@ -3,10 +3,10 @@ import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { LuPlay as PlayIcon, LuTrash2 as ClearIcon } from 'react-icons/lu';
 import {
-  ImperativePanelHandle,
+  Group,
   Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  type PanelImperativeHandle,
+  Separator,
 } from 'react-resizable-panels';
 
 import useIsMobile from '@/common/hooks/useIsMobile';
@@ -41,17 +41,13 @@ const CodePlayground = ({
   onSetOutput,
   isError = false,
 }: CodePlaygroundProps) => {
-  const editorRef = useRef<ImperativePanelHandle>(null);
+  const editorRef = useRef<PanelImperativeHandle>(null);
   const isMobile = useIsMobile();
 
   const panelDirection = isMobile ? 'vertical' : 'horizontal';
 
   const handleClearCode = () => onSetCode('');
   const handleClearOutput = () => onSetOutput('');
-
-  const onLayout = (sizes: number[]) => {
-    document.cookie = `react-resizable-panels:layout=${JSON.stringify(sizes)}`;
-  };
 
   const handlePanelResize = () => {
     const panel = editorRef.current;
@@ -67,14 +63,12 @@ const CodePlayground = ({
   return (
     <>
       <div className='flex flex-auto rounded-t-md border border-neutral-700 bg-neutral-900'>
-        <PanelGroup
-          autoSaveId={id}
-          direction={panelDirection}
-          onLayout={onLayout}
+        <Group
+          orientation={panelDirection}
           style={{ height: isMobile ? '100vh' : '100%' }}
         >
           <Panel
-            ref={editorRef}
+            panelRef={editorRef}
             defaultSize={50}
             minSize={20}
             collapsible={true}
@@ -115,7 +109,7 @@ const CodePlayground = ({
               }
             />
           </Panel>
-          <PanelResizeHandle className='w-2 bg-neutral-700' />
+          <Separator className='w-2 bg-neutral-700' />
           <Panel defaultSize={50} minSize={20} collapsible={true}>
             <PanelHeader title='Console'>
               <div className='flex items-center'>
@@ -140,7 +134,7 @@ const CodePlayground = ({
               isFullScreen={isFullScreen}
             />
           </Panel>
-        </PanelGroup>
+        </Group>
       </div>
       <PanelFooter
         isFullScreen={isFullScreen}

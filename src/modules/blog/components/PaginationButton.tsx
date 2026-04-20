@@ -1,9 +1,9 @@
-import { MouseEvent } from 'react';
+import { type MouseEvent, type ReactElement } from 'react';
 
 type PaginationButtonProps = {
   onClick: (event: MouseEvent<HTMLDivElement>) => void;
   text: string;
-  icon?: JSX.Element;
+  icon?: ReactElement;
 };
 
 const PaginationButton = ({ onClick, text, icon }: PaginationButtonProps) => {

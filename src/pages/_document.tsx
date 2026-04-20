@@ -1,8 +1,25 @@
-import { Head, Html, Main, NextScript } from 'next/document';
+import Document, {
+  type DocumentContext,
+  type DocumentInitialProps,
+  Head,
+  Html,
+  Main,
+  NextScript,
+} from 'next/document';
 
-export default function Document() {
+type AppDocumentProps = DocumentInitialProps & {
+  lang: string;
+};
+
+const HTML_LANG_BY_LOCALE: Record<string, string> = {
+  'zh-TW': 'zh-Hant',
+  'zh-CN': 'zh-Hans',
+  en: 'en',
+};
+
+export default function AppDocument({ lang }: AppDocumentProps) {
   return (
-    <Html lang='zh-Hant' data-scroll-behavior='smooth'>
+    <Html lang={lang} data-scroll-behavior='smooth'>
       <Head>
         <link
           rel='apple-touch-icon'
@@ -36,3 +53,15 @@ export default function Document() {
     </Html>
   );
 }
+
+AppDocument.getInitialProps = async (
+  ctx: DocumentContext,
+): Promise<AppDocumentProps> => {
+  const initialProps = await Document.getInitialProps(ctx);
+  const locale = ctx.locale || ctx.defaultLocale || 'zh-TW';
+
+  return {
+    ...initialProps,
+    lang: HTML_LANG_BY_LOCALE[locale] || 'zh-Hant',
+  };
+};

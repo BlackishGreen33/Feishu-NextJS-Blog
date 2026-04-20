@@ -3,15 +3,18 @@ import { NextPage } from 'next';
 import { NextSeo } from 'next-seo';
 
 import Container from '@/common/components/elements/Container';
-import { SITE_NAME } from '@/common/config/site';
+import { useSiteConfig } from '@/common/config/site';
+import { useI18n } from '@/i18n';
 import Playground from '@/modules/playground';
 
-const PAGE_TITLE = 'JavaScript Playground';
+const PlaygroundPage: NextPage = () => {
+  const { messages } = useI18n();
+  const site = useSiteConfig();
+  const pageTitle = messages.pages.playgroundTitle;
 
-const playground: NextPage = () => {
   return (
     <>
-      <NextSeo title={`${PAGE_TITLE} - ${SITE_NAME}`} />
+      <NextSeo title={`${pageTitle} - ${site.name}`} />
       <Container className='!mt-0 pt-20 md:pt-0' data-aos='fade-up'>
         <Playground id='playground' isHeading />
       </Container>
@@ -19,4 +22,4 @@ const playground: NextPage = () => {
   );
 };
 
-export default playground;
+export default PlaygroundPage;

@@ -7,12 +7,14 @@ import ChatItem from './ChatItem';
 interface ChatListPropsNew extends ChatListProps {
   isWidget?: boolean;
   onDeleteMessage: (id: string) => void;
+  currentUserUid?: string | null;
 }
 
 const ChatList = ({
   messages,
   isWidget = false,
   onDeleteMessage,
+  currentUserUid,
 }: ChatListPropsNew) => {
   const chatListRef = useRef<HTMLDivElement | null>(null);
   const [hasScrolledUp, setHasScrolledUp] = useState(false);
@@ -71,7 +73,12 @@ const ChatList = ({
         style={{ height: chatListHeight }}
       >
         {messages?.map((chat, index) => (
-          <ChatItem key={index} onDelete={onDeleteMessage} {...chat} />
+          <ChatItem
+            key={index}
+            onDelete={onDeleteMessage}
+            currentUserUid={currentUserUid}
+            {...chat}
+          />
         ))}
       </div>
     </div>

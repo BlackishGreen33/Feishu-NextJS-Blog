@@ -1,15 +1,13 @@
-import { create, SetState } from 'zustand';
+import { create } from 'zustand';
 
 interface ChatStoreProps {
   isOpen: boolean;
   toggleChat: () => void;
 }
 
-const useChatStore = create<ChatStoreProps>(
-  (set: SetState<ChatStoreProps>) => ({
+const useChatStore = create<ChatStoreProps>()((set) => ({
     isOpen: false,
     toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
-  }),
-);
+  }));
 
 export default useChatStore;

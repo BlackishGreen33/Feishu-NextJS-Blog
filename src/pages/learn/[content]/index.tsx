@@ -6,9 +6,12 @@ import BackButton from '@/common/components/elements/BackButton';
 import Container from '@/common/components/elements/Container';
 import Loading from '@/common/components/elements/Loading';
 import PageHeading from '@/common/components/elements/PageHeading';
+import { getCanonicalUrl } from '@/common/config/seo';
+import { useSiteConfig } from '@/common/config/site';
 import { LEARN_CONTENTS } from '@/common/constant/learn';
 import { loadMdxFiles } from '@/common/libs/mdx';
 import { ContentProps, MdxFileContentProps } from '@/common/types/learn';
+import { useI18n } from '@/i18n';
 import ContentList from '@/modules/learn/components/ContentList';
 
 interface ContentPageProps {
@@ -21,6 +24,8 @@ const LearnContentPage: NextPage<ContentPageProps> = ({
   subContents,
 }) => {
   const router = useRouter();
+  const { locale, messages } = useI18n();
+  const site = useSiteConfig();
 
   if (router.isFallback) {
     return <Loading />;
@@ -36,12 +41,12 @@ const LearnContentPage: NextPage<ContentPageProps> = ({
     (a, b) => a.frontMatter.id - b.frontMatter.id,
   );
 
-  const canonicalUrl = `https://aulianza.id/learn/${content?.slug}`;
+  const canonicalUrl = getCanonicalUrl(`/learn/${content?.slug}`, locale);
 
   return (
     <>
       <NextSeo
-        title={`Learn ${title} - Ryan Aulia`}
+        title={`${messages.pages.learnTitle} ${title} - ${site.name}`}
         description={description}
         canonical={canonicalUrl}
         openGraph={{
@@ -51,7 +56,7 @@ const LearnContentPage: NextPage<ContentPageProps> = ({
               url: content?.image,
             },
           ],
-          siteName: 'Ryan Aulia',
+          siteName: site.name,
         }}
       />
       <Container data-aos='fade-up'>
@@ -76,7 +81,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths,
-    fallback: true,
+    fallback: false,
   };
 };
 

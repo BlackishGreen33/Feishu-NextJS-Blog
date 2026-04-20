@@ -2,8 +2,11 @@ import { NextPage } from 'next';
 import styled from '@emotion/styled';
 
 import Container from '@/common/components/elements/Container';
+import { useI18n } from '@/i18n';
 
 const Custom404: NextPage = () => {
+  const { messages } = useI18n();
+
   return (
     <Container
       className='flex h-full flex-col items-center justify-center space-y-5 py-40 md:py-20'
@@ -13,7 +16,7 @@ const Custom404: NextPage = () => {
         404
       </StyledHeading>
       <h2 className='animate-pulse text-center text-xl lg:text-xl'>
-        這個頁面不存在，或是已經被移除。
+        {messages.pages.notFoundDescription}
       </h2>
     </Container>
   );

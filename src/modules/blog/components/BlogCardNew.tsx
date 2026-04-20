@@ -4,8 +4,10 @@ import { TbCalendarBolt as DateIcon } from 'react-icons/tb';
 
 import Card from '@/common/components/elements/Card';
 import Image from '@/common/components/elements/Image';
+import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
 import { formatDate } from '@/common/helpers';
 import { BlogItemProps } from '@/common/types/blog';
+import { useI18n } from '@/i18n';
 
 interface BlogCardProps extends BlogItemProps {
   isExcerpt?: boolean;
@@ -23,14 +25,14 @@ const BlogCardNew = ({
   isExcerpt = true,
   priority = false,
 }: BlogCardProps) => {
-  const defaultImage = '/images/placeholder.png';
+  const { locale, messages } = useI18n();
 
   return (
     <Link href={`/blog/${slug}`}>
       <Card className='group flex h-full flex-col overflow-hidden rounded-2xl border shadow-sm dark:border-neutral-800'>
         <div className='relative h-52 overflow-hidden'>
           <Image
-            src={cover || defaultImage}
+            src={cover || SITE_DEFAULT_BLOG_COVER}
             alt={title}
             fill={true}
             priority={priority}
@@ -65,11 +67,13 @@ const BlogCardNew = ({
           <div className='mt-auto flex flex-wrap items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400'>
             <div className='flex items-center gap-1.5'>
               <DateIcon size={16} />
-              <span>{formatDate(publishedAt)}</span>
+              <span>{formatDate(publishedAt, undefined, locale)}</span>
             </div>
             <div className='flex items-center gap-1.5'>
               <ClockIcon size={16} />
-              <span>{readingTimeMinutes} 分鐘閱讀</span>
+              <span>
+                {readingTimeMinutes} {messages.blog.minutesRead}
+              </span>
             </div>
           </div>
         </div>

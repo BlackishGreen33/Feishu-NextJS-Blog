@@ -2,12 +2,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiArrowLeftCircle as BackButtonIcon } from 'react-icons/fi';
 
+import { useI18n } from '@/i18n';
+
 type BackButtonProps = {
   url?: string;
 };
 
 const BackButton = ({ url }: BackButtonProps) => {
   const router = useRouter();
+  const { messages } = useI18n();
 
   const handleOnClick = () => {
     if (url) {
@@ -26,13 +29,13 @@ const BackButton = ({ url }: BackButtonProps) => {
         <Link href={url} passHref>
           <div className={className}>
             <BackButtonIcon size={20} data-testid='back-icon' />
-            <span>返回</span>
+            <span>{messages.common.back}</span>
           </div>
         </Link>
       ) : (
         <div className={className} onClick={handleOnClick}>
           <BackButtonIcon size={20} data-testid='back-icon' />
-          <span>返回</span>
+          <span>{messages.common.back}</span>
         </div>
       )}
     </div>

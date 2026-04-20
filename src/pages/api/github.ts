@@ -6,22 +6,29 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const queryParams = req.query;
+  try {
+    const queryParams = req.query;
 
-  let type = '';
+    let type = '';
 
-  if (typeof queryParams.type === 'string') {
-    type = queryParams.type;
-  } else if (Array.isArray(queryParams.type)) {
-    type = queryParams.type[0];
+    if (typeof queryParams.type === 'string') {
+      type = queryParams.type;
+    } else if (Array.isArray(queryParams.type)) {
+      type = queryParams.type[0];
+    }
+
+    const response = await getGithubUser(type);
+
+    res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=30',
+    );
+
+    return res.status(response.status).json(response.data);
+  } catch {
+    return res.status(200).json({
+      configured: false,
+      contributionsCollection: null,
+    });
   }
-
-  const response = await getGithubUser(type);
-
-  res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=60, stale-while-revalidate=30',
-  );
-
-  return res.status(response.status).json(response.data);
 }

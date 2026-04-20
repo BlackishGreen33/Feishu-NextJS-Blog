@@ -1,5 +1,9 @@
 /* eslint-disable no-console */
+import { loadEnvConfig } from '@next/env';
+
 import { syncFeishuArticles } from '../src/server/blog/sync';
+
+loadEnvConfig(process.cwd());
 
 const main = async () => {
   const isOptional = process.argv.includes('--optional');
@@ -16,6 +20,11 @@ const main = async () => {
 };
 
 main().catch((error) => {
+  if (process.argv.includes('--optional')) {
+    console.warn('[feishu-sync] skipped optional sync', error);
+    return;
+  }
+
   console.error('[feishu-sync] failed', error);
   process.exit(1);
 });

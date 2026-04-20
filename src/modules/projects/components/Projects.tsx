@@ -3,6 +3,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 
 import EmptyState from '@/common/components/elements/EmptyState';
 import { ProjectsProps } from '@/common/types/projects';
+import { useI18n } from '@/i18n';
 
 import ProjectCard from './ProjectCard';
 
@@ -13,10 +14,11 @@ interface ProjectsComponentProps {
 }
 
 const Projects = ({ projects, loadMore, hasMore }: ProjectsComponentProps) => {
+  const { messages } = useI18n();
   const filteredProjects = projects.filter((project) => project?.is_show);
 
   if (filteredProjects.length === 0) {
-    return <EmptyState message='No Data' />;
+    return <EmptyState message={messages.projects.noData} />;
   }
 
   return (
@@ -24,7 +26,7 @@ const Projects = ({ projects, loadMore, hasMore }: ProjectsComponentProps) => {
       dataLength={filteredProjects.length}
       next={loadMore}
       hasMore={hasMore}
-      loader={<h4>Loading...</h4>}
+      loader={<h4>{messages.common.loadingEllipsis}</h4>}
       style={{ overflow: 'hidden' }}
     >
       <div className='grid gap-5 px-1 pt-2 sm:grid-cols-2'>

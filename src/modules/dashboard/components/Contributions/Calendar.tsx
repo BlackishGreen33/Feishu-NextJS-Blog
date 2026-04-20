@@ -2,6 +2,9 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
+import { formatDate } from '@/common/helpers';
+import { useI18n } from '@/i18n';
+
 interface Contribution {
   date: string;
   contributionCount: number;
@@ -27,6 +30,7 @@ interface CalendarProps {
 }
 
 const Calendar = ({ data }: CalendarProps) => {
+  const { locale } = useI18n();
   const [selectContribution, setSelectContribution] = useState<{
     count: number | null;
     date: string | null;
@@ -117,7 +121,9 @@ const Calendar = ({ data }: CalendarProps) => {
 
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='flex items-center gap-2 text-sm'>
-          <span className='dark:text-neutral-400'>Less</span>
+          <span className='dark:text-neutral-400'>
+            {locale === 'en' ? 'Less' : locale === 'zh-CN' ? '少' : '少'}
+          </span>
           <ul className='flex gap-1'>
             <motion.li className='h-[10px] w-[10px] rounded-sm bg-neutral-300 dark:bg-neutral-800' />
             {contributionColors.map((item, index) => (
@@ -137,7 +143,9 @@ const Calendar = ({ data }: CalendarProps) => {
               />
             ))}
           </ul>
-          <span>More</span>
+          <span className='dark:text-neutral-400'>
+            {locale === 'en' ? 'More' : locale === 'zh-CN' ? '多' : '多'}
+          </span>
         </div>
 
         <div
@@ -146,8 +154,12 @@ const Calendar = ({ data }: CalendarProps) => {
             'rounded bg-neutral-200 px-2 text-sm dark:bg-neutral-700',
           )}
         >
-          {selectContribution?.count} contributions on{' '}
-          {selectContribution?.date}
+          {selectContribution?.count}{' '}
+          {locale === 'en' ? 'contributions' : locale === 'zh-CN' ? '次贡献' : '次貢獻'}{' '}
+          ·{' '}
+          {selectContribution?.date
+            ? formatDate(selectContribution.date, undefined, locale)
+            : ''}
         </div>
       </div>
     </>

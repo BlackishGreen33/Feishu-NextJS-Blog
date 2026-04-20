@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import { SITE_NAV_GROUP_LABELS } from '@/common/config/site';
+import LanguageSwitcher from '@/common/components/elements/LanguageSwitcher';
+import ThemeSwitcher from '@/common/components/elements/ThemeSwitcher';
+import { useSiteConfig } from '@/common/config/site';
 import useIsMobile from '@/common/hooks/useIsMobile';
 
 import Breakline from '../../elements/Breakline';
 import SearchBox from '../../elements/SearchBox';
-import ThemeSwitcher from '../../elements/ThemeSwitcher';
 import Navigation from '../../sidebar/Navigation';
 import Profile from '../../sidebar/Profile';
 
 const Sidebar = () => {
   const isMobile = useIsMobile();
+  const site = useSiteConfig();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -44,7 +46,16 @@ const Sidebar = () => {
           <div className='space-y-2.5 px-1'>
             <div className='px-3'>
               <span className='text-sm text-neutral-600'>
-                {SITE_NAV_GROUP_LABELS.theme}
+                {site.navGroupLabels.language}
+              </span>
+            </div>
+            <LanguageSwitcher />
+          </div>
+          <Breakline className='mx-1' />
+          <div className='space-y-2.5 px-1'>
+            <div className='px-3'>
+              <span className='text-sm text-neutral-600'>
+                {site.navGroupLabels.theme}
               </span>
             </div>
             <ThemeSwitcher />

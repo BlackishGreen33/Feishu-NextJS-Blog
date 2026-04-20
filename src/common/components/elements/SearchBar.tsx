@@ -1,5 +1,7 @@
 import { BiSearchAlt as SearchIcon, BiX as ClearIcon } from 'react-icons/bi';
 
+import { useI18n } from '@/i18n';
+
 interface SearchBarProps {
   searchTerm: string;
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -11,6 +13,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onSearchChange,
   onClearSearch,
 }) => {
+  const { messages } = useI18n();
+
   return (
     <div className='flex w-full items-center sm:w-auto '>
       <div className='relative w-full'>
@@ -20,7 +24,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         />
         <input
           type='text'
-          placeholder='搜尋文章...'
+          placeholder={`${messages.common.searchArticles}...`}
           className='w-full rounded-lg border-2 px-10 py-2  text-sm transition-all duration-300 dark:border-neutral-600'
           value={searchTerm}
           onChange={onSearchChange}

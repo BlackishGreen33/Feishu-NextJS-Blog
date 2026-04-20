@@ -9,16 +9,13 @@ import {
   BiSun as LightModeIcon,
 } from 'react-icons/bi';
 import { HiOutlineChat as AiIcon } from 'react-icons/hi';
-import { useDebounce } from 'usehooks-ts';
+import { useDebounceValue } from 'usehooks-ts';
 
-import {
-  EXTERNAL_LINKS,
-  MENU_ITEMS,
-  SOCIAL_MEDIA,
-} from '@/common/constant/menu';
+import { useMenuData } from '@/common/constant/menu';
 import { CommandPaletteContext } from '@/common/context/CommandPaletteContext';
 import useIsMobile from '@/common/hooks/useIsMobile';
 import { MenuItemProps } from '@/common/types/menu';
+import { useI18n } from '@/i18n';
 import AiLoading from '@/modules/cmdpallete/components/AiLoading';
 import AiResponses from '@/modules/cmdpallete/components/AiResponses';
 import QueryNotFound from '@/modules/cmdpallete/components/QueryNotFound';
@@ -44,42 +41,41 @@ const CommandPalette = () => {
   const [aiFinished, setAiFinished] = useState(false);
 
   const router = useRouter();
+  const { locale, messages } = useI18n();
+  const { menuItems, socialMedia, externalLinks } = useMenuData();
   const isMobile = useIsMobile();
   const { isOpen, setIsOpen } = useContext(CommandPaletteContext);
   const { resolvedTheme, setTheme } = useTheme();
-  const queryDebounce = useDebounce(query, 500);
+  const [queryDebounce] = useDebounceValue(query, 500);
 
-  const placeholders = [
-    'Search or Ask anything...',
-    'Press Cmd + K anytime to access this command pallete',
-  ];
+  const placeholders = messages.commandPalette.placeholders;
 
   const placeholder = placeholders[placeholderIndex];
 
   const menuOptions: MenuOptionProps[] = [
     {
-      title: 'PAGES',
-      children: MENU_ITEMS?.map((menu) => ({
+      title: messages.commandPalette.groups.pages,
+      children: menuItems.map((menu) => ({
         ...menu,
         closeOnSelect: true,
       })),
     },
     {
-      title: 'SOCIALS',
-      children: SOCIAL_MEDIA?.map((menu) => ({
+      title: messages.commandPalette.groups.socials,
+      children: socialMedia.map((menu) => ({
         ...menu,
         closeOnSelect: true,
       })),
     },
     {
-      title: 'EXTERNAL LINKS',
-      children: EXTERNAL_LINKS?.map((menu) => ({
+      title: messages.commandPalette.groups.externalLinks,
+      children: externalLinks.map((menu) => ({
         ...menu,
         closeOnSelect: true,
       })),
     },
     {
-      title: 'APPEARANCE',
+      title: messages.commandPalette.groups.appearance,
       children: [
         {
           icon:
@@ -88,9 +84,10 @@ const CommandPalette = () => {
             ) : (
               <DarkModeIcon size={20} />
             ),
-          title: `Switch to ${
-            resolvedTheme === 'dark' ? 'Light' : 'Dark'
-          } Mode`,
+          title:
+            resolvedTheme === 'dark'
+              ? messages.theme.switchToLight
+              : messages.theme.switchToDark,
           click: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
           href: '#',
           isExternal: false,
@@ -101,15 +98,19 @@ const CommandPalette = () => {
   ];
 
   const filterMenuOptions: MenuOptionProps[] = queryDebounce
-    ? menuOptions.map((menu) => ({
+    ? menuOptions.map((menu: MenuOptionProps) => ({
         ...menu,
-        children: menu.children.filter((item) =>
+        children: menu.children.filter((item: MenuOptionItemProps) =>
           item.title.toLowerCase().includes(queryDebounce.toLowerCase()),
         ),
       }))
     : menuOptions;
 
-  const handleSelect = (menu: MenuOptionItemProps) => {
+  const handleSelect = (menu: MenuOptionItemProps | null) => {
+    if (!menu) {
+      return;
+    }
+
     setQuery('');
 
     if (menu.closeOnSelect) setIsOpen(false);
@@ -128,8 +129,7 @@ const CommandPalette = () => {
   }: React.ChangeEvent<HTMLInputElement>) => setQuery(value);
 
   const handleFindGoogle = () => {
-    const url =
-      'https://www.google.com/search?q=' + queryDebounce + '&ref=aulianza.id';
+    const url = 'https://www.google.com/search?q=' + queryDebounce;
     window.open(url, '_blank');
   };
 
@@ -150,9 +150,7 @@ const CommandPalette = () => {
     setAiFinished(false);
   };
 
-  const isActiveRoute = (href: string) => {
-    return router.pathname === href;
-  };
+  const isActiveRoute = (href: string) => router.pathname === href;
 
   useEffect(() => {
     if (query) setEmptyState(false);
@@ -202,7 +200,7 @@ const CommandPalette = () => {
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
         onClose={setIsOpen}
-        className='fixed inset-0 z-[999] overflow-y-auto p-4 pt-[25vh]'
+        className='fixed inset-0 z-999 overflow-y-auto p-4 pt-[25vh]'
       >
         <Transition.Child
           as={Fragment}
@@ -213,7 +211,10 @@ const CommandPalette = () => {
           leaveFrom='opacity-100'
           leaveTo='opacity-0'
         >
-          <Dialog.Overlay className='fixed inset-0 bg-neutral-600/90 dark:bg-neutral-900/90' />
+          <div
+            aria-hidden='true'
+            className='fixed inset-0 bg-neutral-600/90 dark:bg-neutral-900/90'
+          />
         </Transition.Child>
 
         <Dialog.Panel>
@@ -227,7 +228,7 @@ const CommandPalette = () => {
             leaveTo='opacity-0 scale-95'
           >
             <Combobox
-              onChange={(menu: MenuOptionItemProps) => handleSelect(menu)}
+              onChange={handleSelect}
               as='div'
               className='shadow-3xl relative mx-auto max-w-xl overflow-hidden rounded-xl border-2 border-neutral-100 bg-white ring-1 ring-black/5 backdrop-blur dark:divide-neutral-600 dark:border-neutral-800 dark:bg-[#1b1b1b80]'
               disabled={askAssistantClicked}
@@ -250,7 +251,7 @@ const CommandPalette = () => {
               <div
                 className={clsx(
                   'max-h-80 overflow-y-auto px-1 py-2',
-                  isEmptyState && '!py-0',
+                  isEmptyState && 'py-0!',
                 )}
               >
                 {filterMenuOptions.map((menu) => (
@@ -290,13 +291,13 @@ const CommandPalette = () => {
                                   </div>
                                 )}
                                 <span className=''>
-                                  {child?.title} {active}
+                                  {child?.title}
                                 </span>
                               </div>
                               <>
                                 {isActiveRoute(child?.href) ? (
                                   <span className='animate-pulse  text-xs text-neutral-500'>
-                                    You are here
+                                    {messages.commandPalette.currentPage}
                                   </span>
                                 ) : (
                                   <>

@@ -2,6 +2,7 @@
 import { FileToken, MarkdownRenderer } from 'feishu-docx';
 import matter from 'gray-matter';
 
+import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
 import {
   Article,
   ArticleFrontmatter,
@@ -16,13 +17,13 @@ import {
   calculateReadingTime,
   ensureUniqueSlug,
   extensionFromType,
-  extractFirstImage,
   extractLinkedTokens,
   isHiddenTitle,
   parseContentDispositionName,
   replaceTokens,
   sanitizeFileName,
   sortArticlesByDate,
+  stripLeadingHeading,
   summarizeMarkdown,
   toBoolean,
   toIsoDate,
@@ -50,16 +51,25 @@ type RawArticle = {
   fileTokens: Record<string, FileToken>;
   frontmatter: ArticleFrontmatter;
   content: string;
+  documentCoverToken?: string;
+  documentCoverUrl?: string;
 };
 
-const requiredEnvKeys = [
-  'FEISHU_APP_ID',
-  'FEISHU_APP_SECRET',
-  'FEISHU_ROOT_NODE_TOKEN',
-] as const;
+const baseRequiredEnvKeys = ['FEISHU_APP_ID', 'FEISHU_APP_SECRET'] as const;
 
-const getMissingEnvKeys = () =>
-  requiredEnvKeys.filter((key) => !process.env[key]?.trim());
+const getSyncSpaceId = () => process.env.FEISHU_SPACE_ID?.trim();
+
+const getMissingEnvKeys = () => {
+  const missing: string[] = baseRequiredEnvKeys.filter(
+    (key) => !process.env[key]?.trim(),
+  );
+
+  if (!getSyncSpaceId()) {
+    missing.push('FEISHU_SPACE_ID');
+  }
+
+  return missing;
+};
 
 const buildTagList = (input: ArticleFrontmatter['tags']): ArticleTag[] =>
   toStringArray(input).map((name) => ({
@@ -79,19 +89,32 @@ const normalizeFrontmatter = (value: Record<string, unknown>) => ({
   hide: toBoolean(value.hide),
 });
 
+export const resolveArticleDates = (
+  frontmatterDate: string | undefined,
+  node: Pick<FeishuWikiNode, 'obj_create_time' | 'obj_edit_time'>,
+) => ({
+  publishedAt: toIsoDate(
+    frontmatterDate || node.obj_create_time || node.obj_edit_time || undefined,
+  ),
+  updatedAt: toIsoDate(
+    node.obj_edit_time || frontmatterDate || node.obj_create_time || undefined,
+  ),
+});
+
 const parseArticle = (raw: RawArticle, slug: string): Article => {
   const tags = buildTagList(raw.frontmatter.tags);
   const title = raw.frontmatter.title || raw.title;
   const summary = raw.frontmatter.summary || summarizeMarkdown(raw.content);
-  const publishedAt = toIsoDate(
-    raw.frontmatter.date || raw.node.obj_edit_time || undefined,
+  const { publishedAt, updatedAt } = resolveArticleDates(
+    raw.frontmatter.date,
+    raw.node,
   );
-  const updatedAt = toIsoDate(raw.node.obj_edit_time || raw.frontmatter.date);
   const draft =
     raw.frontmatter.draft ||
     raw.frontmatter.hide ||
     isHiddenTitle(raw.node.title || '');
-  const cover = raw.frontmatter.cover || extractFirstImage(raw.content);
+  const cover =
+    raw.documentCoverUrl || SITE_DEFAULT_BLOG_COVER;
 
   return {
     id: raw.node.node_token,
@@ -130,29 +153,37 @@ const createMarkdownRenderer = (
   };
 };
 
+const writeAssetFromToken = async (
+  client: FeishuClient,
+  fileToken: FileToken,
+  directory: string = fileToken.type,
+) => {
+  const storage = getBlogStorage();
+  const download = await client.downloadAsset(fileToken);
+  const originalName = parseContentDispositionName(download.contentDisposition);
+  const extension = extensionFromType(download.contentType, originalName);
+  const fallbackName =
+    fileToken.type === 'image'
+      ? `${directory}-${fileToken.token}${extension}`
+      : `${fileToken.token}${extension}`;
+  const safeName = sanitizeFileName(originalName || fallbackName);
+  const pathname = `${directory}/${safeName}`;
+
+  return storage.writeAsset({
+    body: download.body,
+    contentType: download.contentType,
+    pathname,
+  });
+};
+
 const downloadAssets = async (
   client: FeishuClient,
   fileTokens: Record<string, FileToken>,
 ) => {
   const assetEntries: Record<string, string> = {};
-  const storage = getBlogStorage();
 
   for (const fileToken of Object.values(fileTokens)) {
-    const download = await client.downloadAsset(fileToken);
-    const originalName = parseContentDispositionName(
-      download.contentDisposition,
-    );
-    const extension = extensionFromType(download.contentType, originalName);
-    const safeName = sanitizeFileName(
-      originalName || `${fileToken.token}${extension}`,
-    );
-    const pathname = `${fileToken.type}/${safeName}`;
-
-    assetEntries[fileToken.token] = await storage.writeAsset({
-      body: download.body,
-      contentType: download.contentType,
-      pathname,
-    });
+    assetEntries[fileToken.token] = await writeAssetFromToken(client, fileToken);
 
     await wait(80);
   }
@@ -199,14 +230,24 @@ const rewriteArticleContent = async (
     ...internalLinks,
     ...assets,
   });
+  let cover: string | undefined;
+
+  if (rawArticle.documentCoverToken) {
+    cover =
+      assets[rawArticle.documentCoverToken] ||
+      (await writeAssetFromToken(
+        client,
+        {
+          token: rawArticle.documentCoverToken,
+          type: 'image',
+        },
+        'cover',
+      ));
+  }
 
   return {
     content,
-    cover:
-      rawArticle.frontmatter.cover &&
-      assets[rawArticle.frontmatter.cover as keyof typeof assets]
-        ? assets[rawArticle.frontmatter.cover as keyof typeof assets]
-        : undefined,
+    cover,
   };
 };
 
@@ -233,18 +274,23 @@ export const syncFeishuArticles = async (
     process.env.FEISHU_APP_SECRET as string,
   );
 
-  const nodes = await client.listDocNodes(
-    process.env.FEISHU_ROOT_NODE_TOKEN as string,
-  );
+  const spaceId = getSyncSpaceId();
+
+  if (!spaceId) {
+    throw new Error('Missing Feishu sync space.');
+  }
+
+  const nodes = await client.listDocNodesBySpace(spaceId);
 
   const rawArticles: RawArticle[] = [];
 
   for (const node of nodes) {
     try {
-      const documentInfo = await client.getDocumentInfo(node.obj_token);
-      const blocks = await client.getDocumentBlocks(node.obj_token);
+      const latestNode = (await client.getNode(node.space_id, node.node_token)) || node;
+      const documentInfo = await client.getDocumentInfo(latestNode.obj_token);
+      const blocks = await client.getDocumentBlocks(latestNode.obj_token);
       const { markdown, fileTokens, meta } = createMarkdownRenderer(
-        node.obj_token,
+        latestNode.obj_token,
         blocks,
       );
       const parsed = matter(markdown);
@@ -254,12 +300,16 @@ export const syncFeishuArticles = async (
       });
 
       rawArticles.push({
-        node,
-        title: frontmatter.title || documentInfo?.title || node.title,
+        node: latestNode,
+        title: frontmatter.title || documentInfo?.title || latestNode.title,
         markdown,
         fileTokens,
         frontmatter,
-        content: parsed.content.trim(),
+        content: stripLeadingHeading(
+          parsed.content.trim(),
+          frontmatter.title || documentInfo?.title || latestNode.title,
+        ),
+        documentCoverToken: documentInfo?.cover?.token,
       });
       await wait(120);
     } catch (error) {
@@ -284,10 +334,7 @@ export const syncFeishuArticles = async (
     const article = parseArticle(
       {
         ...rawArticle,
-        frontmatter: {
-          ...rawArticle.frontmatter,
-          cover: rewritten.cover || rawArticle.frontmatter.cover,
-        },
+        documentCoverUrl: rewritten.cover,
         content: rewritten.content,
       },
       slug,

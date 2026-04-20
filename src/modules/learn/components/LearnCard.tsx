@@ -8,6 +8,7 @@ import useSWR from 'swr';
 import Card from '@/common/components/elements/Card';
 import Image from '@/common/components/elements/Image';
 import { ContentProps } from '@/common/types/learn';
+import { useI18n } from '@/i18n';
 import { fetcher } from '@/services/fetcher';
 
 const LearnCard = ({
@@ -18,6 +19,7 @@ const LearnCard = ({
   is_new,
   level,
 }: ContentProps) => {
+  const { messages } = useI18n();
   const { data } = useSWR(`/api/learn?slug=${slug}`, fetcher);
 
   const lessonCount = data?.count ?? '0';
@@ -28,7 +30,7 @@ const LearnCard = ({
         {is_new && (
           <div className='absolute right-0 top-0 z-[2] flex items-center gap-1 rounded-bl-xl rounded-tr-xl bg-yellow-300 px-2 py-1 text-[13px] font-medium text-emerald-950'>
             <NewIcon size={15} />
-            <span>New</span>
+            <span>{messages.learn.newLabel}</span>
           </div>
         )}
         <div className='relative'>
@@ -40,7 +42,7 @@ const LearnCard = ({
             className='h-48 rounded-t-xl object-cover object-left'
           />
           <div className='absolute left-0 top-0 flex h-full w-full items-center justify-center gap-1 rounded-t-xl bg-black text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-80'>
-            <span>View Lessons</span>
+            <span>{messages.learn.viewLessons}</span>
             <ViewIcon size={20} />
           </div>
         </div>
@@ -59,7 +61,7 @@ const LearnCard = ({
             <div className='flex items-center gap-1'>
               <LessonIcon size={16} />
               <span className='ml-0.5 text-sm'>
-                {`${lessonCount} ${lessonCount > 1 ? 'Lessons' : 'Lesson'}`}
+                {`${lessonCount} ${lessonCount > 1 ? messages.learn.lessonPlural : messages.learn.lessonSingular}`}
               </span>
             </div>
             <div className='flex items-center gap-1'>

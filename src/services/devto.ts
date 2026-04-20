@@ -1,11 +1,12 @@
 import axios from 'axios';
 
+import { SITE_DEVTO_USERNAME } from '@/common/config/site';
 import { BlogItemProps } from '@/common/types/blog';
 
 const BASE_URL = 'https://dev.to/api/';
 const BLOG_URL = `${BASE_URL}articles/`;
 const COMMENT_URL = `${BASE_URL}comments`;
-const USERNAME = 'aulianza';
+const USERNAME = SITE_DEVTO_USERNAME;
 
 const DEVTO_KEY = process.env.DEVTO_KEY as string;
 
@@ -18,6 +19,13 @@ export const getBlogData = async ({
   page = 1,
   per_page = 6,
 }: BlogParamsProps): Promise<{ status: number; data: any }> => {
+  if (!USERNAME) {
+    return {
+      status: 200,
+      data: { posts: [], page, per_page, has_next: false },
+    };
+  }
+
   const params = new URLSearchParams({
     username: USERNAME,
     page: page.toString(),
@@ -56,6 +64,10 @@ export const getBlogDetail = async ({
 }: {
   id: number;
 }): Promise<{ status: number; data: any }> => {
+  if (!USERNAME) {
+    return { status: 200, data: {} };
+  }
+
   const params = new URLSearchParams({ username: USERNAME });
 
   const response = await axios.get(`${BLOG_URL}/${id}?${params.toString()}`, {
@@ -83,6 +95,10 @@ export const getBlogComment = async ({
 }: {
   post_id: string;
 }): Promise<{ status: number; data: any }> => {
+  if (!USERNAME) {
+    return { status: 200, data: [] };
+  }
+
   const response = await axios.get(`${COMMENT_URL}/?a_id=${post_id}`, {
     headers: {
       'api-key': DEVTO_KEY,
@@ -108,6 +124,10 @@ export const getBlogViews = async ({
 }: {
   id: number;
 }): Promise<{ status: number; data: any }> => {
+  if (!USERNAME) {
+    return { status: 200, data: { page_views_count: 0 } };
+  }
+
   const response = await axios.get(`${BLOG_URL}me/all`, {
     headers: {
       'api-key': DEVTO_KEY,

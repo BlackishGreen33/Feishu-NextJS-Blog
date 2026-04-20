@@ -7,6 +7,7 @@ import {
   ContentProps,
   MdxFileContentProps,
 } from '@/common/types/learn';
+import { useI18n } from '@/i18n';
 
 import ChapterCard from './ChapterCard';
 import LearnSubContentItem from './LearnSubContentItem';
@@ -22,6 +23,7 @@ const ContentList = ({
   content,
   title,
 }: ContentListProps) => {
+  const { locale } = useI18n();
   const contentSlug: string = content?.slug ?? '';
 
   const groupedContent: Record<string, ChapterGroupProps> =
@@ -88,7 +90,9 @@ const ContentList = ({
         </div>
       ) : (
         <div className='flex items-center justify-center py-5'>
-          <div className='text-neutral-500'>No Lesson Found.</div>
+          <div className='text-neutral-500'>
+            {locale === 'en' ? 'No lesson found.' : locale === 'zh-CN' ? '暂无课程。' : '尚無課程。'}
+          </div>
         </div>
       )}
     </>

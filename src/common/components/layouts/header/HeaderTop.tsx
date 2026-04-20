@@ -5,22 +5,24 @@ import clsx from 'clsx';
 import { FiMenu as MenuIcon } from 'react-icons/fi';
 import { MdClose as CloseIcon } from 'react-icons/md';
 
-import { SITE_PROFILE_IMAGE, SITE_PROFILE_NAME } from '@/common/config/site';
-import { MENU_ITEMS } from '@/common/constant/menu';
+import ThemeSwitcher from '@/common/components/elements/ThemeSwitcher';
+import {
+  SITE_PROFILE_IMAGE,
+  useSiteConfig,
+} from '@/common/config/site';
+import { useMenuData } from '@/common/constant/menu';
 
 import Image from '../../elements/Image';
 import SearchBox from '../../elements/SearchBox';
-import ThemeToggleButton from '../../elements/ThemeToggleButton';
 import Profile from '../../sidebar/Profile';
 
 const HeaderTop = () => {
   const [showMenu, setShowMenu] = useState(false);
-
+  const site = useSiteConfig();
   const router = useRouter();
+  const { menuItems } = useMenuData();
 
-  const menus = MENU_ITEMS.filter(
-    (item) => item.isShow && item.title !== 'Home',
-  );
+  const menus = menuItems.filter((item) => item.isShow && item.href !== '/');
 
   return (
     <header>
@@ -28,18 +30,19 @@ const HeaderTop = () => {
         <div className='flex items-center gap-5'>
           <Image
             src={SITE_PROFILE_IMAGE}
-            alt={SITE_PROFILE_NAME}
+            alt={site.profileName}
             width={40}
             height={40}
             priority
+            unoptimized
             rounded='rounded-full'
             className='rotate-3 border-2 border-neutral-400 dark:border-neutral-600 lg:hover:scale-105'
           />
           {!showMenu && (
             <div className='flex items-center gap-3'>
               <Link href='/' passHref>
-                <h2 className='flex-grow  text-lg font-medium lg:text-xl'>
-                  {SITE_PROFILE_NAME}
+                <h2 className='grow  text-lg font-medium lg:text-xl'>
+                  {site.profileName}
                 </h2>
               </Link>
             </div>
@@ -57,7 +60,7 @@ const HeaderTop = () => {
                   className={clsx(
                     'text-neutral-700 hover:text-neutral-800 dark:text-neutral-400 hover:dark:text-neutral-100',
                     router.pathname === menu?.href &&
-                      '!text-neutral-800 dark:!text-neutral-100',
+                      'text-neutral-800! dark:text-neutral-100!',
                   )}
                 >
                   <div>{menu.title}</div>
@@ -69,7 +72,7 @@ const HeaderTop = () => {
           {!showMenu && (
             <>
               <SearchBox />
-              <ThemeToggleButton />
+              <ThemeSwitcher compact />
             </>
           )}
 

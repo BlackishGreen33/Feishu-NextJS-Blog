@@ -1,0 +1,17 @@
+{
+  "id": "QZnswg6DUikCqLkwUyfcYzCIndb",
+  "slug": "会议记录-简洁版",
+  "title": "会议记录 (简洁版)",
+  "summary": "📍 会议主题 ：简要描述会议主题和目标 参会人员 ：输入“@+人名”插入参会人员 会前必读 ：输入@ 插入相关背景资料 议程 1 ：输入要讨论的主题 讨论过程 ： 高亮 讨论中的重要信息 ...... 后续安排 ： 明天的任务 下周的计划 @成员 总结并同步与会人员 @成员 议...",
+  "cover": "/feishu-assets/cover/03--.jpeg",
+  "publishedAt": "2026-04-19T12:26:58.000Z",
+  "updatedAt": "2026-04-19T12:26:58.000Z",
+  "tags": [],
+  "featured": false,
+  "draft": false,
+  "readingTimeMinutes": 1,
+  "sourceNodeToken": "QZnswg6DUikCqLkwUyfcYzCIndb",
+  "sourceDocumentId": "Z2gfdxpS8o373Nxz9XucY75jnLw",
+  "content": "<div class=\"callout callout-bg-8 callout-border-1\">\n<div class='callout-emoji'>📍</div>\n<p><b>会议主题</b>：简要描述会议主题和目标</p>\n<p><b>参会人员</b>：输入“@+人名”插入参会人员</p>\n<p><b>会前必读</b>：输入@ 插入相关背景资料</p>\n</div>\n\n### 议程 1 ：输入要讨论的主题\n\n<div class=\"flex gap-3 columns-2\" column-size=\"2\">\n<div class=\"w-[38%]\" width-ratio=\"38\">\n<ul>\n<li><b>讨论过程</b>：<ul>\n<li><code>高亮</code>讨论中的重要信息</li>\n<li>......</li>\n</ul>\n</li>\n</ul>\n</div>\n<div class=\"w-[61%]\" width-ratio=\"61\">\n<ul>\n<li><b>后续安排</b>：<ul>\n<li><input disabled=\"\" type=\"checkbox\"/> 明天的任务  </li>\n<li><input disabled=\"\" type=\"checkbox\"/> 下周的计划 @成员</li>\n<li><input disabled=\"\" type=\"checkbox\"/> 总结并同步与会人员 @成员</li>\n</ul>\n</li>\n</ul>\n</div>\n</div>\n\n### 议程 2 ：输入要讨论的主题\n\n<div class=\"flex gap-3 columns-2\" column-size=\"2\">\n<div class=\"w-[38%]\" width-ratio=\"38\">\n<ul>\n<li><b>讨论过程</b>：<ul>\n<li><code>高亮</code>讨论中的重要信息</li>\n<li>......</li>\n</ul>\n</li>\n</ul>\n</div>\n<div class=\"w-[61%]\" width-ratio=\"61\">\n<ul>\n<li><b>后续安排</b>：<ul>\n<li><input disabled=\"\" type=\"checkbox\"/> 当日的待办 @成员</li>\n<li><input disabled=\"\" type=\"checkbox\"/> 总结并同步与会人员 @成员</li>\n</ul>\n</li>\n</ul>\n</div>\n</div>\n\n🌟 将“任务安排”放入[同步块](https://www.feishu.cn/hc/zh-CN/articles/479618550246-%E5%9C%A8%E6%96%87%E6%A1%A3%E4%B8%AD%E6%8F%92%E5%85%A5%E5%90%8C%E6%AD%A5%E5%9D%97)中，复制并粘贴到其他文档，则可以实现跨文档实时更新和同步的效果。",
+  "contentFormat": "markdown"
+}

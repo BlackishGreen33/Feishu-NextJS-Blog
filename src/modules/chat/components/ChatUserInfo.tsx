@@ -1,14 +1,18 @@
-import { signOut, useSession } from 'next-auth/react';
 import clsx from 'clsx';
 import { HiOutlineLogout as SignOutIcon } from 'react-icons/hi';
 
+import { useI18n } from '@/i18n';
+
+import { useFirebaseGuestbookAuth } from '../hooks/useFirebaseGuestbookAuth';
+
 const ChatUserInfo = ({ isWidget = false }: { isWidget?: boolean }) => {
-  const { data: session } = useSession();
+  const { messages } = useI18n();
+  const { user, signOutUser } = useFirebaseGuestbookAuth();
 
-  const userName = session?.user?.name ?? null;
-  const userEmail = session?.user?.email ?? null;
+  const userName = user?.displayName ?? user?.email ?? null;
+  const userEmail = user?.email ?? null;
 
-  return session ? (
+  return user ? (
     <div
       className={clsx(
         'flex flex-col items-start gap-2 px-4 pb-3 text-sm md:flex-row md:items-center',
@@ -16,7 +20,7 @@ const ChatUserInfo = ({ isWidget = false }: { isWidget?: boolean }) => {
       )}
     >
       <div className='flex flex-wrap gap-1 text-neutral-500'>
-        <p>Signed in as</p>
+        <p>{messages.guestbook.loggedInAs}</p>
         <p className='font-medium'>{userName}</p>
         <p>({userEmail})</p>
       </div>
@@ -24,12 +28,12 @@ const ChatUserInfo = ({ isWidget = false }: { isWidget?: boolean }) => {
         <>
           <div className='hidden text-neutral-500 md:block'>•</div>
           <div
-            onClick={() => signOut()}
+            onClick={() => signOutUser()}
             className='flex cursor-pointer items-center gap-1 font-medium text-red-500'
             data-umami-event='Sign Out from Chat Page'
           >
             <SignOutIcon size={16} className='cursor-pointer text-red-500' />
-            <span>Sign Out</span>
+            <span>{messages.guestbook.signOut}</span>
           </div>
         </>
       )}

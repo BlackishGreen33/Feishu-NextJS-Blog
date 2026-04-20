@@ -1,5 +1,6 @@
 export interface MessageProps {
   id: string;
+  uid?: string;
   name: string;
   email: string;
   image?: string;

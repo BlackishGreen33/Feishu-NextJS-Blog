@@ -10,10 +10,13 @@ import { HiOutlineClock as ClockIcon } from 'react-icons/hi';
 import { TbCalendarBolt as DateIcon } from 'react-icons/tb';
 
 import Image from '@/common/components/elements/Image';
+import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
 import { formatDate } from '@/common/helpers';
 import { BlogFeaturedProps } from '@/common/types/blog';
+import { useI18n } from '@/i18n';
 
 const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
+  const { locale, messages } = useI18n();
   const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState<number>(0);
   const featuredData = data.slice(0, 4);
 
@@ -34,8 +37,6 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
   }
 
   const currentFeatured = featuredData[currentFeaturedIndex];
-  const defaultImage = '/images/placeholder.png';
-
   const nextFeatured = () => {
     setCurrentFeaturedIndex((prevIndex) =>
       prevIndex === featuredData.length - 1 ? 0 : prevIndex + 1,
@@ -52,7 +53,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
     <div className='relative overflow-hidden rounded-3xl border shadow-lg dark:border-neutral-700'>
       <div className='relative h-[420px] overflow-hidden'>
         <Image
-          src={currentFeatured.cover || defaultImage}
+          src={currentFeatured.cover || SITE_DEFAULT_BLOG_COVER}
           alt={currentFeatured.title}
           fill={true}
           priority
@@ -66,7 +67,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
         <div className='flex flex-col justify-between gap-6 p-6 sm:p-8'>
           <div className='flex w-fit items-center gap-x-1 rounded-full bg-lime-200 px-2.5 py-1.5 text-xs text-black'>
             <StarIcon size={16} />
-            <span>精選文章</span>
+            <span>{messages.blog.featuredArticle}</span>
           </div>
 
           <div className='flex flex-col justify-end gap-6'>
@@ -83,13 +84,13 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
                 <div className='flex items-center gap-1'>
                   <DateIcon size={16} />
                   <span className='ml-0.5 text-xs sm:text-sm'>
-                    {formatDate(currentFeatured.publishedAt)}
+                    {formatDate(currentFeatured.publishedAt, undefined, locale)}
                   </span>
                 </div>
                 <div className='flex items-center gap-1'>
                   <ClockIcon size={15} />
                   <span className='ml-0.5 text-xs sm:text-sm'>
-                    {currentFeatured.readingTimeMinutes} 分鐘閱讀
+                    {currentFeatured.readingTimeMinutes} {messages.blog.minutesRead}
                   </span>
                 </div>
               </div>
@@ -99,14 +100,14 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
               <button
                 onClick={prevFeatured}
                 className='h-8 w-8 rounded-md bg-white text-black transition-all duration-300 hover:scale-105 hover:text-neutral-900'
-                aria-label='上一則精選'
+                aria-label={messages.blog.previousFeatured}
               >
                 <PrevIcon size={24} />
               </button>
               <button
                 onClick={nextFeatured}
                 className='h-8 w-8 rounded-md bg-white text-black transition-all duration-300 hover:scale-105 hover:text-neutral-900'
-                aria-label='下一則精選'
+                aria-label={messages.blog.nextFeatured}
               >
                 <NextIcon size={24} />
               </button>
@@ -126,7 +127,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
               style={{ borderRadius: '50%' }}
             >
               <Image
-                src={item.cover || defaultImage}
+                src={item.cover || SITE_DEFAULT_BLOG_COVER}
                 alt={item.title}
                 fill={true}
                 sizes='128px'

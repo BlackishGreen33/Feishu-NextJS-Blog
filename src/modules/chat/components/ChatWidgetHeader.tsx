@@ -1,13 +1,16 @@
 import Router from 'next/router';
-import { signOut, useSession } from 'next-auth/react';
 import { BiMinus as MinimizeIcon } from 'react-icons/bi';
 import { HiOutlineLogout as SignOutIcon } from 'react-icons/hi';
 import { LuMaximize2 as MaximizeIcon } from 'react-icons/lu';
 import { MdClose as CloseIcon } from 'react-icons/md';
 
 import useChatStore from '@/common/stores/useChatStore';
+import { useI18n } from '@/i18n';
+
+import { useFirebaseGuestbookAuth } from '../hooks/useFirebaseGuestbookAuth';
 const ChatWidgetHeader = () => {
-  const { data: session } = useSession();
+  const { messages } = useI18n();
+  const { user, signOutUser } = useFirebaseGuestbookAuth();
   const { toggleChat } = useChatStore();
 
   const handleMaximize = () => Router.push('/guestbook');
@@ -41,11 +44,11 @@ const ChatWidgetHeader = () => {
             />
           </div>
         </div>
-        <h4 className=' text-base'>Guestbook</h4>
+        <h4 className=' text-base'>{messages.guestbook.widgetTitle}</h4>
       </div>
-      {session && (
+      {user && (
         <SignOutIcon
-          onClick={() => signOut()}
+          onClick={() => signOutUser()}
           size={22}
           className='cursor-pointer text-red-400'
           data-umami-event='Sign Out from Chat Widget'

@@ -6,6 +6,7 @@ import {
 } from 'react-icons/hi';
 
 import { Tabs } from '@/common/components/elements/Tabs';
+import { useI18n } from '@/i18n';
 
 import CareerList from './CareerList';
 import EducationList from './EducationList';
@@ -13,11 +14,12 @@ import Resume from './Resume';
 import Story from './Story';
 
 const About = () => {
+  const { messages } = useI18n();
   const TABS = [
     {
       label: (
         <TabLabel>
-          <AboutIcon size={17} /> Intro
+          <AboutIcon size={17} /> {messages.about.tabs.story}
         </TabLabel>
       ),
       children: <Story />,
@@ -25,7 +27,7 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <ResumeIcon size={17} /> Resume
+          <ResumeIcon size={17} /> {messages.about.tabs.resume}
         </TabLabel>
       ),
       children: <Resume />,
@@ -33,7 +35,7 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <CareerIcon size={17} /> Career
+          <CareerIcon size={17} /> {messages.about.tabs.career}
         </TabLabel>
       ),
       children: <CareerList />,
@@ -41,7 +43,7 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <EducationIcon size={17} /> Education
+          <EducationIcon size={17} /> {messages.about.tabs.education}
         </TabLabel>
       ),
       children: <EducationList />,

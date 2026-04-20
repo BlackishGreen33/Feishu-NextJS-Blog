@@ -2,24 +2,26 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import useSWR from 'swr';
-import { useDebounce } from 'usehooks-ts';
+import { useDebounceValue } from 'usehooks-ts';
 
 import EmptyState from '@/common/components/elements/EmptyState';
 import Pagination from '@/common/components/elements/Pagination';
 import SearchBar from '@/common/components/elements/SearchBar';
 import BlogCardNewSkeleton from '@/common/components/skeleton/BlogCardNewSkeleton';
 import { BlogItemProps } from '@/common/types/blog';
+import { useI18n } from '@/i18n';
 import { fetcher } from '@/services/fetcher';
 
 import BlogCardNew from './BlogCardNew';
 import BlogFeaturedSection from './BlogFeaturedSection';
 
 const BlogListNew = () => {
+  const { messages } = useI18n();
   const [page, setPage] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const router = useRouter();
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [debouncedSearchTerm] = useDebounceValue(searchTerm, 500);
 
   const { data, error, mutate, isValidating } = useSWR(
     `/api/blog?page=${page}&per_page=6&search=${debouncedSearchTerm}`,
@@ -89,7 +91,7 @@ const BlogListNew = () => {
     !isValidating &&
     (!data?.status || blogData.length === 0) && (
       <EmptyState
-        message={error ? '文章載入失敗' : '目前沒有符合條件的文章。'}
+        message={error ? messages.blog.loadingFailed : messages.blog.noMatchingPosts}
       />
     );
 
@@ -103,13 +105,13 @@ const BlogListNew = () => {
             {searchTerm ? (
               <div>
                 <span className='mr-2 text-neutral-600 dark:text-neutral-400'>
-                  搜尋關鍵字：
+                  {messages.blog.searchKeyword}
                 </span>
                 <span className='italic'>{searchTerm}</span>
               </div>
             ) : (
               <h4 className='text-neutral-800 dark:text-neutral-200'>
-                最新文章
+                {messages.blog.latestArticles}
               </h4>
             )}
             <span className='rounded-full bg-neutral-300 px-2 py-1  text-xs text-neutral-900 dark:bg-neutral-700 dark:text-neutral-50'>

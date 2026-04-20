@@ -7,7 +7,7 @@ interface CodeEditorProps {
   isFullScreen?: boolean;
 }
 
-const editorConfig = {
+const editorConfig: NonNullable<EditorProps['options']> = {
   fontSize: 14,
   minimap: {
     enabled: false,

@@ -1,6 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import prisma from '@/common/libs/prisma';
+import {
+  getViewsFromFirebase,
+  incrementViewsInFirebase,
+} from '@/server/firebase-db';
 
 interface ResponseData {
   views: number;
@@ -14,12 +17,7 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
-      const contentMeta = await prisma.contentmeta.findUnique({
-        where: { slug: slug as string },
-        select: { views: true },
-      });
-
-      const contentViewsCount = contentMeta?.views ?? 0;
+      const contentViewsCount = await getViewsFromFirebase(String(slug));
 
       const response: ResponseData = {
         views: contentViewsCount,
@@ -31,16 +29,8 @@ export default async function handler(
     }
   } else if (req.method === 'POST') {
     try {
-      const contentMeta = await prisma.contentmeta.update({
-        where: { slug: slug as string },
-        data: {
-          views: {
-            increment: 1,
-          },
-        },
-        select: { views: true },
-      });
-      return res.json(contentMeta);
+      const views = await incrementViewsInFirebase(String(slug));
+      return res.json({ views });
     } catch (_error) {
       return res.status(500).json({ error: 'Failed to update views count' });
     }

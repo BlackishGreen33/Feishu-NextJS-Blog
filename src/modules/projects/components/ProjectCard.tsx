@@ -7,6 +7,7 @@ import Image from '@/common/components/elements/Image';
 import Tooltip from '@/common/components/elements/Tooltip';
 import { STACKS } from '@/common/constant/stacks';
 import { ProjectItemProps } from '@/common/types/projects';
+import { useI18n } from '@/i18n';
 
 const ProjectCard = ({
   title,
@@ -16,6 +17,7 @@ const ProjectCard = ({
   stacks,
   is_featured,
 }: ProjectItemProps) => {
+  const { messages } = useI18n();
   const stacksArray = JSON.parse(stacks);
 
   return (
@@ -24,7 +26,7 @@ const ProjectCard = ({
         {is_featured && (
           <div className='absolute right-0 top-0 z-[2] flex items-center gap-1 rounded-bl-xl rounded-tr-xl bg-lime-300 px-2 py-1 text-[13px] font-medium text-emerald-950'>
             <PinIcon size={15} />
-            <span>Featured</span>
+            <span>{messages.projects.featured}</span>
           </div>
         )}
         <div className='relative'>
@@ -36,7 +38,7 @@ const ProjectCard = ({
             className='h-48 rounded-t-xl object-cover object-left'
           />
           <div className='absolute left-0 top-0 flex flex h-full w-full items-center justify-center gap-1 rounded-t-xl bg-black text-sm font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-80'>
-            <span>View Project</span>
+            <span>{messages.projects.viewProject}</span>
             <ViewIcon size={20} />
           </div>
         </div>

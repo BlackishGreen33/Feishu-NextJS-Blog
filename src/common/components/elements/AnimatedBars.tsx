@@ -16,10 +16,10 @@ const AnimatedBars = ({ variant = 'bg-neutral-800' }: AnimatedBarsProps) => {
         }}
         transition={{
           duration: 1,
-          easings: 'easeInOut',
+          ease: 'easeInOut',
           repeat: Infinity,
         }}
-        className={`mr-[1px] h-2 w-1 opacity-75 ${color}`}
+        className={`mr-px h-2 w-1 opacity-75 ${color}`}
       />
       <motion.span
         animate={{
@@ -28,11 +28,11 @@ const AnimatedBars = ({ variant = 'bg-neutral-800' }: AnimatedBarsProps) => {
         }}
         transition={{
           duration: 1.5,
-          easings: 'easeInOut',
+          ease: 'easeInOut',
           repeat: Infinity,
           repeatDelay: 0.2,
         }}
-        className={`mr-[1px] h-1 w-1 ${color}`}
+        className={`mr-px h-1 w-1 ${color}`}
       />
       <motion.span
         animate={{
@@ -41,11 +41,11 @@ const AnimatedBars = ({ variant = 'bg-neutral-800' }: AnimatedBarsProps) => {
         }}
         transition={{
           duration: 1,
-          easings: 'easeInOut',
+          ease: 'easeInOut',
           repeat: Infinity,
           repeatDelay: 0.2,
         }}
-        className={`mr-[1px] h-3 w-1 opacity-80 ${color}`}
+        className={`mr-px h-3 w-1 opacity-80 ${color}`}
       />
 
       <motion.span
@@ -55,7 +55,7 @@ const AnimatedBars = ({ variant = 'bg-neutral-800' }: AnimatedBarsProps) => {
         }}
         transition={{
           duration: 1.5,
-          easings: 'easeInOut',
+          ease: 'easeInOut',
           repeat: Infinity,
           repeatDelay: 0.3,
         }}

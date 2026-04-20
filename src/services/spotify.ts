@@ -23,7 +23,16 @@ const NOW_PLAYING_ENDPOINT = `${BASE_URL}/me/player/currently-playing`;
 const TOP_TRACKS_ENDPOINT = `${BASE_URL}/me/top/tracks`;
 const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`;
 
+const hasSpotifyCredentials = () =>
+  Boolean(CLIENT_ID && CLIENT_SECRET && REFRESH_TOKEN);
+
 const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
+  if (!hasSpotifyCredentials()) {
+    return {
+      access_token: '',
+    };
+  }
+
   const response = await axios.post(
     TOKEN_ENDPOINT,
     querystring.stringify({
@@ -42,6 +51,10 @@ const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
 };
 
 export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
+  if (!hasSpotifyCredentials()) {
+    return { status: 200, data: [] };
+  }
+
   const { access_token } = await getAccessToken();
 
   const response = await axios.get(AVAILABLE_DEVICES_ENDPOINT, {
@@ -63,7 +76,7 @@ export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
     is_active: device.is_active,
     type: device.type,
     model: PAIR_DEVICES[device?.type]?.model || 'Unknown Device',
-    id: PAIR_DEVICES[device?.type]?.id || 'aulianza-device',
+    id: PAIR_DEVICES[device?.type]?.id || 'device-unknown',
   }));
 
   return {
@@ -73,6 +86,10 @@ export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
 };
 
 export const getNowPlaying = async (): Promise<NowPlayingResponseProps> => {
+  if (!hasSpotifyCredentials()) {
+    return { status: 200, isPlaying: false, data: null };
+  }
+
   const { access_token } = await getAccessToken();
 
   const response = await axios.get(NOW_PLAYING_ENDPOINT, {
@@ -117,6 +134,10 @@ export const getNowPlaying = async (): Promise<NowPlayingResponseProps> => {
 };
 
 export const getTopTracks = async (): Promise<TopTracksResponseProps> => {
+  if (!hasSpotifyCredentials()) {
+    return { status: 200, data: [] };
+  }
+
   const { access_token } = await getAccessToken();
 
   const response = await axios.get(`${TOP_TRACKS_ENDPOINT}?limit=10`, {

@@ -1,5 +1,8 @@
 import { format, parseISO } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { enUS, zhCN, zhTW } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz';
+
+import { normalizeLocale } from '@/i18n';
 
 import { ChapterGroupProps, MdxFileContentProps } from '../types/learn';
 
@@ -10,16 +13,56 @@ interface ParsedUrlProps {
 
 export const formatBlogSlug = (slug: string) => slug?.slice(0, -5);
 
-export const formatDate = (date: string, type = 'yyyy 年 MM 月 dd 日') => {
+const DATE_FORMATS = {
+  'zh-TW': 'yyyy 年 MM 月 dd 日',
+  'zh-CN': 'yyyy 年 MM 月 dd 日',
+  en: 'MMM d, yyyy',
+} as const;
+
+const MONTH_YEAR_FORMATS = {
+  'zh-TW': 'yyyy 年 MM 月',
+  'zh-CN': 'yyyy 年 MM 月',
+  en: 'MMM yyyy',
+} as const;
+
+export const getDateFnsLocale = (locale?: string) => {
+  const normalizedLocale = normalizeLocale(locale);
+
+  return {
+    'zh-TW': zhTW,
+    'zh-CN': zhCN,
+    en: enUS,
+  }[normalizedLocale];
+};
+
+export const formatDate = (
+  date: string,
+  type?: string,
+  locale?: string,
+) => {
   if (!date) {
     return '';
   }
 
+  const normalizedLocale = normalizeLocale(locale);
   const formattedDate = format(
-    utcToZonedTime(parseISO(date), 'Asia/Shanghai'),
-    type,
+    toZonedTime(parseISO(date), 'Asia/Shanghai'),
+    type || DATE_FORMATS[normalizedLocale],
+    { locale: getDateFnsLocale(normalizedLocale) },
   );
   return formattedDate;
+};
+
+export const formatMonthYear = (date: string, locale?: string) => {
+  if (!date) {
+    return '';
+  }
+
+  const normalizedLocale = normalizeLocale(locale);
+
+  return format(new Date(date), MONTH_YEAR_FORMATS[normalizedLocale], {
+    locale: getDateFnsLocale(normalizedLocale),
+  });
 };
 
 export const groupContentByChapter = (

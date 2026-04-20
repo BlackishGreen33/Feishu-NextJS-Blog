@@ -4,6 +4,8 @@ import clsx from 'clsx';
 import { FiClock as ClockIcon } from 'react-icons/fi';
 
 import Button from '@/common/components/elements/Button';
+import { useSiteConfig } from '@/common/config/site';
+import { useI18n } from '@/i18n';
 
 interface FormDataProps {
   name: string;
@@ -18,6 +20,8 @@ const formInitialState: FormDataProps = {
 };
 
 const ContactForm = () => {
+  const { messages } = useI18n();
+  const site = useSiteConfig();
   const [formData, setFormData] = useState<FormDataProps>(formInitialState);
 
   const [formErrors, setFormErrors] = useState<Partial<FormDataProps>>({});
@@ -33,7 +37,9 @@ const ContactForm = () => {
     });
     setFormErrors({
       ...formErrors,
-      [name]: value ? undefined : `${name} is required`,
+      [name]: value
+        ? undefined
+        : messages.contact.form.required[name as keyof FormDataProps],
     });
   };
 
@@ -47,15 +53,16 @@ const ContactForm = () => {
       try {
         const response = await axios.post('/api/contact', { formData });
         if (response.status === 200) {
-          alert('Message sent!');
+          alert(messages.contact.form.success);
           setFormData(formInitialState);
         }
       } catch (error) {
-        alert(error);
+        void error;
+        alert(messages.contact.form.failed);
       }
       setIsLoading(false);
     } else {
-      alert('Error!');
+      alert(messages.contact.form.invalid);
     }
   };
 
@@ -68,7 +75,7 @@ const ContactForm = () => {
           <input
             className='w-full rounded-md border border-neutral-200 px-3 py-2 focus:outline-none dark:border-neutral-700'
             type='text'
-            placeholder='Name*'
+            placeholder={messages.contact.form.namePlaceholder}
             name='name'
             value={formData.name}
             onChange={handleChange}
@@ -77,7 +84,7 @@ const ContactForm = () => {
           <input
             className='w-full rounded-md border border-neutral-200 px-3 py-2 focus:outline-none dark:border-neutral-700'
             type='email'
-            placeholder='Email*'
+            placeholder={messages.contact.form.emailPlaceholder}
             name='email'
             value={formData.email}
             onChange={handleChange}
@@ -87,7 +94,7 @@ const ContactForm = () => {
         <textarea
           className='w-full rounded-md border border-neutral-200 px-3 py-2 focus:outline-none dark:border-neutral-700'
           rows={5}
-          placeholder='Message*'
+          placeholder={messages.contact.form.messagePlaceholder}
           name='message'
           value={formData.message}
           onChange={handleChange}
@@ -102,15 +109,15 @@ const ContactForm = () => {
           data-umami-event='Send Contact Message'
           disabled={isSubmitDisabled}
         >
-          {isLoading ? 'Sending Message...' : 'Send Message'}
+          {isLoading ? messages.contact.form.sending : messages.contact.form.send}
         </Button>
       </div>
 
       <div className='my-5 flex items-center gap-2 dark:text-neutral-400'>
         <ClockIcon />
         <div className='text-sm'>
-          <span className='font-medium'>Avg. response:</span> 1-2 Hours (Working
-          Hours, GMT+7)
+          <span className='font-medium'>{messages.contact.averageResponseTime}</span>
+          {site.contactResponseTime}
         </div>
       </div>
     </form>

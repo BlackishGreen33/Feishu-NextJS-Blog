@@ -1,4 +1,5 @@
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY as string,
@@ -12,6 +13,26 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID as string,
 };
 
-const firebase = initializeApp(firebaseConfig);
+const hasFirebaseConfig = [
+  firebaseConfig.apiKey,
+  firebaseConfig.authDomain,
+  firebaseConfig.databaseURL,
+  firebaseConfig.projectId,
+  firebaseConfig.appId,
+].every(Boolean);
 
-export { firebase };
+const firebase = hasFirebaseConfig
+  ? getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null;
+
+const getFirebaseAuth = () => {
+  if (typeof window === 'undefined' || !firebase) {
+    return null;
+  }
+
+  return getAuth(firebase);
+};
+
+export { firebase, getFirebaseAuth, hasFirebaseConfig };

@@ -1,16 +1,21 @@
+import { SITE_GITHUB_URL, useSiteConfig } from '@/common/config/site';
+
 import Image from './Image';
 
 const TopBar = () => {
+  const site = useSiteConfig();
+
   return (
     <div className='hidden items-center justify-center gap-x-2 bg-cover bg-no-repeat p-2.5 text-sm shadow-lg backdrop-blur-2xl dark:border-b dark:border-neutral-800 dark:text-neutral-300 xl:flex'>
       <span>🚀</span>
-      <span>Just launched my landing page website. check it out :</span>
+      <span>{site.profileName} 的個人網站正在整理中，內容會陸續補上：</span>
       <a
-        href='https://aulianza.com/?utm_source=aulianza.id&utm_medium=referral&ref=aulianza.id'
+        href={SITE_GITHUB_URL}
         target='_blank'
+        rel='noopener noreferrer'
         className='ml-0.5 underline'
       >
-        aulianza.com
+        GitHub
       </a>
       <Image
         src='/images/dot_new_animated.svg'

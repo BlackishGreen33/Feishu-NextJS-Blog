@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import {
   SITE_PROFILE_HANDLE,
   SITE_PROFILE_IMAGE,
-  SITE_PROFILE_NAME,
+  useSiteConfig,
 } from '@/common/config/site';
 
 import Image from '../elements/Image';
@@ -16,6 +16,8 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader = ({ expandMenu, imageSize }: ProfileHeaderProps) => {
+  const site = useSiteConfig();
+
   return (
     <div
       className={clsx(
@@ -25,10 +27,11 @@ const ProfileHeader = ({ expandMenu, imageSize }: ProfileHeaderProps) => {
     >
       <Image
         src={SITE_PROFILE_IMAGE}
-        alt={SITE_PROFILE_NAME}
+        alt={site.profileName}
         width={expandMenu ? 80 : imageSize}
         height={expandMenu ? 80 : imageSize}
         priority
+        unoptimized
         rounded='rounded-full'
         className='rotate-3 dark:border-neutral-600 lg:hover:scale-105'
       />
@@ -36,7 +39,7 @@ const ProfileHeader = ({ expandMenu, imageSize }: ProfileHeaderProps) => {
         <div className='mt-1 flex items-center gap-2 lg:mt-4'>
           <Link href='/' passHref>
             <h2 className='flex-grow  text-lg font-medium lg:text-xl'>
-              {SITE_PROFILE_NAME}
+              {site.profileName}
             </h2>
           </Link>
         </div>

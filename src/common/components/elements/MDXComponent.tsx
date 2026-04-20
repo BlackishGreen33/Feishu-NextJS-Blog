@@ -1,6 +1,9 @@
 import { ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+
+import cn from '@/common/libs/cn';
 
 import CodeBlock from './CodeBlock';
 
@@ -9,7 +12,7 @@ interface MarkdownRendererProps {
 }
 
 interface TableProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 const Table = ({ children }: TableProps) => (
@@ -18,10 +21,30 @@ const Table = ({ children }: TableProps) => (
   </div>
 );
 
+const getColumnLayoutClassName = (className?: string) => {
+  if (!className) return null;
+  if (className.includes('columns-3')) {
+    return 'my-6 grid gap-6 md:grid-cols-3';
+  }
+  if (className.includes('columns-2')) {
+    return 'my-6 grid gap-6 md:grid-cols-2';
+  }
+  return null;
+};
+
+const isColumnItem = (className?: string) =>
+  Boolean(
+    className &&
+      (className.includes('w-[33%]') ||
+        className.includes('w-[50%]') ||
+        className.includes('width-ratio')),
+  );
+
 const MDXComponent = ({ children }: MarkdownRendererProps) => {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       components={{
         a: (props) => (
           <a
@@ -35,6 +58,19 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
             {...props}
           />
         ),
+        div: ({ className, ...props }) => {
+          const columnLayoutClassName = getColumnLayoutClassName(className);
+
+          if (columnLayoutClassName) {
+            return <div className={columnLayoutClassName} {...props} />;
+          }
+
+          if (isColumnItem(className)) {
+            return <div className='min-w-0 space-y-3' {...props} />;
+          }
+
+          return <div className={className} {...props} />;
+        },
         h2: (props) => (
           <h2
             className='pt-6 text-xl font-medium dark:text-neutral-300'
@@ -47,11 +83,26 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
             {...props}
           />
         ),
-        ul: ({ node: _node, ordered: _ordered, ...props }) => (
+        h5: (props) => (
+          <h5
+            className='text-base font-semibold text-neutral-100 dark:text-neutral-200'
+            {...props}
+          />
+        ),
+        strong: (props) => (
+          <strong className='font-semibold text-neutral-100' {...props} />
+        ),
+        ul: ({ node: _node, ...props }) => (
           <ul className='list-disc space-y-3 pb-2 pl-10' {...props} />
         ),
-        ol: ({ node: _node, ordered: _ordered, ...props }) => (
+        ol: ({ node: _node, ...props }) => (
           <ol className='list-decimal space-y-3 pb-2 pl-10' {...props} />
+        ),
+        li: ({ node: _node, ...props }) => (
+          <li
+            className='leading-8 text-neutral-700 dark:text-neutral-300'
+            {...props}
+          />
         ),
         code: (props) => <CodeBlock {...props} />,
         blockquote: (props) => (
@@ -60,6 +111,22 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
             {...props}
           />
         ),
+        input: ({ className, ...props }) => {
+          if (props.type === 'checkbox') {
+            return (
+              <input
+                {...props}
+                readOnly
+                className={cn(
+                  'mr-2 inline-block h-4 w-4 align-middle accent-cyan-500',
+                  className,
+                )}
+              />
+            );
+          }
+
+          return <input className={className} {...props} />;
+        },
         hr: () => (
           <hr className='my-8 border-dashed border-neutral-300 dark:border-neutral-700' />
         ),

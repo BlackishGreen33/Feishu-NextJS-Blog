@@ -1,10 +1,11 @@
 import clsx from 'clsx';
+import type { ReactElement } from 'react';
 
 type ViewOptionsProps = {
   option: string;
   setViewOption: (option: string) => void;
   type: string;
-  icon: JSX.Element;
+  icon: ReactElement;
 };
 
 const ViewOptions = ({

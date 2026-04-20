@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { FiSend as SendIcon } from 'react-icons/fi';
 
 import { ChatInputProps } from '@/common/types/chat';
+import { useI18n } from '@/i18n';
 
 import ChatUserInfo from './ChatUserInfo';
 
@@ -10,6 +11,7 @@ const ChatInput = ({
   onSendMessage,
   isWidget,
 }: ChatInputProps & { isWidget?: boolean }) => {
+  const { messages } = useI18n();
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
 
@@ -46,7 +48,7 @@ const ChatInput = ({
           type='text'
           value={message}
           onChange={handleChange}
-          placeholder='Type a message...'
+          placeholder={messages.guestbook.inputPlaceholder}
           className='flex-grow rounded-md border p-2 focus:outline-none dark:border-neutral-600'
           disabled={isSending}
           ref={inputRef}

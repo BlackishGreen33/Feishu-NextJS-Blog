@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FaRegEye as ViewIcon } from 'react-icons/fa';
 
 import { formatDate } from '@/common/helpers';
+import { useI18n } from '@/i18n';
 
 interface BlogHeaderProps {
   title: string;
@@ -17,6 +18,7 @@ const BlogHeader = ({
   updated_at,
   reading_time_minutes,
 }: BlogHeaderProps) => {
+  const { locale, messages } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ const BlogHeader = ({
     };
   }, []);
 
-  const transition = { duration: 0.3, ease: 'easeInOut' };
+  const transition = { duration: 0.3, ease: 'easeInOut' as const };
   const titleVariants = {
     initial: { opacity: 0, y: -20 },
     animate: { opacity: 1, y: 0 },
@@ -64,9 +66,9 @@ const BlogHeader = ({
       )}
       <div className='mb-6 flex flex-col justify-between gap-2 border-b border-dashed border-neutral-600 pb-6 pt-5 text-[14px] text-neutral-600 dark:text-neutral-400 sm:flex-row'>
         <div>
-          發布於
+          {messages.blog.publishedAt}
           <span className='px-1 font-medium'>
-            {published_at ? formatDate(published_at) : ''}
+            {published_at ? formatDate(published_at, undefined, locale) : ''}
           </span>
         </div>
 
@@ -75,15 +77,15 @@ const BlogHeader = ({
             <div className='flex items-center gap-1 font-medium'>
               <ViewIcon size={16} />
               <div className='ml-0.5 flex gap-1'>
-                <span>更新於</span>
-                <span>{formatDate(updated_at)}</span>
+                <span>{messages.blog.updatedAt}</span>
+                <span>{formatDate(updated_at, undefined, locale)}</span>
               </div>
             </div>
           )}
           <div className='flex items-center gap-1 font-medium'>
             <div className='ml-0.5 flex gap-1'>
               <span>{reading_time_minutes}</span>
-              <span>分鐘閱讀</span>
+              <span>{messages.blog.minutesRead}</span>
             </div>
           </div>
         </div>

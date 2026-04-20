@@ -6,6 +6,7 @@ import { FiExternalLink as LinkIcon } from 'react-icons/fi';
 import Tooltip from '@/common/components/elements/Tooltip';
 import { STACKS } from '@/common/constant/stacks';
 import { SubContentMetaProps } from '@/common/types/learn';
+import { useI18n } from '@/i18n';
 
 const ContentDetailHeader = ({
   title,
@@ -15,6 +16,7 @@ const ContentDetailHeader = ({
   language,
   source_url,
 }: SubContentMetaProps) => {
+  const { locale, messages } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ const ContentDetailHeader = ({
     };
   }, []);
 
-  const transition = { duration: 0.3, ease: 'easeInOut' };
+  const transition = { duration: 0.3, ease: 'easeInOut' as const };
   const titleVariants = {
     initial: { opacity: 0, y: -20 },
     animate: { opacity: 1, y: 0 },
@@ -68,13 +70,25 @@ const ContentDetailHeader = ({
               <div className='flex items-center gap-2 font-medium text-neutral-700 dark:text-neutral-300 '>
                 <LinkIcon size={18} />
                 <span className='text-[15px] transition-all duration-300 dark:text-teal-500 hover:dark:text-teal-400'>
-                  View in {source}
+                  {locale === 'en'
+                    ? `View in ${source}`
+                    : locale === 'zh-CN'
+                      ? `在 ${source} 中查看`
+                      : `在 ${source} 中查看`}
                 </span>
               </div>
             </Link>
           )}
           {difficulty && (
-            <Tooltip title={`Difficulty: ${difficulty}`}>
+            <Tooltip
+              title={
+                locale === 'en'
+                  ? `Difficulty: ${difficulty}`
+                  : locale === 'zh-CN'
+                    ? `难度：${difficulty}`
+                    : `難度：${difficulty}`
+              }
+            >
               <div className='rounded-full bg-neutral-200 px-2 py-1 text-xs font-medium text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400'>
                 {difficulty}
               </div>

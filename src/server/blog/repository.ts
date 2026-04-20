@@ -16,7 +16,7 @@ export const getArticleIndex = async (includeDraft = false) => {
 
   if (!index) {
     throw new Error(
-      'No synced blog index found. Run `yarn feishu:sync` or use the seed data.',
+      'No synced blog index found. Run `pnpm feishu:sync` or use the seed data.',
     );
   }
 

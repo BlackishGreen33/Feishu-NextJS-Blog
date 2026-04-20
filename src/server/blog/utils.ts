@@ -72,6 +72,23 @@ export const summarizeMarkdown = (value: string, maxLength = 140) => {
   return `${text.slice(0, maxLength).trimEnd()}...`;
 };
 
+const normalizeHeadingText = (value: string) =>
+  stripMarkdown(value).replace(/\s+/g, ' ').trim().toLowerCase();
+
+export const stripLeadingHeading = (content: string, title: string) => {
+  const headingMatch = content.match(/^#\s+(.+?)\n+/);
+
+  if (!headingMatch?.[1]) {
+    return content;
+  }
+
+  if (normalizeHeadingText(headingMatch[1]) !== normalizeHeadingText(title)) {
+    return content;
+  }
+
+  return content.slice(headingMatch[0].length).trimStart();
+};
+
 export const extractFirstImage = (value: string) => {
   const matched = value.match(MARKDOWN_IMAGE_REGEX);
   return matched?.[1] || matched?.[2] || null;
@@ -159,10 +176,18 @@ export const isHiddenTitle = (title: string) => /\[(hide|隐藏)]/i.test(title);
 
 export const toIsoDate = (value?: string | number | null) => {
   if (!value) return new Date().toISOString();
+  const normalizedValue =
+    typeof value === 'string' && /^\d+$/.test(value.trim())
+      ? Number(value.trim())
+      : value;
   const date =
-    typeof value === 'number'
-      ? new Date(value > 1e12 ? value : value * 1000)
-      : new Date(value);
+    typeof normalizedValue === 'number'
+      ? new Date(
+          normalizedValue > 1e12
+            ? normalizedValue
+            : normalizedValue * 1000,
+        )
+      : new Date(normalizedValue);
 
   if (Number.isNaN(date.getTime())) {
     return new Date().toISOString();

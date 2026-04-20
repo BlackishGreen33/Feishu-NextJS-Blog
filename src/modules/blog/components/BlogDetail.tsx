@@ -1,6 +1,7 @@
 import Breakline from '@/common/components/elements/Breakline';
 import MDXComponent from '@/common/components/elements/MDXComponent';
 import { BlogDetailProps } from '@/common/types/blog';
+import { useI18n } from '@/i18n';
 
 import BlogHeader from './BlogHeader';
 
@@ -12,6 +13,8 @@ const BlogDetail = ({
   tags,
   readingTimeMinutes,
 }: BlogDetailProps) => {
+  const { messages } = useI18n();
+
   return (
     <>
       <BlogHeader
@@ -25,7 +28,7 @@ const BlogDetail = ({
       </div>
       {tags?.length >= 1 && (
         <div className='my-10 space-y-2'>
-          <h6 className='text-lg font-medium'>標籤</h6>
+          <h6 className='text-lg font-medium'>{messages.blog.tags}</h6>
           <div className='flex flex-wrap gap-2 pt-2'>
             {tags.map((tag) => (
               <div

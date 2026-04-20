@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import { useI18n } from '@/i18n';
+
 import Progress from './Progress';
 
 interface ItemProps {
@@ -28,7 +30,16 @@ const sumTotalFromArray = <T extends { hours: number; minutes: number }>(
   );
 };
 
+const formatDuration = (hours: number, minutes: number) => {
+  const totalMinutes = hours * 60 + minutes;
+  const normalizedHours = Math.floor(totalMinutes / 60);
+  const normalizedMinutes = totalMinutes % 60;
+
+  return `${normalizedHours} 小時 ${normalizedMinutes} 分鐘`;
+};
+
 const CodingActiveList = ({ data }: CodingActiveListProps) => {
+  const { locale } = useI18n();
   const getLanguagesTotalHours = sumTotalFromArray<ItemProps>(
     data?.languages || [],
     'hours',
@@ -37,9 +48,13 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
     data?.languages || [],
     'minutes',
   );
-  const getLanguagesTotalTimeDisplay = `${
-    Math.floor((getLanguagesTotalMinutes % 3600) / 60) + getLanguagesTotalHours
-  } hrs ${getLanguagesTotalMinutes} mins`;
+  const getLanguagesTotalTimeDisplay =
+    locale === 'en'
+      ? `${getLanguagesTotalHours}h ${getLanguagesTotalMinutes}m`
+      : formatDuration(getLanguagesTotalHours, getLanguagesTotalMinutes).replace(
+          '小時',
+          locale === 'zh-CN' ? '小时' : '小時',
+        );
 
   const getEditorTotalHours = sumTotalFromArray<ItemProps>(
     data?.categories || [],
@@ -49,13 +64,17 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
     data?.categories || [],
     'minutes',
   );
-  const getEditorTotalTimeDisplay = `${
-    Math.floor((getEditorTotalMinutes % 3600) / 60) + getEditorTotalHours
-  } hrs ${getEditorTotalMinutes} mins`;
+  const getEditorTotalTimeDisplay =
+    locale === 'en'
+      ? `${getEditorTotalHours}h ${getEditorTotalMinutes}m`
+      : formatDuration(getEditorTotalHours, getEditorTotalMinutes).replace(
+          '小時',
+          locale === 'zh-CN' ? '小时' : '小時',
+        );
 
   const actives = [
     {
-      title: 'Languages',
+      title: locale === 'en' ? 'Languages' : locale === 'zh-CN' ? '语言' : '語言',
       total: getLanguagesTotalTimeDisplay,
       data: data?.languages,
       styles: {
@@ -63,7 +82,7 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
       },
     },
     {
-      title: 'Categories',
+      title: locale === 'en' ? 'Activity type' : locale === 'zh-CN' ? '活动类型' : '活動類型',
       total: getEditorTotalTimeDisplay,
       data: data?.categories,
       styles: {

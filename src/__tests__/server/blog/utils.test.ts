@@ -1,6 +1,7 @@
 import {
   extractFirstImage,
   replaceTokens,
+  stripLeadingHeading,
   summarizeMarkdown,
   toSlug,
 } from '@/server/blog/utils';
@@ -40,5 +41,13 @@ describe('blog utils', () => {
 
     expect(replaced).toContain('/blog/hello-world');
     expect(replaced).toContain('/feishu-assets/image.png');
+  });
+
+  it('strips a duplicated leading h1 when it matches the article title', () => {
+    const content = '# 团队工作周报\n\n## 本周总结\n\n内容';
+
+    expect(stripLeadingHeading(content, '团队工作周报')).toBe(
+      '## 本周总结\n\n内容',
+    );
   });
 });

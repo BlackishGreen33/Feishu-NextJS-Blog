@@ -8,8 +8,9 @@ import useIsMobile from '@/common/hooks/useIsMobile';
 import MobileMenu from './MobileMenu';
 import MobileMenuButton from './MobileMenuButton';
 import ProfileHeader from './ProfileHeader';
+import LanguageSwitcher from '../elements/LanguageSwitcher';
 import SearchBox from '../elements/SearchBox';
-import ThemeToggleButton from '../elements/ThemeToggleButton';
+import ThemeSwitcher from '../elements/ThemeSwitcher';
 
 interface ProfileProps {
   isScrolled?: boolean;
@@ -59,12 +60,13 @@ const Profile = ({ isScrolled = false }: ProfileProps) => {
           {isMobile && (
             <div
               className={clsx(
-                'mt-2 flex items-center gap-5 lg:hidden',
+                'mt-2 flex items-center gap-3 lg:hidden',
                 expandMenu &&
                   'h-[120px] flex-col-reverse !items-end justify-between pb-1',
               )}
             >
-              <ThemeToggleButton />
+              <LanguageSwitcher compact />
+              <ThemeSwitcher compact />
               <MobileMenuButton
                 expandMenu={expandMenu}
                 setExpandMenu={setExpandMenu}

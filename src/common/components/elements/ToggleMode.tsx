@@ -25,7 +25,7 @@ const ToggleMode = () => {
       )}
 
       <div className='ml-0.5 flex'>
-        {isDarkTheme ? 'Light Mode' : 'Dark Mode'}
+        {isDarkTheme ? '淺色模式' : '深色模式'}
       </div>
     </button>
   );

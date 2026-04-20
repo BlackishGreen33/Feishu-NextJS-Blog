@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NextImage, { ImageProps as NextImageProps } from 'next/image';
 import clsx from 'clsx';
 
@@ -8,12 +8,19 @@ import cn from '@/common/libs/cn';
 
 type ImageProps = {
   rounded?: string;
+  fallbackSrc?: NextImageProps['src'];
 } & NextImageProps;
 
 const Image = (props: ImageProps) => {
-  const { alt, src, className, rounded, priority, ...rest } = props;
+  const { alt, src, className, rounded, priority, fallbackSrc, ...rest } = props;
   const [isLoading, setLoading] = useState(true);
+  const [currentSrc, setCurrentSrc] = useState(src);
   const isFillImage = Boolean(rest.fill);
+
+  useEffect(() => {
+    setLoading(true);
+    setCurrentSrc(src);
+  }, [src]);
 
   return (
     <div
@@ -33,10 +40,18 @@ const Image = (props: ImageProps) => {
           rounded,
           className,
         )}
-        src={src}
+        src={currentSrc}
         alt={alt}
         priority={priority}
         onLoad={() => setLoading(false)}
+        onError={() => {
+          if (fallbackSrc && currentSrc !== fallbackSrc) {
+            setCurrentSrc(fallbackSrc);
+            return;
+          }
+
+          setLoading(false);
+        }}
         {...rest}
       />
     </div>

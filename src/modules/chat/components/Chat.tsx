@@ -1,33 +1,38 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { getDatabase, onValue, ref, remove, set } from 'firebase/database';
 import { v4 as uuidv4 } from 'uuid';
 
+import EmptyState from '@/common/components/elements/EmptyState';
+import { SITE_PROFILE_IMAGE } from '@/common/config/site';
 import { firebase } from '@/common/libs/firebase';
 import { MessageProps } from '@/common/types/chat';
+import { useI18n } from '@/i18n';
 
 import ChatAuth from './ChatAuth';
 import ChatInput from './ChatInput';
 import ChatList from './ChatList';
+import { useFirebaseGuestbookAuth } from '../hooks/useFirebaseGuestbookAuth';
 
 const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
-  const { data: session } = useSession();
-
-  const [messages, setMessages] = useState<MessageProps[]>([]);
-
-  const database = getDatabase(firebase);
+  const { messages } = useI18n();
+  const { user } = useFirebaseGuestbookAuth();
+  const [chatMessages, setChatMessages] = useState<MessageProps[]>([]);
   const databaseChat = process.env.NEXT_PUBLIC_FIREBASE_CHAT_DB as string;
+  const database = firebase ? getDatabase(firebase) : null;
+  const isChatConfigured = Boolean(database && databaseChat);
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
+    if (!database || !databaseChat || !user) return;
+
     const messageId = uuidv4();
     const messageRef = ref(database, `${databaseChat}/${messageId}`);
 
-    set(messageRef, {
+    await set(messageRef, {
       id: messageId,
-      name: session?.user?.name,
-      email: session?.user?.email,
-      image: session?.user?.image,
+      uid: user.uid,
+      name: user.displayName || user.email?.split('@')[0] || 'Guest',
+      email: user.email || '',
+      image: user.photoURL || SITE_PROFILE_IMAGE,
       message,
       created_at: new Date().toISOString(),
       is_show: true,
@@ -35,6 +40,8 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
   };
 
   const handleDeleteMessage = (id: string) => {
+    if (!database || !databaseChat) return;
+
     const messageRef = ref(database, `${databaseChat}/${id}`);
 
     if (messageRef) {
@@ -43,8 +50,10 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
   };
 
   useEffect(() => {
+    if (!database || !databaseChat) return;
+
     const messagesRef = ref(database, databaseChat);
-    onValue(messagesRef, (snapshot) => {
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
       const messagesData = snapshot.val();
       if (messagesData) {
         const messagesArray = Object.values(messagesData) as MessageProps[];
@@ -53,19 +62,33 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
           const dateB = new Date(b.created_at);
           return dateA.getTime() - dateB.getTime();
         });
-        setMessages(sortedMessage);
+        setChatMessages(sortedMessage);
       }
     });
-  }, [database]);
+    return () => unsubscribe();
+  }, [database, databaseChat]);
+
+  if (!isChatConfigured) {
+    return (
+      <EmptyState
+        message={
+          isWidget
+            ? messages.guestbook.widgetUnavailable
+            : messages.guestbook.pageUnavailable
+        }
+      />
+    );
+  }
 
   return (
     <>
-      <ChatList
+        <ChatList
         isWidget={isWidget}
-        messages={messages}
+        messages={chatMessages}
         onDeleteMessage={handleDeleteMessage}
+        currentUserUid={user?.uid ?? null}
       />
-      {session ? (
+      {user ? (
         <ChatInput onSendMessage={handleSendMessage} isWidget={isWidget} />
       ) : (
         <ChatAuth isWidget={isWidget} />
