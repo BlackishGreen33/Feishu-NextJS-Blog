@@ -1,0 +1,26 @@
+{
+  "id": "fixture-feishu-sync",
+  "slug": "feishu-sync-architecture",
+  "title": "飛書同步架構說明",
+  "summary": "這篇示例文章展示了如何把飛書知識庫同步為 Markdown，並由 Next.js 直接渲染。",
+  "cover": null,
+  "publishedAt": "2026-04-17T00:00:00.000Z",
+  "updatedAt": "2026-04-17T00:00:00.000Z",
+  "tags": [
+    {
+      "name": "Feishu",
+      "slug": "feishu"
+    },
+    {
+      "name": "Next.js",
+      "slug": "next-js"
+    }
+  ],
+  "featured": true,
+  "draft": false,
+  "readingTimeMinutes": 2,
+  "sourceNodeToken": "fixture-node-token",
+  "sourceDocumentId": "fixture-document-id",
+  "content": "## 這是什麼？\n\n這個專案會把飛書知識庫中的指定子樹內容同步成可控的中間資料，再由站點以 Markdown 正常渲染，而不是直接嵌入飛書頁面。\n\n## 同步流程\n\n1. 使用飛書自建應用憑證換取 `tenant_access_token`。\n2. 從知識庫根節點遞迴抓取 `docx` 文檔節點。\n3. 讀取 block JSON，透過 `feishu-docx` 轉成 Markdown。\n4. 下載圖片與附件，寫入本地或 Vercel Blob。\n5. 產生文章索引與詳情 JSON，供首頁、列表與詳情頁共用。\n\n## 文檔 Frontmatter\n\n你可以在飛書文檔頂部加入以下 frontmatter：\n\n```yaml\n---\nslug: feishu-sync-architecture\ntitle: 飛書同步架構說明\ndate: 2026-04-17\ntags: [Feishu, Next.js]\nsummary: 這篇示例文章展示了如何把飛書知識庫同步為 Markdown，並由 Next.js 直接渲染。\nfeatured: true\ndraft: false\n---\n```\n\n## 本地開發\n\n- 執行 `yarn feishu:sync` 可手動同步。\n- 執行 `yarn dev` 時，若未配置飛書憑證，站點會回退到這份本地示例資料。\n",
+  "contentFormat": "markdown"
+}

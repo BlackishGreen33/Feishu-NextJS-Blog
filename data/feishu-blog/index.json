@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-04-17T00:00:00.000Z",
+  "source": "fixture",
+  "articles": [
+    {
+      "id": "fixture-feishu-sync",
+      "slug": "feishu-sync-architecture",
+      "title": "飛書同步架構說明",
+      "summary": "這篇示例文章展示了如何把飛書知識庫同步為 Markdown，並由 Next.js 直接渲染。",
+      "cover": null,
+      "publishedAt": "2026-04-17T00:00:00.000Z",
+      "updatedAt": "2026-04-17T00:00:00.000Z",
+      "tags": [
+        {
+          "name": "Feishu",
+          "slug": "feishu"
+        },
+        {
+          "name": "Next.js",
+          "slug": "next-js"
+        }
+      ],
+      "featured": true,
+      "draft": false,
+      "readingTimeMinutes": 2,
+      "sourceNodeToken": "fixture-node-token",
+      "sourceDocumentId": "fixture-document-id"
+    }
+  ]
+}

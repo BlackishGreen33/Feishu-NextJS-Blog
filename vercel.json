@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "src/pages/api/chat.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "src/pages/api/cron/feishu-sync.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/feishu-sync",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}
