@@ -12,7 +12,7 @@
   "crons": [
     {
       "path": "/api/cron/feishu-sync",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
