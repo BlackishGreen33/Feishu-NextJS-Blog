@@ -8,11 +8,5 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/feishu-sync",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  }
 }

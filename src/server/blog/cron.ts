@@ -5,12 +5,8 @@ export const authorizeCronRequest = (req: NextApiRequest) => {
   const authHeader = req.headers.authorization;
 
   if (!cronSecret) {
-    return true;
+    return false;
   }
 
-  if (authHeader === `Bearer ${cronSecret}`) {
-    return true;
-  }
-
-  return req.headers['x-vercel-cron'] === '1';
+  return authHeader === `Bearer ${cronSecret}`;
 };
