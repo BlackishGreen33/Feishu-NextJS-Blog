@@ -5,6 +5,18 @@
 :root {
   --color-dark: #121212;
   --color-light: #fafafa;
+  --jakartaSans-font:
+    'Inter', 'Segoe UI', 'Helvetica Neue', 'Noto Sans TC', 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
+  --onestSans-font:
+    'Inter', 'Segoe UI', 'Helvetica Neue', 'Noto Sans TC', 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
+  --soraSans-font:
+    'Avenir Next', 'Inter', 'Segoe UI', 'Helvetica Neue', 'Noto Sans TC',
+    'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --firaCode-font:
+    'SFMono-Regular', 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code',
+    'Menlo', 'Consolas', 'Liberation Mono', monospace;
 }
 
 html {
@@ -51,4 +63,251 @@ a {
 
 ::-webkit-scrollbar-thumb {
   @apply rounded-[3px] border-2 border-neutral-300 bg-neutral-600 dark:bg-neutral-400;
+}
+
+.callout {
+  margin: 1.75rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  border: 1px solid var(--callout-border, #334155);
+  border-radius: 1rem;
+  background: var(--callout-bg, rgba(38, 38, 38, 0.88));
+  color: var(--callout-text, inherit);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 1rem 1.125rem;
+}
+
+.callout > :not(.callout-emoji) {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.callout-emoji {
+  flex: 0 0 auto;
+  padding-top: 0.125rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.callout p,
+.callout li,
+.callout strong,
+.callout b {
+  color: inherit;
+}
+
+.callout p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.callout p + p {
+  margin-top: 0.25rem;
+}
+
+.callout a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.callout code {
+  color: inherit;
+}
+
+.callout-bg-1 {
+  --callout-bg: #fef2f2;
+}
+
+.callout-bg-2 {
+  --callout-bg: #fff7ed;
+}
+
+.callout-bg-3 {
+  --callout-bg: #fefce8;
+}
+
+.callout-bg-4 {
+  --callout-bg: #f0fdf4;
+}
+
+.callout-bg-5 {
+  --callout-bg: #eff6ff;
+}
+
+.callout-bg-6 {
+  --callout-bg: #faf5ff;
+}
+
+.callout-bg-7 {
+  --callout-bg: #f9fafb;
+}
+
+.callout-bg-8 {
+  --callout-bg: #66421a;
+}
+
+.callout-bg-9 {
+  --callout-bg: #7c4420;
+}
+
+.callout-bg-10 {
+  --callout-bg: #67511a;
+}
+
+.callout-bg-11 {
+  --callout-bg: #1f5136;
+}
+
+.callout-bg-12 {
+  --callout-bg: #1e3f73;
+}
+
+.callout-bg-13 {
+  --callout-bg: #4c2a6d;
+}
+
+.callout-bg-14 {
+  --callout-bg: #3f3f46;
+}
+
+.dark .callout-bg-1 {
+  --callout-bg: #4f1d1d;
+}
+
+.dark .callout-bg-2 {
+  --callout-bg: #4a2a12;
+}
+
+.dark .callout-bg-3 {
+  --callout-bg: #4a3512;
+}
+
+.dark .callout-bg-4 {
+  --callout-bg: #183925;
+}
+
+.dark .callout-bg-5 {
+  --callout-bg: #1d3557;
+}
+
+.dark .callout-bg-6 {
+  --callout-bg: #3b2555;
+}
+
+.dark .callout-bg-7 {
+  --callout-bg: #2f2f35;
+}
+
+.dark .callout-bg-8 {
+  --callout-bg: #66421a;
+}
+
+.dark .callout-bg-9 {
+  --callout-bg: #7c4420;
+}
+
+.dark .callout-bg-10 {
+  --callout-bg: #67511a;
+}
+
+.dark .callout-bg-11 {
+  --callout-bg: #1f5136;
+}
+
+.dark .callout-bg-12 {
+  --callout-bg: #1e3f73;
+}
+
+.dark .callout-bg-13 {
+  --callout-bg: #4c2a6d;
+}
+
+.dark .callout-bg-14 {
+  --callout-bg: #3f3f46;
+}
+
+.light .callout-bg-8 {
+  --callout-bg: #fecaca;
+}
+
+.light .callout-bg-9 {
+  --callout-bg: #fed7aa;
+}
+
+.light .callout-bg-10 {
+  --callout-bg: #fef08a;
+}
+
+.light .callout-bg-11 {
+  --callout-bg: #bbf7d0;
+}
+
+.light .callout-bg-12 {
+  --callout-bg: #bfdbfe;
+}
+
+.light .callout-bg-13 {
+  --callout-bg: #e9d5ff;
+}
+
+.light .callout-bg-14 {
+  --callout-bg: #e5e7eb;
+}
+
+.callout-border-1 {
+  --callout-border: #f59e0b;
+}
+
+.callout-border-2 {
+  --callout-border: #fb923c;
+}
+
+.callout-border-3 {
+  --callout-border: #eab308;
+}
+
+.callout-border-4 {
+  --callout-border: #4ade80;
+}
+
+.callout-border-5 {
+  --callout-border: #60a5fa;
+}
+
+.callout-border-6 {
+  --callout-border: #c084fc;
+}
+
+.callout-border-7 {
+  --callout-border: #a1a1aa;
+}
+
+.callout-color-1 {
+  --callout-text: #f87171;
+}
+
+.callout-color-2 {
+  --callout-text: #fb923c;
+}
+
+.callout-color-3 {
+  --callout-text: #facc15;
+}
+
+.callout-color-4 {
+  --callout-text: #4ade80;
+}
+
+.callout-color-5 {
+  --callout-text: #60a5fa;
+}
+
+.callout-color-6 {
+  --callout-text: #c084fc;
+}
+
+.callout-color-7 {
+  --callout-text: #d4d4d8;
 }

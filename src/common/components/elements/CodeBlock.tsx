@@ -35,19 +35,22 @@ SyntaxHighlighter.registerLanguage(languages.css, css);
 interface CodeBlockProps extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
   className?: string;
-  inline?: boolean;
+  isBlock?: boolean;
   node?: unknown;
 }
 
-const CodeBlock = ({
+export const CodeBlockBase = ({
   className = '',
   children,
-  inline,
+  isBlock = false,
   ...props
 }: CodeBlockProps) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [, copy] = useCopyToClipboard();
   const match = /language-(\w+)/.exec(className || '');
+  const code = Array.isArray(children)
+    ? children.join('')
+    : String(children ?? '');
 
   const handleCopy = (code: string) => {
     copy(code);
@@ -66,13 +69,13 @@ const CodeBlock = ({
 
   return (
     <>
-      {!inline ? (
+      {isBlock ? (
         <div className='relative'>
           <button
             className='absolute top-3 right-3 rounded-lg border border-neutral-700 p-2 hover:bg-neutral-800'
             type='button'
             aria-label='Copy to Clipboard'
-            onClick={() => handleCopy(String(children))}
+            onClick={() => handleCopy(code)}
             data-umami-event='Click Copy Code'
           >
             {!isCopied ? (
@@ -92,14 +95,17 @@ const CodeBlock = ({
               paddingRight: '50px',
             }}
             PreTag='div'
-            language={match ? match[1] : 'javascript'}
+            language={match?.[1]}
             wrapLongLines={true}
           >
-            {String(children).replace(/\n$/, '')}
+            {code.replace(/\n$/, '')}
           </SyntaxHighlighter>
         </div>
       ) : (
-        <code className='rounded-md bg-neutral-200 px-2 py-1 text-[14px] font-light text-sky-600 dark:bg-neutral-700 dark:text-sky-300'>
+        <code
+          className='rounded-md bg-neutral-200 px-2 py-1 text-[14px] font-light text-sky-600 dark:bg-neutral-700 dark:text-sky-300'
+          {...props}
+        >
           {children}
         </code>
       )}
@@ -107,9 +113,14 @@ const CodeBlock = ({
   );
 };
 
-const LoadingPlaceholder = () => <div className='mt-12 mb-12 h-36 w-full' />;
+const LoadingPlaceholder = () => (
+  <span
+    aria-hidden='true'
+    className='inline-block min-h-[1.5rem] min-w-[3ch] align-baseline'
+  />
+);
 
-export default dynamic(() => Promise.resolve(CodeBlock), {
+export default dynamic(() => Promise.resolve(CodeBlockBase), {
   ssr: false,
   loading: LoadingPlaceholder,
 });

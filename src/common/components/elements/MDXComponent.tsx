@@ -40,6 +40,9 @@ const isColumnItem = (className?: string) =>
       className.includes('width-ratio')),
   );
 
+const toCodeValue = (children?: ReactNode) =>
+  Array.isArray(children) ? children.join('') : String(children ?? '');
+
 const MDXComponent = ({ children }: MarkdownRendererProps) => {
   return (
     <ReactMarkdown
@@ -104,7 +107,15 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
             {...props}
           />
         ),
-        code: (props) => <CodeBlock {...props} />,
+        code: ({ children, className, node: _node, ...props }) => (
+          <CodeBlock
+            {...props}
+            className={className}
+            isBlock={Boolean(className) || toCodeValue(children).includes('\n')}
+          >
+            {children}
+          </CodeBlock>
+        ),
         blockquote: (props) => (
           <blockquote
             className='rounded-br-2xl border-l-[5px] border-neutral-700 border-l-cyan-500 bg-neutral-200 py-3 pl-6 text-lg font-medium text-cyan-800 dark:bg-neutral-800 dark:text-cyan-200'

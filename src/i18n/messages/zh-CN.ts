@@ -255,6 +255,7 @@ const zhCNMessages: Messages = {
   commandPalette: {
     placeholders: ['搜索或提问任何内容...', '随时按下 Cmd + K 打开命令面板'],
     groups: {
+      articles: '文章',
       pages: '页面',
       socials: '社交',
       externalLinks: '外部链接',

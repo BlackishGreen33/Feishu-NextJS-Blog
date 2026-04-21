@@ -137,7 +137,7 @@ const BlogListNew = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                  <BlogCardNew {...item} priority={index === 0} />
+                  <BlogCardNew {...item} priority={index < 3} />
                 </motion.div>
               ))}
             </>

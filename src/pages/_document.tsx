@@ -7,13 +7,6 @@ import Document, {
   NextScript,
 } from 'next/document';
 
-import {
-  firaCode,
-  jakartaSans,
-  onestSans,
-  soraSans,
-} from '@/common/styles/fonts';
-
 type MyDocumentProps = DocumentInitialProps & {
   locale: string;
 };
@@ -39,12 +32,6 @@ class MyDocument extends Document<MyDocumentProps> {
       <Html
         lang={HTML_LANG_BY_LOCALE[this.props.locale] ?? 'zh-Hant'}
         data-scroll-behavior='smooth'
-        className={[
-          jakartaSans.variable,
-          soraSans.variable,
-          firaCode.variable,
-          onestSans.variable,
-        ].join(' ')}
       >
         <Head>
           <link

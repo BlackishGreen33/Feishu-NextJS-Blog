@@ -8,18 +8,22 @@ import {
   BiSearch as SearchIcon,
   BiSun as LightModeIcon,
 } from 'react-icons/bi';
+import { FiFileText as ArticleIcon } from 'react-icons/fi';
 import { HiOutlineChat as AiIcon } from 'react-icons/hi';
+import useSWR from 'swr';
 import { useDebounceValue } from 'usehooks-ts';
 
 import { useMenuData } from '@/common/constant/menu';
 import { CommandPaletteContext } from '@/common/context/CommandPaletteContext';
 import useIsMobile from '@/common/hooks/useIsMobile';
+import { BlogItemProps } from '@/common/types/blog';
 import { MenuItemProps } from '@/common/types/menu';
 import { useI18n } from '@/i18n';
 import AiLoading from '@/modules/cmdpallete/components/AiLoading';
 import AiResponses from '@/modules/cmdpallete/components/AiResponses';
 import QueryNotFound from '@/modules/cmdpallete/components/QueryNotFound';
 import { sendMessage } from '@/services/chatgpt';
+import { fetcher } from '@/services/fetcher';
 
 interface MenuOptionItemProps extends MenuItemProps {
   click?: () => void;
@@ -31,6 +35,15 @@ interface MenuOptionProps {
   children: MenuOptionItemProps[];
 }
 
+type ArticleSearchResponse = {
+  status: boolean;
+  data?: {
+    posts?: BlogItemProps[];
+  };
+};
+
+const ARTICLE_RESULT_LIMIT = 5;
+
 const CommandPalette = () => {
   const [query, setQuery] = useState('');
   const [isEmptyState, setEmptyState] = useState(false);
@@ -41,18 +54,40 @@ const CommandPalette = () => {
   const [aiFinished, setAiFinished] = useState(false);
 
   const router = useRouter();
-  const { locale, messages } = useI18n();
+  const { messages } = useI18n();
   const { menuItems, socialMedia, externalLinks } = useMenuData();
   const isMobile = useIsMobile();
   const { isOpen, setIsOpen } = useContext(CommandPaletteContext);
   const { resolvedTheme, setTheme } = useTheme();
   const [queryDebounce] = useDebounceValue(query, 500);
+  const articleSearchKey = isOpen
+    ? `/api/blog?page=1&per_page=${ARTICLE_RESULT_LIMIT}${
+        queryDebounce ? `&search=${encodeURIComponent(queryDebounce)}` : ''
+      }`
+    : null;
+  const { data: articleSearchData, isLoading: isArticleSearchLoading } =
+    useSWR<ArticleSearchResponse>(articleSearchKey, fetcher, {
+      revalidateOnFocus: false,
+      refreshInterval: 0,
+    });
 
   const placeholders = messages.commandPalette.placeholders;
 
   const placeholder = placeholders[placeholderIndex];
+  const articleOptions: MenuOptionItemProps[] = (
+    articleSearchData?.status ? articleSearchData.data?.posts || [] : []
+  ).map((article) => ({
+    title: article.title,
+    href: `/blog/${article.slug}`,
+    icon: <ArticleIcon size={20} />,
+    isExternal: false,
+    closeOnSelect: true,
+    type: messages.nav.blog,
+    children: article.summary,
+    eventName: `Article: ${article.slug}`,
+  }));
 
-  const menuOptions: MenuOptionProps[] = [
+  const staticMenuOptions: MenuOptionProps[] = [
     {
       title: messages.commandPalette.groups.pages,
       children: menuItems.map((menu) => ({
@@ -97,14 +132,20 @@ const CommandPalette = () => {
     },
   ];
 
-  const filterMenuOptions: MenuOptionProps[] = queryDebounce
-    ? menuOptions.map((menu: MenuOptionProps) => ({
-        ...menu,
-        children: menu.children.filter((item: MenuOptionItemProps) =>
-          item.title.toLowerCase().includes(queryDebounce.toLowerCase()),
-        ),
-      }))
-    : menuOptions;
+  const filterMenuOptions: MenuOptionProps[] = [
+    {
+      title: messages.commandPalette.groups.articles,
+      children: articleOptions,
+    },
+    ...(queryDebounce
+      ? staticMenuOptions.map((menu: MenuOptionProps) => ({
+          ...menu,
+          children: menu.children.filter((item: MenuOptionItemProps) =>
+            item.title.toLowerCase().includes(queryDebounce.toLowerCase()),
+          ),
+        }))
+      : staticMenuOptions),
+  ];
 
   const handleSelect = (menu: MenuOptionItemProps | null) => {
     if (!menu) {
@@ -119,7 +160,7 @@ const CommandPalette = () => {
 
     if (menu.isExternal) {
       window.open(menu.href, '_blank');
-    } else {
+    } else if (menu.href && menu.href !== '#') {
       router.push(menu?.href as string);
     }
   };
@@ -150,7 +191,7 @@ const CommandPalette = () => {
     setAiFinished(false);
   };
 
-  const isActiveRoute = (href: string) => router.pathname === href;
+  const isActiveRoute = (href: string) => router.asPath.split('?')[0] === href;
 
   useEffect(() => {
     if (query) setEmptyState(false);
@@ -179,7 +220,8 @@ const CommandPalette = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-        setIsOpen(!isOpen);
+        event.preventDefault();
+        setIsOpen(true);
       } else if (event.key === 'Escape') {
         setIsOpen(false);
       }
@@ -188,7 +230,7 @@ const CommandPalette = () => {
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, setIsOpen]);
+  }, [setIsOpen]);
 
   useEffect(() => {
     if (aiResponse?.includes('```')) {
@@ -240,6 +282,7 @@ const CommandPalette = () => {
                   <SearchIcon size={22} />
                 )}
                 <Combobox.Input
+                  value={query}
                   onChange={handleSearch}
                   className='h-14 w-full border-0 bg-transparent text-neutral-800 placeholder-neutral-500 focus:ring-0 focus:outline-none dark:text-neutral-200'
                   placeholder={
@@ -267,7 +310,10 @@ const CommandPalette = () => {
                     </div>
                     <Combobox.Options static className='space-y-1'>
                       {menu?.children?.map((child, index) => (
-                        <Combobox.Option key={index.toString()} value={child}>
+                        <Combobox.Option
+                          key={child.href || index.toString()}
+                          value={child}
+                        >
                           {({ active }) => (
                             <div
                               className={clsx(
@@ -290,7 +336,17 @@ const CommandPalette = () => {
                                     {child?.icon}
                                   </div>
                                 )}
-                                <span className=''>{child?.title}</span>
+                                <div className='min-w-0'>
+                                  <span className='block truncate'>
+                                    {child?.title}
+                                  </span>
+                                  {typeof child.children === 'string' &&
+                                    child.children && (
+                                      <span className='mt-0.5 block truncate text-xs text-neutral-500 dark:text-neutral-400'>
+                                        {child.children}
+                                      </span>
+                                    )}
+                                </div>
                               </div>
                               <>
                                 {isActiveRoute(child?.href) ? (
@@ -319,6 +375,7 @@ const CommandPalette = () => {
               {!isEmptyState &&
                 !askAssistantClicked &&
                 queryDebounce &&
+                !isArticleSearchLoading &&
                 filterMenuOptions.every(
                   (item) => item.children.length === 0,
                 ) && (
@@ -331,6 +388,7 @@ const CommandPalette = () => {
 
               {askAssistantClicked &&
                 queryDebounce &&
+                !isArticleSearchLoading &&
                 filterMenuOptions.every(
                   (item) => item.children.length === 0,
                 ) && (

@@ -181,6 +181,7 @@ export type Messages = {
   commandPalette: {
     placeholders: string[];
     groups: {
+      articles: string;
       pages: string;
       socials: string;
       externalLinks: string;

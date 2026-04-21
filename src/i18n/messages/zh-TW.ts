@@ -255,6 +255,7 @@ const zhTWMessages: Messages = {
   commandPalette: {
     placeholders: ['搜尋或提問任何內容...', '隨時按下 Cmd + K 開啟指令面板'],
     groups: {
+      articles: '文章',
       pages: '頁面',
       socials: '社群',
       externalLinks: '外部連結',

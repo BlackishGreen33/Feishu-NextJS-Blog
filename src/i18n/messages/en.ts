@@ -271,6 +271,7 @@ const enMessages: Messages = {
       'Press Cmd + K to open the command palette anytime',
     ],
     groups: {
+      articles: 'Articles',
       pages: 'Pages',
       socials: 'Socials',
       externalLinks: 'External links',
