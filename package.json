@@ -17,6 +17,7 @@
     "test:watch": "jest --watch",
     "test": "jest",
     "test:ci": "jest --ci",
+    "commitmsg:check": "node scripts/validate-commit-msg.js",
     "feishu:sync": "tsx scripts/feishu-sync.ts",
     "prepare": "husky install"
   },
@@ -63,8 +64,6 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@next/env": "16.2.4",

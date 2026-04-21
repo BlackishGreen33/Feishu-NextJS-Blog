@@ -100,7 +100,20 @@
   - `pnpm format:check`
   - `pnpm test`
 - Husky `pre-commit` 會執行 `pnpm lint-staged`
-- `commit-msg` 會跑 commitlint；提交訊息請遵守 conventional commits
+- Husky `commit-msg` 會執行 `node scripts/validate-commit-msg.js`
+- 提交訊息格式固定為 `<emoji> <type>(<scope>): <desc>`
+- 目前允許的 type / emoji 對應：
+  - `✨ feat`
+  - `🐛 fix`
+  - `📝 docs`
+  - `🔧 chore`
+  - `🚀 ci`
+  - `♻️ refactor`
+  - `💄 style`
+  - `✅ test`
+  - `⚡ perf`
+  - `⏪ revert`
+  - `▲ vercel`
 
 ## 變更建議
 
