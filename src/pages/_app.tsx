@@ -13,12 +13,6 @@ import CommandPalette from '@/common/components/elements/CommandPalette';
 import Layout from '@/common/components/layouts';
 import { getDefaultSeo } from '@/common/config/seo';
 import { CommandPaletteProvider } from '@/common/context/CommandPaletteContext';
-import {
-  firaCode,
-  jakartaSans,
-  onestSans,
-  soraSans,
-} from '@/common/styles/fonts';
 
 const ProgressBar = dynamic(
   () => import('src/common/components/elements/ProgressBar'),
@@ -39,16 +33,6 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   return (
     <>
-      <style jsx global>
-        {`
-          html {
-            --jakartaSans-font: ${jakartaSans.style.fontFamily};
-            --soraSans-font: ${soraSans.style.fontFamily};
-            --firaCode-font: ${firaCode.style.fontFamily};
-            --onestSans-font: ${onestSans.style.fontFamily};
-          }
-        `}
-      </style>
       <DefaultSeo {...defaultSeo} />
       <ThemeProvider attribute='class' defaultTheme='dark'>
         <CommandPaletteProvider>

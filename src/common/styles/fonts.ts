@@ -8,7 +8,7 @@ export const jakartaSans = Plus_Jakarta_Sans({
 });
 
 export const firaCode = Fira_Code({
-  variable: '--font-fira-code',
+  variable: '--firaCode-font',
   subsets: ['latin'],
   display: 'swap',
 });
