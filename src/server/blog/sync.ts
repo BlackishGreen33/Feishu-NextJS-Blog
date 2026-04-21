@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
 import type { FileToken } from 'feishu-docx/dist/index.js';
+import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
 import matter from 'gray-matter';
 
 import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
@@ -153,6 +153,27 @@ const createMarkdownRenderer = (
   };
 };
 
+export const buildAssetPath = ({
+  fileToken,
+  contentType,
+  originalName,
+  directory = fileToken.type,
+}: {
+  fileToken: FileToken;
+  contentType: string | null;
+  originalName?: string | null;
+  directory?: string;
+}) => {
+  const extension = extensionFromType(contentType, originalName);
+  const safeName = sanitizeFileName(
+    originalName
+      ? `${fileToken.token}-${originalName}`
+      : `${fileToken.token}${extension}`,
+  );
+
+  return `${directory}/${safeName || `${fileToken.token}${extension}`}`;
+};
+
 const writeAssetFromToken = async (
   client: FeishuClient,
   fileToken: FileToken,
@@ -161,13 +182,12 @@ const writeAssetFromToken = async (
   const storage = getBlogStorage();
   const download = await client.downloadAsset(fileToken);
   const originalName = parseContentDispositionName(download.contentDisposition);
-  const extension = extensionFromType(download.contentType, originalName);
-  const fallbackName =
-    fileToken.type === 'image'
-      ? `${directory}-${fileToken.token}${extension}`
-      : `${fileToken.token}${extension}`;
-  const safeName = sanitizeFileName(originalName || fallbackName);
-  const pathname = `${directory}/${safeName}`;
+  const pathname = buildAssetPath({
+    fileToken,
+    contentType: download.contentType,
+    originalName,
+    directory,
+  });
 
   return storage.writeAsset({
     body: download.body,

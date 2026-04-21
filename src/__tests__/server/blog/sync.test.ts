@@ -1,4 +1,8 @@
-import { resolveArticleDates, syncFeishuArticles } from '@/server/blog/sync';
+import {
+  buildAssetPath,
+  resolveArticleDates,
+  syncFeishuArticles,
+} from '@/server/blog/sync';
 
 const REQUIRED_KEYS = [
   'FEISHU_APP_ID',
@@ -42,5 +46,28 @@ describe('syncFeishuArticles', () => {
 
     expect(result.publishedAt).toBe('2026-04-01T00:00:00.000Z');
     expect(result.updatedAt).toBe('2026-04-19T01:23:59.000Z');
+  });
+
+  it('builds token-stable asset paths even when file names collide', () => {
+    const firstPath = buildAssetPath({
+      fileToken: {
+        token: 'img-first',
+        type: 'image',
+      },
+      contentType: 'image/png',
+      originalName: 'image.png',
+    });
+    const secondPath = buildAssetPath({
+      fileToken: {
+        token: 'img-second',
+        type: 'image',
+      },
+      contentType: 'image/png',
+      originalName: 'image.png',
+    });
+
+    expect(firstPath).toBe('image/img-first-image.png');
+    expect(secondPath).toBe('image/img-second-image.png');
+    expect(firstPath).not.toBe(secondPath);
   });
 });
