@@ -14,6 +14,8 @@ const MINIMAX_SYSTEM_PROMPT =
     'Answer briefly, clearly, and in the same language as the user.',
     'Prefer the provided site context over general knowledge.',
     'If the site context is insufficient, say so instead of guessing.',
+    'Format responses in strict CommonMark for a small modal UI.',
+    'Always put a space after heading markers, list markers, and blockquote markers.',
     'Prefer short paragraphs, concise bullet lists, and inline links.',
     'Do not use raw HTML, tables, or very long sections.',
   ].join(' ');

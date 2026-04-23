@@ -4,6 +4,7 @@ import { BiLeftArrowCircle as BackButton } from 'react-icons/bi';
 import Button from '@/common/components/elements/Button';
 import MDXComponent from '@/common/components/elements/MDXComponent';
 import { useI18n } from '@/i18n';
+import { normalizeStreamingMarkdown } from '@/modules/cmdpallete/libs/normalizeStreamingMarkdown';
 
 interface AiResponsesProps {
   response: string;
@@ -106,6 +107,8 @@ const AiResponses = ({
     messages.commandPalette.aiFallback.retry,
   ].join('\n\n');
   const renderedResponse = response?.trim() || fallbackResponse;
+  const normalizedDisplayedResponse =
+    normalizeStreamingMarkdown(displayedResponse);
   const onAiFinishedRef = useRef(onAiFinished);
   const isStreamingRef = useRef(isStreaming);
   const renderedResponseRef = useRef(renderedResponse);
@@ -268,7 +271,9 @@ const AiResponses = ({
   return (
     <>
       <div className='space-y-4 text-left break-words'>
-        <MDXComponent>{displayedResponse}</MDXComponent>
+        <MDXComponent allowRawHtml={false}>
+          {normalizedDisplayedResponse}
+        </MDXComponent>
       </div>
 
       {isAiFinished && (

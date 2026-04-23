@@ -366,11 +366,11 @@ const CommandPalette = () => {
                                 active || isActiveRoute(child?.href)
                                   ? 'bg-neutral-200 text-neutral-600 dark:bg-neutral-700/60 dark:text-white'
                                   : 'text-neutral-600 dark:text-neutral-300',
-                                'group mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-4 py-2',
+                                'group mx-2 flex cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-md px-4 py-2',
                                 'dark:hover:bg-[#ffffff14]',
                               )}
                             >
-                              <div className='flex items-center gap-5'>
+                              <div className='flex min-w-0 flex-1 items-center gap-5 overflow-hidden'>
                                 {child?.icon && (
                                   <div
                                     className={clsx(
@@ -382,7 +382,7 @@ const CommandPalette = () => {
                                     {child?.icon}
                                   </div>
                                 )}
-                                <div className='min-w-0'>
+                                <div className='min-w-0 flex-1'>
                                   <span className='block truncate'>
                                     {child?.title}
                                   </span>

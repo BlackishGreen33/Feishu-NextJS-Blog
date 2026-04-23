@@ -9,6 +9,7 @@ import CodeBlock from './CodeBlock';
 
 interface MarkdownRendererProps {
   children: string;
+  allowRawHtml?: boolean;
 }
 
 interface TableProps {
@@ -43,12 +44,21 @@ const isColumnItem = (className?: string) =>
 const toCodeValue = (children?: ReactNode) =>
   Array.isArray(children) ? children.join('') : String(children ?? '');
 
-const MDXComponent = ({ children }: MarkdownRendererProps) => {
+const MDXComponent = ({
+  children,
+  allowRawHtml = true,
+}: MarkdownRendererProps) => {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw]}
+      rehypePlugins={allowRawHtml ? [rehypeRaw] : []}
       components={{
+        h1: (props) => (
+          <h1
+            className='pb-2 text-2xl font-semibold text-neutral-100 first:pt-0 dark:text-neutral-100'
+            {...props}
+          />
+        ),
         a: (props) => (
           <a
             className='cursor-pointer text-teal-500 hover:text-teal-400 hover:underline'
@@ -57,7 +67,7 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
         ),
         p: (props) => (
           <p
-            className='leading-8 text-neutral-700 dark:text-neutral-300'
+            className='mb-4 leading-8 text-neutral-700 last:mb-0 dark:text-neutral-300'
             {...props}
           />
         ),
@@ -76,13 +86,19 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
         },
         h2: (props) => (
           <h2
-            className='pt-6 text-xl font-medium dark:text-neutral-300'
+            className='pt-6 text-xl font-medium first:pt-0 dark:text-neutral-300'
             {...props}
           />
         ),
         h3: (props) => (
           <h3
-            className='pt-4 text-[18px] leading-snug font-medium dark:text-neutral-300'
+            className='pt-4 text-[18px] leading-snug font-medium first:pt-0 dark:text-neutral-300'
+            {...props}
+          />
+        ),
+        h4: (props) => (
+          <h4
+            className='pt-3 text-base font-medium text-neutral-100 first:pt-0 dark:text-neutral-200'
             {...props}
           />
         ),
@@ -96,10 +112,13 @@ const MDXComponent = ({ children }: MarkdownRendererProps) => {
           <strong className='font-semibold text-neutral-100' {...props} />
         ),
         ul: ({ node: _node, ...props }) => (
-          <ul className='list-disc space-y-3 pb-2 pl-10' {...props} />
+          <ul className='list-disc space-y-3 pb-2 pl-10 last:pb-0' {...props} />
         ),
         ol: ({ node: _node, ...props }) => (
-          <ol className='list-decimal space-y-3 pb-2 pl-10' {...props} />
+          <ol
+            className='list-decimal space-y-3 pb-2 pl-10 last:pb-0'
+            {...props}
+          />
         ),
         li: ({ node: _node, ...props }) => (
           <li
