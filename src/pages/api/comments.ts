@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { sanitizeCommentList } from '@/server/blog/htmlSanitizer';
 import { getBlogComment } from '@/services/devto';
 
 export default async function handler(
@@ -18,7 +19,11 @@ export default async function handler(
       post_id: String(post_id),
     });
 
-    res.status(200).json({ status: true, data: response.data });
+    const sanitizedComments = Array.isArray(response.data)
+      ? await sanitizeCommentList(response.data)
+      : [];
+
+    res.status(200).json({ status: true, data: sanitizedComments });
   } catch (error) {
     res.status(200).json({ status: false, error });
   }

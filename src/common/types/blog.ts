@@ -85,5 +85,5 @@ export type CommentItemProps = {
     profile_image: string;
     profile_image_90: string;
   };
-  children: Comment[];
+  children: CommentItemProps[];
 };

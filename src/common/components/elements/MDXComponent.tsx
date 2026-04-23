@@ -1,9 +1,12 @@
-import { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
+import type { Element } from 'hast';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 import cn from '@/common/libs/cn';
+import { feishuHtmlSanitizeSchema } from '@/common/libs/htmlSanitizer';
 
 import CodeBlock from './CodeBlock';
 
@@ -22,36 +25,98 @@ const Table = ({ children }: TableProps) => (
   </div>
 );
 
-const getColumnLayoutClassName = (className?: string) => {
-  if (!className) return null;
-  if (className.includes('columns-3')) {
-    return 'my-6 grid gap-6 md:grid-cols-3';
+const toAttributeString = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return undefined;
+};
+
+const getNodeAttribute = (node: Element | undefined, name: string) =>
+  toAttributeString(node?.properties?.[name]);
+
+const getColumnCount = (node: Element | undefined) => {
+  const value = Number(getNodeAttribute(node, 'column-size'));
+  return Number.isFinite(value) && value > 1 ? value : null;
+};
+
+const getColumnTemplate = (node: Element | undefined, columnCount: number) => {
+  const divChildren = node?.children.filter(
+    (child): child is Element =>
+      child.type === 'element' && child.tagName === 'div',
+  );
+
+  if (!divChildren || divChildren.length < columnCount) {
+    return null;
   }
-  if (className.includes('columns-2')) {
-    return 'my-6 grid gap-6 md:grid-cols-2';
+
+  const ratios = divChildren.slice(0, columnCount).map((child) => {
+    const ratio = Number(getNodeAttribute(child, 'width-ratio'));
+    return Number.isFinite(ratio) && ratio > 0 ? `${ratio}fr` : null;
+  });
+
+  return ratios.every(Boolean) ? ratios.join(' ') : null;
+};
+
+const getColumnLayoutProps = (node: Element | undefined) => {
+  const columnCount = getColumnCount(node);
+
+  if (!columnCount) return null;
+
+  const columnTemplate = getColumnTemplate(node, columnCount);
+
+  if (columnTemplate) {
+    return {
+      className:
+        'my-6 grid gap-6 md:[grid-template-columns:var(--feishu-columns)]',
+      style: {
+        '--feishu-columns': columnTemplate,
+      } as CSSProperties,
+    };
   }
+
+  if (columnCount === 3) {
+    return {
+      className: 'my-6 grid gap-6 md:grid-cols-3',
+      style: undefined,
+    };
+  }
+
+  if (columnCount === 2) {
+    return {
+      className: 'my-6 grid gap-6 md:grid-cols-2',
+      style: undefined,
+    };
+  }
+
   return null;
 };
 
-const isColumnItem = (className?: string) =>
-  Boolean(
-    className &&
-    (className.includes('w-[33%]') ||
-      className.includes('w-[50%]') ||
-      className.includes('width-ratio')),
-  );
+const isColumnItem = (node: Element | undefined) =>
+  Boolean(getNodeAttribute(node, 'width-ratio'));
 
 const toCodeValue = (children?: ReactNode) =>
   Array.isArray(children) ? children.join('') : String(children ?? '');
+
+const getImageAlignmentClassName = (align?: string) => {
+  if (align === 'center') return 'block mx-auto';
+  if (align === 'right') return 'block ml-auto';
+  if (align === 'left') return 'block mr-auto';
+  return null;
+};
 
 const MDXComponent = ({
   children,
   allowRawHtml = true,
 }: MarkdownRendererProps) => {
+  const rehypePlugins = allowRawHtml
+    ? [rehypeRaw, [rehypeSanitize, feishuHtmlSanitizeSchema] as const]
+    : [[rehypeSanitize, feishuHtmlSanitizeSchema] as const];
+
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={allowRawHtml ? [rehypeRaw] : []}
+      rehypePlugins={rehypePlugins}
       components={{
         h1: (props) => (
           <h1
@@ -71,18 +136,37 @@ const MDXComponent = ({
             {...props}
           />
         ),
-        div: ({ className, ...props }) => {
-          const columnLayoutClassName = getColumnLayoutClassName(className);
+        div: ({ className, node, ...props }) => {
+          const columnLayout = getColumnLayoutProps(
+            node as Element | undefined,
+          );
+          const domProps = {
+            ...props,
+          } as typeof props & Record<string, unknown>;
 
-          if (columnLayoutClassName) {
-            return <div className={columnLayoutClassName} {...props} />;
+          delete domProps['column-size'];
+          delete domProps['width-ratio'];
+
+          if (columnLayout) {
+            return (
+              <div
+                className={columnLayout.className}
+                style={columnLayout.style}
+                {...(domProps as typeof props)}
+              />
+            );
           }
 
-          if (isColumnItem(className)) {
-            return <div className='min-w-0 space-y-3' {...props} />;
+          if (isColumnItem(node as Element | undefined)) {
+            return (
+              <div
+                className='min-w-0 space-y-3'
+                {...(domProps as typeof props)}
+              />
+            );
           }
 
-          return <div className={className} {...props} />;
+          return <div className={className} {...(domProps as typeof props)} />;
         },
         h2: (props) => (
           <h2
@@ -171,14 +255,29 @@ const MDXComponent = ({
             {props.children}
           </td>
         ),
-        img: (props) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            {...props}
-            alt={props.alt || ''}
-            className='my-4 rounded-2xl border border-neutral-200 dark:border-neutral-700'
-          />
-        ),
+        img: ({ className, node, ...props }) => {
+          const domProps = {
+            ...props,
+          } as typeof props & Record<string, unknown>;
+
+          delete domProps['src-width'];
+          delete domProps['src-height'];
+
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              {...(domProps as typeof props)}
+              alt={props.alt || ''}
+              className={cn(
+                'my-4 rounded-2xl border border-neutral-200 dark:border-neutral-700',
+                getImageAlignmentClassName(
+                  getNodeAttribute(node as Element | undefined, 'align'),
+                ),
+                className,
+              )}
+            />
+          );
+        },
       }}
     >
       {children}
