@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useState } from 'react';
+import { Fragment, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { Combobox, Dialog, Transition } from '@headlessui/react';
@@ -22,7 +22,7 @@ import { useI18n } from '@/i18n';
 import AiLoading from '@/modules/cmdpallete/components/AiLoading';
 import AiResponses from '@/modules/cmdpallete/components/AiResponses';
 import QueryNotFound from '@/modules/cmdpallete/components/QueryNotFound';
-import { sendMessage } from '@/services/chatgpt';
+import { sendMessageStream } from '@/services/ai';
 import { fetcher } from '@/services/fetcher';
 
 interface MenuOptionItemProps extends MenuItemProps {
@@ -52,6 +52,8 @@ const CommandPalette = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
   const [aiFinished, setAiFinished] = useState(false);
+  const [aiStreaming, setAiStreaming] = useState(false);
+  const aiRequestControllerRef = useRef<AbortController | null>(null);
 
   const router = useRouter();
   const { messages } = useI18n();
@@ -175,20 +177,70 @@ const CommandPalette = () => {
   };
 
   const handleAskAiAssistant = async () => {
+    aiRequestControllerRef.current?.abort();
+
     setEmptyState(true);
     setAskAssistantClicked(true);
     setAiLoading(true);
+    setAiFinished(false);
+    setAiStreaming(true);
+    setAiResponse('');
 
-    const response = await sendMessage(queryDebounce);
+    const controller = new AbortController();
+    let hasReceivedChunk = false;
+    aiRequestControllerRef.current = controller;
 
-    setAiResponse(response);
-    setAiLoading(false);
+    await sendMessageStream({
+      prompt: queryDebounce,
+      locale: router.locale,
+      currentPath: router.asPath,
+      signal: controller.signal,
+      onChunk: (chunk) => {
+        if (aiRequestControllerRef.current !== controller) {
+          return;
+        }
+
+        hasReceivedChunk = true;
+        setAiLoading(false);
+        setAiResponse((prev) => prev + chunk);
+      },
+      onComplete: () => {
+        if (aiRequestControllerRef.current !== controller) {
+          return;
+        }
+
+        aiRequestControllerRef.current = null;
+        setAiStreaming(false);
+
+        if (!hasReceivedChunk) {
+          setAiLoading(false);
+        }
+      },
+      onError: (message) => {
+        if (aiRequestControllerRef.current !== controller) {
+          return;
+        }
+
+        aiRequestControllerRef.current = null;
+        setAiStreaming(false);
+        setAiLoading(false);
+        setAiResponse((prev) =>
+          prev
+            ? `${prev}\n\n> ${message}`
+            : message || 'AI 助手暫時不可用，請稍後再試。',
+        );
+      },
+    });
   };
 
   const handleAiClose = () => {
+    aiRequestControllerRef.current?.abort();
+    aiRequestControllerRef.current = null;
     setAskAssistantClicked(false);
     setAiResponse('');
     setAiFinished(false);
+    setAiLoading(false);
+    setAiStreaming(false);
   };
 
   const isActiveRoute = (href: string) => router.asPath.split('?')[0] === href;
@@ -231,12 +283,6 @@ const CommandPalette = () => {
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setIsOpen]);
-
-  useEffect(() => {
-    if (aiResponse?.includes('```')) {
-      setAiFinished(true);
-    }
-  }, [aiResponse]);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -399,6 +445,7 @@ const CommandPalette = () => {
                       <AiResponses
                         response={aiResponse}
                         isAiFinished={aiFinished}
+                        isStreaming={aiStreaming}
                         onAiFinished={() => setAiFinished(true)}
                         onAiClose={handleAiClose}
                       />
