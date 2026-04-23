@@ -4,9 +4,16 @@ import path from 'path';
 
 import { Article, ArticleIndex } from '@/common/types/blog';
 
-const DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
-const ARTICLES_DIR = path.join(DATA_DIR, 'articles');
-const PUBLIC_ASSETS_DIR = path.join(process.cwd(), 'public', 'feishu-assets');
+const SEEDED_DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
+const SEEDED_ARTICLES_DIR = path.join(SEEDED_DATA_DIR, 'articles');
+const LOCAL_CACHE_DATA_DIR = path.join(process.cwd(), '.cache', 'feishu-blog');
+const LOCAL_CACHE_ARTICLES_DIR = path.join(LOCAL_CACHE_DATA_DIR, 'articles');
+const LOCAL_CACHE_PUBLIC_ASSETS_DIR = path.join(
+  process.cwd(),
+  'public',
+  'local-feishu-assets',
+);
+const LOCAL_CACHE_ASSET_BASE_PATH = '/local-feishu-assets';
 
 const BLOB_PREFIX = 'feishu-blog';
 const BLOB_INDEX_PATH = `${BLOB_PREFIX}/index.json`;
@@ -41,44 +48,62 @@ const readJsonFile = async <T>(filePath: string) => {
   }
 };
 
+const readFirstJsonFile = async <T>(filePaths: string[]) => {
+  for (const filePath of filePaths) {
+    const content = await readJsonFile<T>(filePath);
+
+    if (content) {
+      return content;
+    }
+  }
+
+  return null;
+};
+
 const ensureLocalDirs = async () => {
   await Promise.all([
-    fs.mkdir(DATA_DIR, { recursive: true }),
-    fs.mkdir(ARTICLES_DIR, { recursive: true }),
-    fs.mkdir(PUBLIC_ASSETS_DIR, { recursive: true }),
+    fs.mkdir(LOCAL_CACHE_DATA_DIR, { recursive: true }),
+    fs.mkdir(LOCAL_CACHE_ARTICLES_DIR, { recursive: true }),
+    fs.mkdir(LOCAL_CACHE_PUBLIC_ASSETS_DIR, { recursive: true }),
   ]);
 };
 
 const localStorage: BlogStorageAdapter = {
   name: 'local',
   async readIndex() {
-    return readJsonFile<ArticleIndex>(path.join(DATA_DIR, 'index.json'));
+    return readFirstJsonFile<ArticleIndex>([
+      path.join(LOCAL_CACHE_DATA_DIR, 'index.json'),
+      path.join(SEEDED_DATA_DIR, 'index.json'),
+    ]);
   },
   async writeIndex(index) {
     await ensureLocalDirs();
     await fs.writeFile(
-      path.join(DATA_DIR, 'index.json'),
+      path.join(LOCAL_CACHE_DATA_DIR, 'index.json'),
       JSON.stringify(index, null, 2),
       'utf8',
     );
   },
   async readArticle(slug) {
-    return readJsonFile<Article>(path.join(ARTICLES_DIR, `${slug}.json`));
+    return readFirstJsonFile<Article>([
+      path.join(LOCAL_CACHE_ARTICLES_DIR, `${slug}.json`),
+      path.join(SEEDED_ARTICLES_DIR, `${slug}.json`),
+    ]);
   },
   async writeArticle(article) {
     await ensureLocalDirs();
     await fs.writeFile(
-      path.join(ARTICLES_DIR, `${article.slug}.json`),
+      path.join(LOCAL_CACHE_ARTICLES_DIR, `${article.slug}.json`),
       JSON.stringify(article, null, 2),
       'utf8',
     );
   },
   async writeAsset({ body, pathname: filePath }) {
     await ensureLocalDirs();
-    const localPath = path.join(PUBLIC_ASSETS_DIR, filePath);
+    const localPath = path.join(LOCAL_CACHE_PUBLIC_ASSETS_DIR, filePath);
     await fs.mkdir(path.dirname(localPath), { recursive: true });
     await fs.writeFile(localPath, new Uint8Array(body));
-    return `/feishu-assets/${filePath}`;
+    return `${LOCAL_CACHE_ASSET_BASE_PATH}/${filePath}`;
   },
 };
 

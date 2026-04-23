@@ -17,6 +17,8 @@
 .DS_Store
 *.pem
 output/
+.cache/feishu-blog/
+public/local-feishu-assets/
 
 # debug
 npm-debug.log*
