@@ -125,11 +125,11 @@ cp .env.example .env.local
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SITE_URL=http://localhost:3000
+IMAGE_REMOTE_HOSTS=
 
 FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_SPACE_ID=
-FEISHU_SYNC_TTL_SECONDS=600
 ```
 
 ### 3. 從飛書同步內容
@@ -157,10 +157,18 @@ pnpm dev
 | `FEISHU_APP_ID`           | Yes      | 飛書應用憑證                          |
 | `FEISHU_APP_SECRET`       | Yes      | 飛書應用憑證                          |
 | `FEISHU_SPACE_ID`         | Yes      | 目標飛書知識庫 space                  |
-| `FEISHU_SYNC_TTL_SECONDS` | No       | 同步快取 TTL                          |
 | `BLOB_READ_WRITE_TOKEN`   | Optional | 在生產環境啟用 Vercel Blob            |
 | `CRON_SECRET`             | Optional | 保護定時同步端點                      |
 | `NEXT_PUBLIC_FIREBASE_*`  | Optional | 啟用 guestbook 與 chat widget 功能    |
+| `FIREBASE_ADMIN_*`        | Optional | 啟用 guestbook API 層與服務端驗證     |
+| `GUESTBOOK_ADMIN_UIDS`    | Optional | 允許在留言板頁面執行隱藏/刪除的 UID   |
+| `IMAGE_REMOTE_HOSTS`      | Optional | 額外允許的遠端圖片 host 清單          |
+| `CONTACT_FORM_API_KEY`    | Optional | 聯絡表單送信金鑰                      |
+| `DEVTO_KEY`               | Optional | dev.to 讀取 API 金鑰                  |
+| `GITHUB_READ_USER_TOKEN_PERSONAL` | Optional | GitHub GraphQL 讀取 Token      |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing 與裝置資料 |
+| `WAKATIME_API_KEY`        | Optional | WakaTime 統計資料                     |
+| `MINIMAX_SYSTEM_PROMPT`   | Optional | Command Palette AI 的系統提示詞       |
 
 ## 內容工作流
 
