@@ -11,6 +11,11 @@ type ImageProps = {
   fallbackSrc?: NextImageProps['src'];
 } & NextImageProps;
 
+const shouldBypassOptimizer = (src: NextImageProps['src']) =>
+  typeof src === 'string' &&
+  (src.startsWith('/feishu-assets/') ||
+    src.startsWith('/local-feishu-assets/'));
+
 const Image = (props: ImageProps) => {
   const { alt, src, className, rounded, priority, fallbackSrc, ...rest } =
     props;
@@ -44,6 +49,7 @@ const Image = (props: ImageProps) => {
         src={currentSrc}
         alt={alt}
         priority={priority}
+        unoptimized={shouldBypassOptimizer(currentSrc)}
         onLoad={() => setLoading(false)}
         onError={() => {
           if (fallbackSrc && currentSrc !== fallbackSrc) {
