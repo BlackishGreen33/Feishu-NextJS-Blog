@@ -3,25 +3,29 @@ import Image from 'next/image';
 import clsx from 'clsx';
 import { BsSpotify as SpotifyIcon } from 'react-icons/bs';
 import { MdClose as CloseIcon } from 'react-icons/md';
-import useSWR from 'swr';
 
 import { NowPlayingProps } from '@/common/types/spotify';
-import { fetcher } from '@/services/fetcher';
 
 import AnimatedBars from './AnimatedBars';
 
-const NowPlayingCard = ({ isExpand = false }: { isExpand?: boolean }) => {
-  const { data } = useSWR<NowPlayingProps>('/api/now-playing', fetcher);
-
+const NowPlayingCard = ({
+  isExpand = false,
+  playingData,
+}: {
+  isExpand?: boolean;
+  playingData: NowPlayingProps;
+}) => {
   const [expand, setExpand] = useState(isExpand);
 
   const trimmedSongTitle =
-    data?.title &&
-    data?.title.slice(0, 40) + (data?.title?.length > 40 ? '...' : '');
+    playingData?.title &&
+    playingData.title.slice(0, 40) +
+      (playingData?.title?.length > 40 ? '...' : '');
 
   const trimmedSongArtist =
-    data?.artist &&
-    data?.artist.slice(0, 20) + (data?.artist?.length > 20 ? '...' : '');
+    playingData?.artist &&
+    playingData.artist.slice(0, 20) +
+      (playingData?.artist?.length > 20 ? '...' : '');
 
   const handleOpenSongUrl = (url?: string) => {
     url && window.open(url, '_blank');
@@ -29,12 +33,12 @@ const NowPlayingCard = ({ isExpand = false }: { isExpand?: boolean }) => {
 
   const handleMusicToggle = () => setExpand(!expand);
 
-  if (!data?.songUrl) return null;
+  if (!playingData?.songUrl) return null;
 
   return (
     <div
       className={clsx(
-        'fixed bottom-0 z-2 w-full p-3',
+        'fixed bottom-0 z-2 w-full p-3 lg:hidden',
         !expand && 'flex justify-end',
       )}
     >
@@ -48,19 +52,19 @@ const NowPlayingCard = ({ isExpand = false }: { isExpand?: boolean }) => {
       ) : (
         <div className='mt-5 flex items-center justify-between rounded-md bg-green-400 px-3 py-2 text-neutral-800 dark:bg-green-500 dark:text-neutral-900'>
           <div className='flex items-center gap-3'>
-            {data?.albumImageUrl && (
+            {playingData?.albumImageUrl && (
               <Image
                 className='rounded-md'
                 unoptimized
-                alt={data?.album}
-                src={data?.albumImageUrl}
+                alt={playingData?.album}
+                src={playingData?.albumImageUrl}
                 width={60}
                 height={60}
               />
             )}
             <div
               className='flex flex-col pt-0.5 hover:cursor-pointer hover:underline'
-              onClick={() => handleOpenSongUrl(data?.songUrl)}
+              onClick={() => handleOpenSongUrl(playingData?.songUrl)}
             >
               <div className='text-sm font-medium'>{trimmedSongTitle}</div>
               <div className='flex items-center gap-2 text-xs'>

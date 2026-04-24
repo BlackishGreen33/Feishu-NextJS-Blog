@@ -6,14 +6,16 @@ import { CommandPaletteContext } from '@/common/context/CommandPaletteContext';
 import { useI18n } from '@/i18n';
 
 const SearchBox = () => {
-  const { setIsOpen } = useContext(CommandPaletteContext);
+  const { openPalette, preloadPalette } = useContext(CommandPaletteContext);
   const { messages } = useI18n();
 
   return (
     <button
       type='button'
       aria-label={messages.common.searchArticles}
-      onClick={() => setIsOpen(true)}
+      onClick={openPalette}
+      onFocus={preloadPalette}
+      onMouseEnter={preloadPalette}
       className='flex w-full items-center gap-3 rounded-lg border-[1.8px] border-neutral-300 bg-neutral-100 px-3 py-2 text-neutral-500 backdrop-blur transition-all duration-300 hover:border-teal-400 hover:text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:text-neutral-200'
     >
       <FiSearch size={20} />

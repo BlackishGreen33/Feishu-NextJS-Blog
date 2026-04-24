@@ -2,28 +2,22 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Popover } from '@headlessui/react';
 import { BsSpotify as SpotifyIcon } from 'react-icons/bs';
-import useSWR from 'swr';
 
 import { DeviceProps, NowPlayingProps } from '@/common/types/spotify';
-import { fetcher } from '@/services/fetcher';
 
 import AnimatedBars from './AnimatedBars';
 import DevicePopover from './DevicePopover';
 import PlayerPopover from './PlayerPopover';
 
-const NowPlayingBar = () => {
+const NowPlayingBar = ({
+  devicesData = [],
+  playingData,
+}: {
+  devicesData?: DeviceProps[];
+  playingData: NowPlayingProps;
+}) => {
   const [isShowDeviceList, setShowDeviceList] = useState(false);
   const [isShowPlayingInfo, setShowPlayingInfo] = useState(false);
-
-  const { data: playingData } = useSWR<NowPlayingProps>(
-    '/api/now-playing',
-    fetcher,
-  );
-
-  const { data: devicesData = [] } = useSWR<DeviceProps[]>(
-    '/api/available-devices',
-    fetcher,
-  );
 
   const activeDevice = devicesData?.find((device) => device.is_active);
 
