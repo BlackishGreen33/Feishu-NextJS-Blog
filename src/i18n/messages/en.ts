@@ -236,12 +236,20 @@ const enMessages: Messages = {
   },
   guestbook: {
     widgetTitle: 'Guestbook',
+    empty: 'No messages yet. Be the first one to leave a note.',
     pageAuthPrompt:
       'Please sign in before leaving a message. Your profile is only used to identify your posts.',
     widgetUnavailable: 'The guestbook widget is not configured yet.',
     pageUnavailable:
       'Firebase is not configured for the guestbook yet, so the page is not available.',
     inputPlaceholder: 'Write a message...',
+    hideAction: 'Hide message',
+    deleteAction: 'Delete message',
+    loadMore: 'Load older messages',
+    loadingMore: 'Loading older messages...',
+    sendFailed: 'Unable to send the message right now.',
+    deleteFailed: 'Unable to delete the message right now.',
+    moderationFailed: 'Unable to update the message status right now.',
     signInWithGoogle: 'Continue with Google',
     signInWithGithub: 'Continue with GitHub',
     checkingAuth: 'Checking sign-in status...',
