@@ -170,6 +170,9 @@ importers:
       '@types/aos':
         specifier: ^3.0.7
         version: 3.0.7
+      '@types/hast':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -203,9 +206,6 @@ importers:
       eslint-plugin-simple-import-sort:
         specifier: ^13.0.0
         version: 13.0.0(eslint@9.39.4(jiti@2.6.1))
-      hast:
-        specifier: ^1.0.0
-        version: 1.0.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -2716,12 +2716,6 @@ packages:
         integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==,
       }
 
-  '@types/unist@2.0.6':
-    resolution:
-      {
-        integrity: sha512-PBjIUxZHOuj0R15/xuwJYjFi+KZdNFrehocChv4g5hu6aFroHue8m0lBP0POdK2nKzbw0cgV1mws8+V/JAcEkQ==,
-      }
-
   '@types/unist@3.0.3':
     resolution:
       {
@@ -4993,13 +4987,6 @@ packages:
       {
         integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==,
       }
-
-  hast@1.0.0:
-    resolution:
-      {
-        integrity: sha512-vFUqlRV5C+xqP76Wwq2SrM0kipnmpxJm7OfvVXpB35Fp+Fn4MV+ozr+JZr5qFvyR1q/U+Foim2x+3P+x9S1PLA==,
-      }
-    deprecated: Renamed to rehype
 
   hastscript@9.0.1:
     resolution:
@@ -10639,7 +10626,7 @@ snapshots:
 
   '@types/hast@3.0.4':
     dependencies:
-      '@types/unist': 2.0.6
+      '@types/unist': 3.0.3
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
@@ -10721,8 +10708,6 @@ snapshots:
   '@types/trusted-types@2.0.7': {}
 
   '@types/unist@2.0.11': {}
-
-  '@types/unist@2.0.6': {}
 
   '@types/unist@3.0.3': {}
 
@@ -12440,8 +12425,6 @@ snapshots:
   hast-util-whitespace@3.0.0:
     dependencies:
       '@types/hast': 3.0.4
-
-  hast@1.0.0: {}
 
   hastscript@9.0.1:
     dependencies:
