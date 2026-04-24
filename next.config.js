@@ -1,4 +1,5 @@
 const DEFAULT_REMOTE_IMAGE_HOSTS = [
+  '**.public.blob.vercel-storage.com',
   'avatars.githubusercontent.com',
   'i.scdn.co',
   'image-cdn-ak.spotifycdn.com',
