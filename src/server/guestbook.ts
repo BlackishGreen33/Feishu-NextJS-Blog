@@ -198,6 +198,48 @@ const getSnapshotMessages = (snapshot: DataSnapshot) => {
   return messages.sort(sortGuestbookMessages);
 };
 
+const isMissingGuestbookIndexError = (error: unknown) =>
+  error instanceof Error &&
+  error.message.includes('Index not defined') &&
+  error.message.includes('created_at');
+
+const paginateVisibleMessages = ({
+  cursor,
+  messages,
+  requestedLimit,
+}: {
+  cursor?: string | null;
+  messages: MessageProps[];
+  requestedLimit: number;
+}) => {
+  const boundary = decodeCursor(cursor);
+  const visibleMessages = messages.filter(
+    (message) => message.status === 'published',
+  );
+  const filteredMessages = boundary
+    ? visibleMessages.filter(
+        (message) =>
+          message.created_at < boundary.created_at ||
+          (message.created_at === boundary.created_at &&
+            message.id !== boundary.id),
+      )
+    : visibleMessages;
+  const pageMessages = filteredMessages.slice(-requestedLimit);
+  const nextCursor =
+    filteredMessages.length > requestedLimit && pageMessages.length > 0
+      ? encodeCursor({
+          created_at: pageMessages[0].created_at,
+          id: pageMessages[0].id,
+        })
+      : null;
+
+  return {
+    hasMore: Boolean(nextCursor),
+    messages: pageMessages,
+    nextCursor,
+  };
+};
+
 const getAuthorizationToken = (authorizationHeader?: string | null) => {
   if (!authorizationHeader?.startsWith('Bearer ')) {
     return null;
@@ -307,6 +349,19 @@ export const listGuestbookMessages = async ({
   const { guestbookPath } = getGuestbookPaths();
   const requestedLimit = clampPageSize(limit);
   const batchSize = Math.min(Math.max(requestedLimit * 3, 30), 120);
+  const readPageWithFallback = async () => {
+    const fallbackSnapshot = await database.ref(guestbookPath).get();
+    const fallbackMessages = fallbackSnapshot.exists()
+      ? getSnapshotMessages(fallbackSnapshot)
+      : [];
+
+    return paginateVisibleMessages({
+      cursor,
+      messages: fallbackMessages,
+      requestedLimit,
+    });
+  };
+
   const collected: MessageProps[] = [];
   const seenIds = new Set<string>();
 
@@ -324,9 +379,23 @@ export const listGuestbookMessages = async ({
       query = query.endAt(boundary.created_at);
     }
 
-    const snapshot = await query
-      .limitToLast(batchSize + (boundary ? 1 : 0))
-      .get();
+    let snapshot: DataSnapshot;
+
+    try {
+      snapshot = await query.limitToLast(batchSize + (boundary ? 1 : 0)).get();
+    } catch (error) {
+      if (isMissingGuestbookIndexError(error)) {
+        const fallbackPage = await readPageWithFallback();
+
+        return {
+          configured: true,
+          ...fallbackPage,
+          viewer: viewerAuth.viewer,
+        };
+      }
+
+      throw error;
+    }
 
     if (!snapshot.exists()) {
       exhausted = true;
