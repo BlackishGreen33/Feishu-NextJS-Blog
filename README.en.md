@@ -126,11 +126,11 @@ At minimum, configure these Feishu sync variables:
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SITE_URL=http://localhost:3000
+IMAGE_REMOTE_HOSTS=
 
 FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_SPACE_ID=
-FEISHU_SYNC_TTL_SECONDS=600
 ```
 
 ### 3. Sync content from Feishu
@@ -151,17 +151,25 @@ When Feishu credentials are configured, `predev` attempts one sync before the ap
 
 ## Environment Variables
 
-| Variable                  | Required | Purpose                                        |
-| ------------------------- | -------- | ---------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`    | Yes      | Public site URL used by SEO, sitemap and links |
-| `SITE_URL`                | Yes      | Server-side canonical URL fallback             |
-| `FEISHU_APP_ID`           | Yes      | Feishu app credential                          |
-| `FEISHU_APP_SECRET`       | Yes      | Feishu app credential                          |
-| `FEISHU_SPACE_ID`         | Yes      | Target Feishu knowledge base space             |
-| `FEISHU_SYNC_TTL_SECONDS` | No       | Sync cache TTL                                 |
-| `BLOB_READ_WRITE_TOKEN`   | Optional | Enable Vercel Blob in production               |
-| `CRON_SECRET`             | Optional | Protect the cron sync endpoint                 |
-| `NEXT_PUBLIC_FIREBASE_*`  | Optional | Enable guestbook and chat widget flows         |
+| Variable                                                                | Required | Purpose                                                      |
+| ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------ |
+| `NEXT_PUBLIC_SITE_URL`                                                  | Yes      | Public site URL used by SEO, sitemap and links               |
+| `SITE_URL`                                                              | Yes      | Server-side canonical URL fallback                           |
+| `FEISHU_APP_ID`                                                         | Yes      | Feishu app credential                                        |
+| `FEISHU_APP_SECRET`                                                     | Yes      | Feishu app credential                                        |
+| `FEISHU_SPACE_ID`                                                       | Yes      | Target Feishu knowledge base space                           |
+| `BLOB_READ_WRITE_TOKEN`                                                 | Optional | Enable Vercel Blob in production                             |
+| `CRON_SECRET`                                                           | Optional | Protect the cron sync endpoint                               |
+| `NEXT_PUBLIC_FIREBASE_*`                                                | Optional | Enable guestbook and chat widget flows                       |
+| `FIREBASE_ADMIN_*`                                                      | Optional | Enable the guestbook API layer and server-side verification  |
+| `GUESTBOOK_ADMIN_UIDS`                                                  | Optional | UID allowlist for hide/delete controls on the guestbook page |
+| `IMAGE_REMOTE_HOSTS`                                                    | Optional | Extra remote image hosts to allow                            |
+| `CONTACT_FORM_API_KEY`                                                  | Optional | Contact form delivery key                                    |
+| `DEVTO_KEY`                                                             | Optional | dev.to read API key                                          |
+| `GITHUB_READ_USER_TOKEN_PERSONAL`                                       | Optional | GitHub GraphQL read token                                    |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing and device data                          |
+| `WAKATIME_API_KEY`                                                      | Optional | WakaTime stats                                               |
+| `MINIMAX_SYSTEM_PROMPT`                                                 | Optional | System prompt override for Command Palette AI                |
 
 ## Content Workflow
 

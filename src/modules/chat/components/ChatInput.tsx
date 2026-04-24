@@ -43,7 +43,10 @@ const ChatInput = ({
 
   return (
     <>
-      <form className='flex items-center gap-x-1 border-t border-neutral-300 p-4 pb-3 dark:border-neutral-800'>
+      <form
+        className='flex items-center gap-x-1 border-t border-neutral-300 p-4 pb-3 dark:border-neutral-800'
+        onSubmit={handleSendMessage}
+      >
         <input
           type='text'
           value={message}
@@ -56,7 +59,6 @@ const ChatInput = ({
         />
         <button
           type='submit'
-          onClick={handleSendMessage}
           className={clsx(
             'ml-2 rounded-md bg-sky-600 p-3 text-white',
             !message.trim() && 'cursor-not-allowed !bg-neutral-600',

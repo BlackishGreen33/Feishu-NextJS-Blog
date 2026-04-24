@@ -1,3 +1,24 @@
+const DEFAULT_REMOTE_IMAGE_HOSTS = [
+  'avatars.githubusercontent.com',
+  'i.scdn.co',
+  'image-cdn-ak.spotifycdn.com',
+  'lh3.googleusercontent.com',
+  'mosaic.scdn.co',
+];
+
+const parseRemoteImageHosts = (value) =>
+  (value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const remoteImageHosts = [
+  ...new Set([
+    ...DEFAULT_REMOTE_IMAGE_HOSTS,
+    ...parseRemoteImageHosts(process.env.IMAGE_REMOTE_HOSTS),
+  ]),
+];
+
 const nextConfig = {
   reactStrictMode: true,
   // Pages Router API routes rely on feishu-docx at runtime; bundle server deps
@@ -32,12 +53,10 @@ const nextConfig = {
         search: '?key=ccnu',
       },
     ],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    remotePatterns: remoteImageHosts.map((hostname) => ({
+      hostname,
+      protocol: 'https',
+    })),
   },
 };
 

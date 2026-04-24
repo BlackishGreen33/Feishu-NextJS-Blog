@@ -269,21 +269,6 @@ const CommandPalette = () => {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        setIsOpen(true);
-      } else if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setIsOpen]);
-
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog

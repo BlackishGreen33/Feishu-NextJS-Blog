@@ -156,10 +156,18 @@ export type Messages = {
   };
   guestbook: {
     widgetTitle: string;
+    empty: string;
     pageAuthPrompt: string;
     widgetUnavailable: string;
     pageUnavailable: string;
     inputPlaceholder: string;
+    hideAction: string;
+    deleteAction: string;
+    loadMore: string;
+    loadingMore: string;
+    sendFailed: string;
+    deleteFailed: string;
+    moderationFailed: string;
     signInWithGoogle: string;
     signInWithGithub: string;
     checkingAuth: string;

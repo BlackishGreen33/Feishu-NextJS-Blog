@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { Article, ArticleIndex } from '@/common/types/blog';
+import { getServerEnv } from '@/server/env';
 
 const SEEDED_DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
 const SEEDED_ARTICLES_DIR = path.join(SEEDED_DATA_DIR, 'articles');
@@ -164,9 +165,8 @@ const blobStorage: BlogStorageAdapter = {
 };
 
 export const getBlogStorage = (): BlogStorageAdapter => {
-  const shouldUseBlob = Boolean(
-    process.env.VERCEL && process.env.BLOB_READ_WRITE_TOKEN,
-  );
+  const { blobReadWriteToken, isVercel } = getServerEnv();
+  const shouldUseBlob = Boolean(isVercel && blobReadWriteToken);
 
   return shouldUseBlob ? blobStorage : localStorage;
 };

@@ -11,11 +11,7 @@ import {
   TopTracksResponseProps,
   TrackProps,
 } from '@/common/types/spotify';
-
-const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN;
-const TOKEN = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+import { getServerEnv } from '@/server/env';
 
 const BASE_URL = 'https://api.spotify.com/v1';
 const AVAILABLE_DEVICES_ENDPOINT = `${BASE_URL}/me/player/devices`;
@@ -23,8 +19,20 @@ const NOW_PLAYING_ENDPOINT = `${BASE_URL}/me/player/currently-playing`;
 const TOP_TRACKS_ENDPOINT = `${BASE_URL}/me/top/tracks`;
 const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`;
 
-const hasSpotifyCredentials = () =>
-  Boolean(CLIENT_ID && CLIENT_SECRET && REFRESH_TOKEN);
+const getSpotifyCredentials = () => {
+  const { spotify } = getServerEnv();
+
+  return {
+    clientId: spotify.clientId,
+    clientSecret: spotify.clientSecret,
+    refreshToken: spotify.refreshToken,
+  };
+};
+
+const hasSpotifyCredentials = () => {
+  const { clientId, clientSecret, refreshToken } = getSpotifyCredentials();
+  return Boolean(clientId && clientSecret && refreshToken);
+};
 
 const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
   if (!hasSpotifyCredentials()) {
@@ -33,15 +41,18 @@ const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
     };
   }
 
+  const { clientId, clientSecret, refreshToken } = getSpotifyCredentials();
+  const token = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
   const response = await axios.post(
     TOKEN_ENDPOINT,
     querystring.stringify({
       grant_type: 'refresh_token',
-      refresh_token: REFRESH_TOKEN,
+      refresh_token: refreshToken,
     }),
     {
       headers: {
-        Authorization: `Basic ${TOKEN}`,
+        Authorization: `Basic ${token}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     },

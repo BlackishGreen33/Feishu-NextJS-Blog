@@ -1,20 +1,23 @@
 import clsx from 'clsx';
-import { FiTrash2 as DeleteIcon } from 'react-icons/fi';
+import { FiEyeOff as HideIcon, FiTrash2 as DeleteIcon } from 'react-icons/fi';
 import { MdAdminPanelSettings as AdminIcon } from 'react-icons/md';
 
 import Image from '@/common/components/elements/Image';
 import { SITE_CONTACT_EMAIL, SITE_PROFILE_IMAGE } from '@/common/config/site';
-import { MessageProps } from '@/common/types/chat';
+import { GuestbookModerationStatus, MessageProps } from '@/common/types/chat';
 import { useI18n } from '@/i18n';
 
 import ChatTime from './ChatTime';
 
 interface ChatItemProps extends MessageProps {
+  canModerate?: boolean;
   onDelete: (id: string) => void;
+  onModerate: (id: string, status: GuestbookModerationStatus) => void;
   currentUserUid?: string | null;
 }
 
 const ChatItem = ({
+  canModerate = false,
   id,
   uid,
   image,
@@ -22,13 +25,18 @@ const ChatItem = ({
   email,
   message,
   created_at,
+  status,
   onDelete,
+  onModerate,
   currentUserUid,
 }: ChatItemProps) => {
   const { messages } = useI18n();
   const authorEmail = SITE_CONTACT_EMAIL;
   const avatarSrc = image || SITE_PROFILE_IMAGE;
-  const canDelete = Boolean(currentUserUid && uid && currentUserUid === uid);
+  const canDelete = Boolean(
+    currentUserUid && (currentUserUid === uid || canModerate),
+  );
+  const canHide = Boolean(canModerate && status === 'published');
 
   const pattern = /@([^:]+):/g;
   const modifiedMessage = message?.split(pattern).map((part, index) => {
@@ -44,6 +52,10 @@ const ChatItem = ({
 
   const handleDeleteMessage = () => {
     onDelete(id);
+  };
+
+  const handleHideMessage = () => {
+    onModerate(id, 'hidden');
   };
 
   return (
@@ -89,9 +101,20 @@ const ChatItem = ({
             {modifiedMessage}
           </p>
           <div className='flex items-center gap-3'>
+            {canHide && (
+              <HideIcon
+                size={17}
+                title={messages.guestbook.hideAction}
+                aria-label={messages.guestbook.hideAction}
+                className='hidden cursor-pointer text-amber-500 group-hover:flex'
+                onClick={handleHideMessage}
+              />
+            )}
             {canDelete && (
               <DeleteIcon
                 size={17}
+                title={messages.guestbook.deleteAction}
+                aria-label={messages.guestbook.deleteAction}
                 className='hidden cursor-pointer text-red-500 group-hover:flex'
                 onClick={handleDeleteMessage}
               />

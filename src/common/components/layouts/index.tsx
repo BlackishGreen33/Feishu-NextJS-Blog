@@ -1,18 +1,21 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import clsx from 'clsx';
-import { useWindowSize } from 'usehooks-ts';
 
 import useHasMounted from '@/common/hooks/useHasMounted';
 import ChatButton from '@/modules/chat/components/ChatButton';
 
 import HeaderSidebar from './header/HeaderSidebar';
 import HeaderTop from './header/HeaderTop';
-import NowPlayingBar from '../elements/NowPlayingBar';
-import NowPlayingCard from '../elements/NowPlayingCard';
 
 // import TopBar from '../elements/TopBar';
+
+const NowPlayingDock = dynamic(
+  () => import('@/common/components/elements/NowPlayingDock'),
+  { ssr: false },
+);
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,8 +24,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { resolvedTheme } = useTheme();
   const hasMounted = useHasMounted();
-  const { width } = useWindowSize();
-  const isMobile = width < 480;
+  const [shouldRenderNowPlaying, setShouldRenderNowPlaying] = useState(false);
 
   const isDarkTheme =
     hasMounted && (resolvedTheme === 'dark' || resolvedTheme === 'system');
@@ -36,6 +38,28 @@ const Layout = ({ children }: LayoutProps) => {
     router.pathname.startsWith('/blog/') ||
     router.pathname.startsWith('/learn/');
   const isShowChatButton = pageName !== 'guestbook';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const idleCallback = window.requestIdleCallback?.(
+      () => setShouldRenderNowPlaying(true),
+      { timeout: 1500 },
+    );
+    const timeoutId = window.setTimeout(() => {
+      setShouldRenderNowPlaying(true);
+    }, 1800);
+
+    return () => {
+      if (idleCallback) {
+        window.cancelIdleCallback?.(idleCallback);
+      }
+
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
     <>
@@ -61,7 +85,7 @@ const Layout = ({ children }: LayoutProps) => {
         )}
       </div>
       {isShowChatButton && <ChatButton />}
-      {isMobile ? <NowPlayingCard /> : <NowPlayingBar />}
+      {shouldRenderNowPlaying ? <NowPlayingDock /> : null}
     </>
   );
 };

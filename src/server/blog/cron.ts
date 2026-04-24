@@ -1,7 +1,9 @@
 import { NextApiRequest } from 'next';
 
+import { getServerEnv } from '@/server/env';
+
 export const authorizeCronRequest = (req: NextApiRequest) => {
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = getServerEnv().cronSecret;
   const authHeader = req.headers.authorization;
 
   if (!cronSecret) {

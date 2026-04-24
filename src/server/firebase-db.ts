@@ -1,10 +1,11 @@
+import { getPublicEnv } from '@/common/config/env';
 import { ProjectItemProps } from '@/common/types/projects';
 
 const PROJECTS_PATH = 'projects';
 const CONTENT_META_PATH = 'contentmeta';
 
 const getFirebaseDatabaseUrl = () =>
-  process.env.NEXT_PUBLIC_FIREBASE_DB_URL?.trim().replace(/\/$/, '') || '';
+  getPublicEnv().firebase.databaseUrl.replace(/\/$/, '') || '';
 
 const hasFirebaseDatabaseUrl = () => Boolean(getFirebaseDatabaseUrl());
 
