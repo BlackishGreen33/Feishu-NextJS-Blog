@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-const API_KEY = process.env.WAKATIME_API_KEY;
-const AUTHORIZATION_HEADER = API_KEY
-  ? `Basic ${Buffer.from(API_KEY).toString('base64')}`
-  : '';
+import { getServerEnv } from '@/server/env';
 
 const STATS_ENDPOINT = 'https://wakatime.com/api/v1/users/current/stats';
 const ALL_TIME_SINCE_TODAY =
@@ -35,14 +32,18 @@ export const getReadStats = async (): Promise<{
   status: number;
   data: any;
 }> => {
-  if (!API_KEY) {
+  const apiKey = getServerEnv().wakatimeApiKey;
+
+  if (!apiKey) {
     return { status: 200, data: createEmptyStats(false) };
   }
+
+  const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
     const response = await axios.get(`${STATS_ENDPOINT}/last_7_days`, {
       headers: {
-        Authorization: AUTHORIZATION_HEADER,
+        Authorization: authorizationHeader,
       },
     });
 
@@ -96,14 +97,18 @@ export const getAllTimeSinceToday = async (): Promise<{
   status: number;
   data: any;
 }> => {
-  if (!API_KEY) {
+  const apiKey = getServerEnv().wakatimeApiKey;
+
+  if (!apiKey) {
     return { status: 200, data: createEmptyAllTime(false) };
   }
+
+  const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
     const response = await axios.get(ALL_TIME_SINCE_TODAY, {
       headers: {
-        Authorization: AUTHORIZATION_HEADER,
+        Authorization: authorizationHeader,
       },
     });
 

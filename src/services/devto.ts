@@ -2,13 +2,12 @@ import axios from 'axios';
 
 import { SITE_DEVTO_USERNAME } from '@/common/config/site';
 import { BlogItemProps } from '@/common/types/blog';
+import { getServerEnv } from '@/server/env';
 
 const BASE_URL = 'https://dev.to/api/';
 const BLOG_URL = `${BASE_URL}articles/`;
 const COMMENT_URL = `${BASE_URL}comments`;
 const USERNAME = SITE_DEVTO_USERNAME;
-
-const DEVTO_KEY = process.env.DEVTO_KEY as string;
 
 type BlogParamsProps = {
   page?: number;
@@ -34,7 +33,7 @@ export const getBlogData = async ({
 
   const response = await axios.get(`${BLOG_URL}me?${params.toString()}`, {
     headers: {
-      'api-key': DEVTO_KEY,
+      'api-key': getServerEnv().devtoKey,
     },
   });
 
@@ -72,7 +71,7 @@ export const getBlogDetail = async ({
 
   const response = await axios.get(`${BLOG_URL}/${id}?${params.toString()}`, {
     headers: {
-      'api-key': DEVTO_KEY,
+      'api-key': getServerEnv().devtoKey,
     },
   });
 
@@ -101,7 +100,7 @@ export const getBlogComment = async ({
 
   const response = await axios.get(`${COMMENT_URL}/?a_id=${post_id}`, {
     headers: {
-      'api-key': DEVTO_KEY,
+      'api-key': getServerEnv().devtoKey,
     },
   });
 
@@ -130,7 +129,7 @@ export const getBlogViews = async ({
 
   const response = await axios.get(`${BLOG_URL}me/all`, {
     headers: {
-      'api-key': DEVTO_KEY,
+      'api-key': getServerEnv().devtoKey,
     },
   });
 

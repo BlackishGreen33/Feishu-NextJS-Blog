@@ -11,6 +11,7 @@ import {
   ArticleSummary,
   ArticleTag,
 } from '@/common/types/blog';
+import { getServerEnv } from '@/server/env';
 
 import { FeishuClient, FeishuWikiNode } from './feishu';
 import { getBlogStorage } from './storage';
@@ -58,7 +59,7 @@ type RawArticle = {
 
 const baseRequiredEnvKeys = ['FEISHU_APP_ID', 'FEISHU_APP_SECRET'] as const;
 
-const getSyncSpaceId = () => process.env.FEISHU_SPACE_ID?.trim();
+const getSyncSpaceId = () => getServerEnv().feishu.spaceId;
 
 const getMissingEnvKeys = () => {
   const missing: string[] = baseRequiredEnvKeys.filter(
@@ -292,10 +293,10 @@ export const syncFeishuArticles = async (
     throw new Error(`Missing Feishu env vars: ${missingEnvKeys.join(', ')}`);
   }
 
-  const client = new FeishuClient(
-    process.env.FEISHU_APP_ID as string,
-    process.env.FEISHU_APP_SECRET as string,
-  );
+  const {
+    feishu: { appId, appSecret },
+  } = getServerEnv();
+  const client = new FeishuClient(appId, appSecret);
 
   const spaceId = getSyncSpaceId();
 

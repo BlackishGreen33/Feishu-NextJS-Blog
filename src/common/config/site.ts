@@ -1,10 +1,8 @@
+import { getPublicEnv } from '@/common/config/env';
 import { useI18n } from '@/i18n';
 import { getMessages } from '@/i18n';
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.SITE_URL ||
-  'http://localhost:3000';
+export const SITE_URL = getPublicEnv().siteUrl || 'http://localhost:3000';
 export const SITE_PROFILE_HANDLE = '@BlackishGreen33';
 export const SITE_PROFILE_IMAGE =
   'https://avatars.githubusercontent.com/u/103036558?v=4';

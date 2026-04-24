@@ -1,8 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { getServerEnv } from '@/server/env';
 import { sendMessage } from '@/services/contact';
-
-const FORM_API_KEY = process.env.CONTACT_FORM_API_KEY as string;
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,9 +9,10 @@ export default async function handler(
 ) {
   try {
     const { formData } = req.body;
+    const { contactFormApiKey } = getServerEnv();
 
     const updatedFormData = new FormData();
-    updatedFormData.append('access_key', FORM_API_KEY);
+    updatedFormData.append('access_key', contactFormApiKey);
 
     for (const key in formData) {
       updatedFormData.append(key, formData[key]);

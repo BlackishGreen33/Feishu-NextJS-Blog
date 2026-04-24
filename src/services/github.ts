@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { GITHUB_ACCOUNTS } from '@/common/constant/github';
+import { getServerEnv } from '@/server/env';
 
 const GITHUB_USER_ENDPOINT = 'https://api.github.com/graphql';
 
@@ -220,6 +221,9 @@ export const getGithubUser = async (type: string) => {
     };
   }
 
-  const { username, token } = account;
+  const { githubTokens } = getServerEnv();
+  const { username } = account;
+  const token = type === 'personal' ? githubTokens.personal : undefined;
+
   return await fetchGithubData(username, token);
 };
