@@ -150,25 +150,25 @@ pnpm dev
 
 ## 环境变量
 
-| Variable                  | Required | Purpose                               |
-| ------------------------- | -------- | ------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`    | Yes      | SEO、sitemap 与公开链接使用的站点 URL |
-| `SITE_URL`                | Yes      | 服务端 canonical URL 兜底值           |
-| `FEISHU_APP_ID`           | Yes      | 飞书应用凭证                          |
-| `FEISHU_APP_SECRET`       | Yes      | 飞书应用凭证                          |
-| `FEISHU_SPACE_ID`         | Yes      | 目标飞书知识库 space                  |
-| `BLOB_READ_WRITE_TOKEN`   | Optional | 在生产环境启用 Vercel Blob            |
-| `CRON_SECRET`             | Optional | 保护定时同步接口                      |
-| `NEXT_PUBLIC_FIREBASE_*`  | Optional | 启用 guestbook 与 chat widget         |
-| `FIREBASE_ADMIN_*`        | Optional | 启用 guestbook API 层与服务端校验     |
-| `GUESTBOOK_ADMIN_UIDS`    | Optional | 允许在留言板页执行隐藏/删除的 UID 列表 |
-| `IMAGE_REMOTE_HOSTS`      | Optional | 额外允许的远程图片 host 列表          |
-| `CONTACT_FORM_API_KEY`    | Optional | 联系表单发送密钥                      |
-| `DEVTO_KEY`               | Optional | dev.to 读取 API 密钥                  |
-| `GITHUB_READ_USER_TOKEN_PERSONAL` | Optional | GitHub GraphQL 读取 Token   |
-| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing 与设备数据 |
-| `WAKATIME_API_KEY`        | Optional | WakaTime 统计数据                     |
-| `MINIMAX_SYSTEM_PROMPT`   | Optional | Command Palette AI 的系统提示词       |
+| Variable                                                                | Required | Purpose                                |
+| ----------------------------------------------------------------------- | -------- | -------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                                                  | Yes      | SEO、sitemap 与公开链接使用的站点 URL  |
+| `SITE_URL`                                                              | Yes      | 服务端 canonical URL 兜底值            |
+| `FEISHU_APP_ID`                                                         | Yes      | 飞书应用凭证                           |
+| `FEISHU_APP_SECRET`                                                     | Yes      | 飞书应用凭证                           |
+| `FEISHU_SPACE_ID`                                                       | Yes      | 目标飞书知识库 space                   |
+| `BLOB_READ_WRITE_TOKEN`                                                 | Optional | 在生产环境启用 Vercel Blob             |
+| `CRON_SECRET`                                                           | Optional | 保护定时同步接口                       |
+| `NEXT_PUBLIC_FIREBASE_*`                                                | Optional | 启用 guestbook 与 chat widget          |
+| `FIREBASE_ADMIN_*`                                                      | Optional | 启用 guestbook API 层与服务端校验      |
+| `GUESTBOOK_ADMIN_UIDS`                                                  | Optional | 允许在留言板页执行隐藏/删除的 UID 列表 |
+| `IMAGE_REMOTE_HOSTS`                                                    | Optional | 额外允许的远程图片 host 列表           |
+| `CONTACT_FORM_API_KEY`                                                  | Optional | 联系表单发送密钥                       |
+| `DEVTO_KEY`                                                             | Optional | dev.to 读取 API 密钥                   |
+| `GITHUB_READ_USER_TOKEN_PERSONAL`                                       | Optional | GitHub GraphQL 读取 Token              |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing 与设备数据         |
+| `WAKATIME_API_KEY`                                                      | Optional | WakaTime 统计数据                      |
+| `MINIMAX_SYSTEM_PROMPT`                                                 | Optional | Command Palette AI 的系统提示词        |
 
 ## 内容工作流
 
