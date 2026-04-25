@@ -15,7 +15,13 @@ const main = async () => {
   }
 
   console.log(
-    `[feishu-sync] synced ${result.totalArticles}/${result.totalDocuments} docs to ${result.storage}`,
+    [
+      `[feishu-sync] synced ${result.totalArticles}/${result.totalDocuments} docs to ${result.storage}`,
+      `(changed=${result.changedArticles ?? 0}`,
+      `reused=${result.reusedArticles ?? 0}`,
+      `assets_downloaded=${result.downloadedAssets ?? 0}`,
+      `assets_reused=${result.reusedAssets ?? 0})`,
+    ].join(' '),
   );
 };
 

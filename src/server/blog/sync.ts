@@ -10,6 +10,9 @@ import {
   ArticleIndex,
   ArticleSummary,
   ArticleTag,
+  BlogSyncAssetState,
+  BlogSyncDocumentState,
+  BlogSyncState,
 } from '@/common/types/blog';
 import { getServerEnv } from '@/server/env';
 
@@ -31,7 +34,6 @@ import {
   toIsoDate,
   toSlug,
   toStringArray,
-  wait,
 } from './utils';
 
 type SyncOptions = {
@@ -44,6 +46,10 @@ type SyncResult = {
   storage: string;
   totalDocuments?: number;
   totalArticles?: number;
+  reusedArticles?: number;
+  changedArticles?: number;
+  downloadedAssets?: number;
+  reusedAssets?: number;
 };
 
 type RawArticle = {
@@ -57,7 +63,33 @@ type RawArticle = {
   documentCoverUrl?: string;
 };
 
+type DocumentMetadata = {
+  node: FeishuWikiNode;
+  documentInfo: Awaited<ReturnType<FeishuClient['getDocumentInfo']>>;
+  previousState?: BlogSyncDocumentState;
+  previousArticle?: Article | null;
+  revisionId?: string;
+  objEditTime?: string;
+  coverToken?: string;
+  shouldRefresh: boolean;
+};
+
+type AssetSyncStats = {
+  downloadedAssets: number;
+  reusedAssets: number;
+};
+
+type AssetResolver = {
+  assets: Record<string, BlogSyncAssetState>;
+  resolveAsset: (
+    fileToken: FileToken,
+    directory?: string,
+  ) => Promise<BlogSyncAssetState>;
+};
+
 const baseRequiredEnvKeys = ['FEISHU_APP_ID', 'FEISHU_APP_SECRET'] as const;
+const DOCUMENT_SYNC_CONCURRENCY = 3;
+const ASSET_SYNC_CONCURRENCY = 4;
 
 const getSyncSpaceId = () => getServerEnv().feishu.spaceId;
 
@@ -71,6 +103,77 @@ const getMissingEnvKeys = () => {
   }
 
   return missing;
+};
+
+const mapWithConcurrency = async <Input, Output>(
+  items: Input[],
+  concurrency: number,
+  mapper: (item: Input, index: number) => Promise<Output>,
+) => {
+  const results = new Array<Output>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+  return results;
+};
+
+const normalizeOptionalString = (value?: string | number | null) => {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  return String(value);
+};
+
+const getDocumentRevisionId = (
+  documentInfo: Awaited<ReturnType<FeishuClient['getDocumentInfo']>>,
+) =>
+  normalizeOptionalString(
+    documentInfo?.revision_id ?? documentInfo?.latest_revision_id,
+  );
+
+const normalizeSyncState = (state: BlogSyncState | null): BlogSyncState => ({
+  generatedAt: state?.generatedAt || '',
+  source: 'feishu',
+  documents: state?.documents || {},
+  assets: state?.assets || {},
+});
+
+const hasSameDocumentVersion = (
+  previous: BlogSyncDocumentState | undefined,
+  current: Pick<
+    DocumentMetadata,
+    'coverToken' | 'objEditTime' | 'revisionId' | 'node'
+  >,
+) => {
+  if (!previous || previous.sourceDocumentId !== current.node.obj_token) {
+    return false;
+  }
+
+  if ((previous.coverToken || '') !== (current.coverToken || '')) {
+    return false;
+  }
+
+  if (current.revisionId) {
+    return previous.revisionId === current.revisionId;
+  }
+
+  if (current.objEditTime) {
+    return previous.objEditTime === current.objEditTime;
+  }
+
+  return false;
 };
 
 const buildTagList = (input: ArticleFrontmatter['tags']): ArticleTag[] =>
@@ -176,11 +279,11 @@ export const buildAssetPath = ({
 };
 
 const writeAssetFromToken = async (
+  storage: ReturnType<typeof getBlogStorage>,
   client: FeishuClient,
   fileToken: FileToken,
   directory: string = fileToken.type,
 ) => {
-  const storage = getBlogStorage();
   const download = await client.downloadAsset(fileToken);
   const originalName = parseContentDispositionName(download.contentDisposition);
   const pathname = buildAssetPath({
@@ -190,39 +293,118 @@ const writeAssetFromToken = async (
     directory,
   });
 
-  return storage.writeAsset({
+  const url = await storage.writeAsset({
     body: download.body,
     contentType: download.contentType,
     pathname,
   });
+
+  return {
+    pathname,
+    url,
+    contentType: download.contentType,
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+const createAssetResolver = (
+  storage: ReturnType<typeof getBlogStorage>,
+  client: FeishuClient,
+  initialAssets: Record<string, BlogSyncAssetState>,
+  stats: AssetSyncStats,
+): AssetResolver => {
+  const assets = { ...initialAssets };
+  const inFlightAssets = new Map<string, Promise<BlogSyncAssetState>>();
+
+  const resolveAsset: AssetResolver['resolveAsset'] = async (
+    fileToken,
+    directory = fileToken.type,
+  ) => {
+    const existing = assets[fileToken.token];
+
+    if (existing && (await storage.assetExists(existing.pathname))) {
+      stats.reusedAssets += 1;
+      return existing;
+    }
+
+    const pendingAsset = inFlightAssets.get(fileToken.token);
+
+    if (pendingAsset) {
+      return pendingAsset;
+    }
+
+    const nextAsset = writeAssetFromToken(
+      storage,
+      client,
+      fileToken,
+      directory,
+    ).then((asset) => {
+      stats.downloadedAssets += 1;
+      assets[fileToken.token] = asset;
+      return asset;
+    });
+
+    inFlightAssets.set(fileToken.token, nextAsset);
+
+    try {
+      return await nextAsset;
+    } finally {
+      inFlightAssets.delete(fileToken.token);
+    }
+  };
+
+  return {
+    assets,
+    resolveAsset,
+  };
 };
 
 const downloadAssets = async (
-  client: FeishuClient,
+  assetResolver: AssetResolver,
   fileTokens: Record<string, FileToken>,
 ) => {
   const assetEntries: Record<string, string> = {};
+  const uniqueFileTokens = [
+    ...new Map(
+      Object.values(fileTokens).map((fileToken) => [
+        fileToken.token,
+        fileToken,
+      ]),
+    ).values(),
+  ];
 
-  for (const fileToken of Object.values(fileTokens)) {
-    assetEntries[fileToken.token] = await writeAssetFromToken(
-      client,
+  const assets = await mapWithConcurrency(
+    uniqueFileTokens,
+    ASSET_SYNC_CONCURRENCY,
+    async (fileToken) => ({
       fileToken,
-    );
+      asset: await assetResolver.resolveAsset(fileToken),
+    }),
+  );
 
-    await wait(80);
-  }
+  assets.forEach(({ fileToken, asset }) => {
+    assetEntries[fileToken.token] = asset.url;
+  });
 
   return assetEntries;
 };
 
-const buildSlugMap = (documents: RawArticle[]) => {
+const buildSlugMap = (
+  documents: DocumentMetadata[],
+  rawArticlesByNodeToken: Map<string, RawArticle>,
+) => {
   const slugs = new Set<string>();
   const mapping = new Map<string, string>();
 
   documents.forEach((document) => {
-    const preferredSlug = toSlug(
-      document.frontmatter.slug || document.frontmatter.title || document.title,
-    );
+    const rawArticle = rawArticlesByNodeToken.get(document.node.node_token);
+    const preferredSlug = rawArticle
+      ? toSlug(
+          rawArticle.frontmatter.slug ||
+            rawArticle.frontmatter.title ||
+            rawArticle.title,
+        )
+      : document.previousState?.slug || toSlug(document.node.title);
     const slug = ensureUniqueSlug(
       preferredSlug,
       document.node.node_token.slice(-6),
@@ -235,7 +417,7 @@ const buildSlugMap = (documents: RawArticle[]) => {
 };
 
 const rewriteArticleContent = async (
-  client: FeishuClient,
+  assetResolver: AssetResolver,
   rawArticle: RawArticle,
   nodeTokenToSlug: Map<string, string>,
 ) => {
@@ -249,7 +431,8 @@ const rewriteArticleContent = async (
     return acc;
   }, {});
 
-  const assets = await downloadAssets(client, rawArticle.fileTokens);
+  const assets = await downloadAssets(assetResolver, rawArticle.fileTokens);
+  const assetTokens = new Set(Object.keys(assets));
   const content = replaceTokens(rawArticle.content, {
     ...internalLinks,
     ...assets,
@@ -259,19 +442,22 @@ const rewriteArticleContent = async (
   if (rawArticle.documentCoverToken) {
     cover =
       assets[rawArticle.documentCoverToken] ||
-      (await writeAssetFromToken(
-        client,
-        {
-          token: rawArticle.documentCoverToken,
-          type: 'image',
-        },
-        'cover',
-      ));
+      (
+        await assetResolver.resolveAsset(
+          {
+            token: rawArticle.documentCoverToken,
+            type: 'image',
+          },
+          'cover',
+        )
+      ).url;
+    assetTokens.add(rawArticle.documentCoverToken);
   }
 
   return {
     content,
     cover,
+    assetTokens: [...assetTokens],
   };
 };
 
@@ -305,69 +491,189 @@ export const syncFeishuArticles = async (
   }
 
   const nodes = await client.listDocNodesBySpace(spaceId);
+  const previousSyncState = normalizeSyncState(await storage.readSyncState());
+  const assetStats: AssetSyncStats = {
+    downloadedAssets: 0,
+    reusedAssets: 0,
+  };
+  const assetResolver = createAssetResolver(
+    storage,
+    client,
+    previousSyncState.assets,
+    assetStats,
+  );
 
-  const rawArticles: RawArticle[] = [];
+  const metadataResults = await mapWithConcurrency(
+    nodes,
+    DOCUMENT_SYNC_CONCURRENCY,
+    async (node) => {
+      try {
+        const latestNode =
+          (await client.getNode(node.space_id, node.node_token)) || node;
+        const documentInfo = await client.getDocumentInfo(latestNode.obj_token);
+        const revisionId = getDocumentRevisionId(documentInfo);
+        const objEditTime = normalizeOptionalString(latestNode.obj_edit_time);
+        const coverToken = documentInfo?.cover?.token;
+        const previousState =
+          previousSyncState.documents[latestNode.node_token];
+        const isUnchanged = hasSameDocumentVersion(previousState, {
+          node: latestNode,
+          revisionId,
+          objEditTime,
+          coverToken,
+        });
+        const previousArticle =
+          isUnchanged && previousState
+            ? await storage.readArticle(previousState.slug)
+            : undefined;
 
-  for (const node of nodes) {
-    try {
-      const latestNode =
-        (await client.getNode(node.space_id, node.node_token)) || node;
-      const documentInfo = await client.getDocumentInfo(latestNode.obj_token);
-      const blocks = await client.getDocumentBlocks(latestNode.obj_token);
-      const { markdown, fileTokens, meta } = createMarkdownRenderer(
-        latestNode.obj_token,
-        blocks,
-      );
-      const parsed = matter(markdown);
-      const frontmatter = normalizeFrontmatter({
-        ...meta,
-        ...(parsed.data as Record<string, unknown>),
-      });
+        return {
+          node: latestNode,
+          documentInfo,
+          previousState,
+          previousArticle,
+          revisionId,
+          objEditTime,
+          coverToken,
+          shouldRefresh: !isUnchanged || !previousArticle,
+        } satisfies DocumentMetadata;
+      } catch (error) {
+        // Keep the sync resilient: skip one broken doc instead of aborting all.
+        console.error(`Failed to inspect document ${node.obj_token}`, error);
+        return null;
+      }
+    },
+  );
+  const metadata = metadataResults.filter(Boolean) as DocumentMetadata[];
 
-      rawArticles.push({
-        node: latestNode,
-        title: frontmatter.title || documentInfo?.title || latestNode.title,
-        markdown,
-        fileTokens,
-        frontmatter,
-        content: stripLeadingHeading(
-          parsed.content.trim(),
-          frontmatter.title || documentInfo?.title || latestNode.title,
-        ),
-        documentCoverToken: documentInfo?.cover?.token,
-      });
-      await wait(120);
-    } catch (error) {
-      // Keep the sync resilient: skip one broken doc instead of aborting all.
-      console.error(`Failed to sync document ${node.obj_token}`, error);
-    }
-  }
+  const rawArticleResults = await mapWithConcurrency(
+    metadata.filter((document) => document.shouldRefresh),
+    DOCUMENT_SYNC_CONCURRENCY,
+    async (document) => {
+      try {
+        const blocks = await client.getDocumentBlocks(document.node.obj_token);
+        const { markdown, fileTokens, meta } = createMarkdownRenderer(
+          document.node.obj_token,
+          blocks,
+        );
+        const parsed = matter(markdown);
+        const frontmatter = normalizeFrontmatter({
+          ...meta,
+          ...(parsed.data as Record<string, unknown>),
+        });
 
-  const nodeTokenToSlug = buildSlugMap(rawArticles);
+        return {
+          node: document.node,
+          title:
+            frontmatter.title ||
+            document.documentInfo?.title ||
+            document.node.title,
+          markdown,
+          fileTokens,
+          frontmatter,
+          content: stripLeadingHeading(
+            parsed.content.trim(),
+            frontmatter.title ||
+              document.documentInfo?.title ||
+              document.node.title,
+          ),
+          documentCoverToken: document.coverToken,
+        } satisfies RawArticle;
+      } catch (error) {
+        // Keep the sync resilient: skip one broken doc instead of aborting all.
+        console.error(
+          `Failed to sync document ${document.node.obj_token}`,
+          error,
+        );
+        return null;
+      }
+    },
+  );
+  const rawArticles = rawArticleResults.filter(Boolean) as RawArticle[];
+  const rawArticlesByNodeToken = new Map(
+    rawArticles.map((article) => [article.node.node_token, article]),
+  );
+  const activeDocuments = metadata.filter(
+    (document) =>
+      (!document.shouldRefresh && document.previousArticle) ||
+      rawArticlesByNodeToken.has(document.node.node_token),
+  );
+
+  const nodeTokenToSlug = buildSlugMap(activeDocuments, rawArticlesByNodeToken);
   const articles: Article[] = [];
+  const nextDocuments: BlogSyncState['documents'] = {};
+  const slugRewrites = activeDocuments.reduce<Record<string, string>>(
+    (acc, document) => {
+      const slug = nodeTokenToSlug.get(document.node.node_token);
 
-  for (const rawArticle of rawArticles) {
-    const slug = nodeTokenToSlug.get(rawArticle.node.node_token);
+      if (
+        slug &&
+        document.previousState?.slug &&
+        document.previousState.slug !== slug
+      ) {
+        acc[`/blog/${document.previousState.slug}`] = `/blog/${slug}`;
+      }
+
+      return acc;
+    },
+    {},
+  );
+
+  for (const document of activeDocuments) {
+    const slug = nodeTokenToSlug.get(document.node.node_token);
     if (!slug) continue;
 
-    const rewritten = await rewriteArticleContent(
-      client,
-      rawArticle,
-      nodeTokenToSlug,
-    );
+    const rawArticle = rawArticlesByNodeToken.get(document.node.node_token);
+    let article: Article;
+    let assetTokens: string[];
 
-    const article = parseArticle(
-      {
-        ...rawArticle,
-        documentCoverUrl: rewritten.cover,
-        content: rewritten.content,
-      },
-      slug,
-    );
+    if (rawArticle) {
+      const rewritten = await rewriteArticleContent(
+        assetResolver,
+        rawArticle,
+        nodeTokenToSlug,
+      );
 
-    await storage.writeArticle(article);
+      article = parseArticle(
+        {
+          ...rawArticle,
+          documentCoverUrl: rewritten.cover,
+          content: rewritten.content,
+        },
+        slug,
+      );
+      assetTokens = rewritten.assetTokens;
+
+      await storage.writeArticle(article);
+    } else if (document.previousArticle) {
+      article =
+        Object.keys(slugRewrites).length > 0
+          ? {
+              ...document.previousArticle,
+              content: replaceTokens(
+                document.previousArticle.content,
+                slugRewrites,
+              ),
+            }
+          : document.previousArticle;
+      assetTokens = document.previousState?.assetTokens || [];
+
+      if (article !== document.previousArticle) {
+        await storage.writeArticle(article);
+      }
+    } else {
+      continue;
+    }
+
     articles.push(article);
-    await wait(80);
+    nextDocuments[document.node.node_token] = {
+      slug: article.slug,
+      sourceDocumentId: document.node.obj_token,
+      objEditTime: document.objEditTime,
+      revisionId: document.revisionId,
+      coverToken: document.coverToken,
+      assetTokens,
+    };
   }
 
   const publicArticles = sortArticlesByDate(
@@ -387,18 +693,29 @@ export const syncFeishuArticles = async (
       sourceDocumentId: article.sourceDocumentId,
     })),
   );
+  const generatedAt = new Date().toISOString();
 
   const index: ArticleIndex = {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     source: 'feishu',
     articles: publicArticles,
   };
 
   await storage.writeIndex(index);
+  await storage.writeSyncState({
+    generatedAt,
+    source: 'feishu',
+    documents: nextDocuments,
+    assets: assetResolver.assets,
+  });
 
   return {
     storage: storage.name,
-    totalDocuments: rawArticles.length,
+    totalDocuments: activeDocuments.length,
     totalArticles: publicArticles.length,
+    reusedArticles: activeDocuments.length - rawArticles.length,
+    changedArticles: rawArticles.length,
+    downloadedAssets: assetStats.downloadedAssets,
+    reusedAssets: assetStats.reusedAssets,
   };
 };

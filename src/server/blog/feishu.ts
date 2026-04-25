@@ -50,6 +50,8 @@ type FeishuDocumentResponse = {
     document?: {
       document_id: string;
       title?: string;
+      revision_id?: string | number;
+      latest_revision_id?: string | number;
       cover?: {
         token?: string;
         offset_ratio_x?: number;
@@ -152,6 +154,7 @@ type FeishuBlockLike = Block & {
 const tokenCache = new Map<string, CachedToken>();
 const SOURCE_SYNCED_BLOCK_TYPE = 49;
 const SYNCED_BLOCK_TYPE = 999;
+const MAX_RATE_LIMIT_RETRIES = 2;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -177,6 +180,20 @@ const buildFeishuPermissionHint = (
   ]
     .filter(Boolean)
     .join(' ');
+};
+
+const isRateLimitPayload = (payload: FeishuApiErrorPayload, status?: number) =>
+  status === 429 || /rate limit|too many requests/i.test(payload.msg || '');
+
+const getRateLimitRetryDelay = (response?: Response, retryAttempt = 0) => {
+  const retryAfter = response?.headers.get('retry-after');
+  const retryAfterSeconds = retryAfter ? Number(retryAfter) : NaN;
+
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+
+  return 500 * (retryAttempt + 1);
 };
 
 export const formatFeishuApiErrorMessage = (
@@ -309,7 +326,8 @@ export class FeishuClient {
     input: string,
     init: RequestInit = {},
     params?: Record<string, string | number | undefined>,
-  ) {
+    retryAttempt = 0,
+  ): Promise<T> {
     const accessToken = await this.getTenantAccessToken();
     const search = new URLSearchParams();
 
@@ -332,6 +350,11 @@ export class FeishuClient {
     });
 
     if (!response.ok) {
+      if (response.status === 429 && retryAttempt < MAX_RATE_LIMIT_RETRIES) {
+        await wait(getRateLimitRetryDelay(response, retryAttempt));
+        return this.request<T>(input, init, params, retryAttempt + 1);
+      }
+
       await parseApiError(response);
     }
 
@@ -342,6 +365,14 @@ export class FeishuClient {
       typeof payload.code === 'number' &&
       payload.code !== 0
     ) {
+      if (
+        isRateLimitPayload(payload as FeishuApiErrorPayload) &&
+        retryAttempt < MAX_RATE_LIMIT_RETRIES
+      ) {
+        await wait(getRateLimitRetryDelay(undefined, retryAttempt));
+        return this.request<T>(input, init, params, retryAttempt + 1);
+      }
+
       throw new Error(
         formatFeishuApiErrorMessage(payload as FeishuApiErrorPayload),
       );
@@ -513,7 +544,6 @@ export class FeishuClient {
       );
 
       for (const child of children) {
-        await wait(120);
         await walk(child);
       }
     };
@@ -521,7 +551,6 @@ export class FeishuClient {
     const rootChildren = await this.listChildNodes(spaceId);
 
     for (const child of rootChildren) {
-      await wait(120);
       await walk(child);
     }
 
@@ -568,7 +597,14 @@ export class FeishuClient {
     return this.normalizeBlocks(blocks);
   }
 
-  async downloadAsset(fileToken: FileToken) {
+  async downloadAsset(
+    fileToken: FileToken,
+    retryAttempt = 0,
+  ): Promise<{
+    body: Buffer;
+    contentType: string | null;
+    contentDisposition: string | null;
+  }> {
     const accessToken = await this.getTenantAccessToken();
     const endpoint =
       fileToken.type === 'board'
@@ -582,6 +618,11 @@ export class FeishuClient {
     });
 
     if (!response.ok) {
+      if (response.status === 429 && retryAttempt < MAX_RATE_LIMIT_RETRIES) {
+        await wait(getRateLimitRetryDelay(response, retryAttempt));
+        return this.downloadAsset(fileToken, retryAttempt + 1);
+      }
+
       await parseApiError(response);
     }
 
