@@ -19,8 +19,11 @@ const main = async () => {
       `[feishu-sync] synced ${result.totalArticles}/${result.totalDocuments} docs to ${result.storage}`,
       `(changed=${result.changedArticles ?? 0}`,
       `reused=${result.reusedArticles ?? 0}`,
+      `fallback=${result.fallbackArticles ?? 0}`,
       `assets_downloaded=${result.downloadedAssets ?? 0}`,
-      `assets_reused=${result.reusedAssets ?? 0})`,
+      `assets_reused=${result.reusedAssets ?? 0}`,
+      `assets_deleted=${result.deletedAssets ?? 0}`,
+      `assets_delete_failed=${result.failedAssetDeletes ?? 0})`,
     ].join(' '),
   );
 };

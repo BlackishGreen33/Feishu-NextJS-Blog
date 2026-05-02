@@ -50,6 +50,9 @@ type SyncResult = {
   changedArticles?: number;
   downloadedAssets?: number;
   reusedAssets?: number;
+  fallbackArticles?: number;
+  deletedAssets?: number;
+  failedAssetDeletes?: number;
 };
 
 type RawArticle = {
@@ -77,6 +80,8 @@ type DocumentMetadata = {
 type AssetSyncStats = {
   downloadedAssets: number;
   reusedAssets: number;
+  deletedAssets: number;
+  failedAssetDeletes: number;
 };
 
 type AssetResolver = {
@@ -389,6 +394,37 @@ const downloadAssets = async (
   return assetEntries;
 };
 
+const pruneUnusedAssets = async (
+  storage: ReturnType<typeof getBlogStorage>,
+  assets: Record<string, BlogSyncAssetState>,
+  activeAssetTokens: Set<string>,
+  stats: AssetSyncStats,
+) => {
+  const nextAssets: Record<string, BlogSyncAssetState> = {};
+
+  await mapWithConcurrency(
+    Object.entries(assets),
+    ASSET_SYNC_CONCURRENCY,
+    async ([token, asset]) => {
+      if (activeAssetTokens.has(token)) {
+        nextAssets[token] = asset;
+        return;
+      }
+
+      try {
+        await storage.deleteAsset(asset.pathname);
+        stats.deletedAssets += 1;
+      } catch (error) {
+        stats.failedAssetDeletes += 1;
+        nextAssets[token] = asset;
+        console.warn(`Failed to delete unused asset ${asset.pathname}`, error);
+      }
+    },
+  );
+
+  return nextAssets;
+};
+
 const buildSlugMap = (
   documents: DocumentMetadata[],
   rawArticlesByNodeToken: Map<string, RawArticle>,
@@ -495,6 +531,8 @@ export const syncFeishuArticles = async (
   const assetStats: AssetSyncStats = {
     downloadedAssets: 0,
     reusedAssets: 0,
+    deletedAssets: 0,
+    failedAssetDeletes: 0,
   };
   const assetResolver = createAssetResolver(
     storage,
@@ -522,10 +560,9 @@ export const syncFeishuArticles = async (
           objEditTime,
           coverToken,
         });
-        const previousArticle =
-          isUnchanged && previousState
-            ? await storage.readArticle(previousState.slug)
-            : undefined;
+        const previousArticle = previousState
+          ? await storage.readArticle(previousState.slug)
+          : undefined;
 
         return {
           node: latestNode,
@@ -595,13 +632,15 @@ export const syncFeishuArticles = async (
   );
   const activeDocuments = metadata.filter(
     (document) =>
-      (!document.shouldRefresh && document.previousArticle) ||
+      Boolean(document.previousArticle) ||
       rawArticlesByNodeToken.has(document.node.node_token),
   );
 
   const nodeTokenToSlug = buildSlugMap(activeDocuments, rawArticlesByNodeToken);
   const articles: Article[] = [];
   const nextDocuments: BlogSyncState['documents'] = {};
+  let fallbackArticles = 0;
+  let reusedArticles = 0;
   const slugRewrites = activeDocuments.reduce<Record<string, string>>(
     (acc, document) => {
       const slug = nodeTokenToSlug.get(document.node.node_token);
@@ -646,6 +685,12 @@ export const syncFeishuArticles = async (
 
       await storage.writeArticle(article);
     } else if (document.previousArticle) {
+      if (document.shouldRefresh) {
+        fallbackArticles += 1;
+      } else {
+        reusedArticles += 1;
+      }
+
       article =
         Object.keys(slugRewrites).length > 0
           ? {
@@ -666,14 +711,20 @@ export const syncFeishuArticles = async (
     }
 
     articles.push(article);
-    nextDocuments[document.node.node_token] = {
-      slug: article.slug,
-      sourceDocumentId: document.node.obj_token,
-      objEditTime: document.objEditTime,
-      revisionId: document.revisionId,
-      coverToken: document.coverToken,
-      assetTokens,
-    };
+    nextDocuments[document.node.node_token] =
+      document.shouldRefresh && !rawArticle && document.previousState
+        ? {
+            ...document.previousState,
+            assetTokens,
+          }
+        : {
+            slug: article.slug,
+            sourceDocumentId: document.node.obj_token,
+            objEditTime: document.objEditTime,
+            revisionId: document.revisionId,
+            coverToken: document.coverToken,
+            assetTokens,
+          };
   }
 
   const publicArticles = sortArticlesByDate(
@@ -701,21 +752,34 @@ export const syncFeishuArticles = async (
     articles: publicArticles,
   };
 
+  const activeAssetTokens = new Set(
+    Object.values(nextDocuments).flatMap((document) => document.assetTokens),
+  );
+  const nextAssets = await pruneUnusedAssets(
+    storage,
+    assetResolver.assets,
+    activeAssetTokens,
+    assetStats,
+  );
+
   await storage.writeIndex(index);
   await storage.writeSyncState({
     generatedAt,
     source: 'feishu',
     documents: nextDocuments,
-    assets: assetResolver.assets,
+    assets: nextAssets,
   });
 
   return {
     storage: storage.name,
     totalDocuments: activeDocuments.length,
     totalArticles: publicArticles.length,
-    reusedArticles: activeDocuments.length - rawArticles.length,
+    reusedArticles,
     changedArticles: rawArticles.length,
+    fallbackArticles,
     downloadedAssets: assetStats.downloadedAssets,
     reusedAssets: assetStats.reusedAssets,
+    deletedAssets: assetStats.deletedAssets,
+    failedAssetDeletes: assetStats.failedAssetDeletes,
   };
 };

@@ -1,4 +1,4 @@
-import { BlobNotFoundError, head, put } from '@vercel/blob';
+import { BlobNotFoundError, del, head, put } from '@vercel/blob';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -50,6 +50,7 @@ export interface BlogStorageAdapter {
   writeSyncState: (state: BlogSyncState) => Promise<void>;
   assetExists: (pathname: string) => Promise<boolean>;
   writeAsset: (options: AssetWriteOptions) => Promise<string>;
+  deleteAsset: (pathname: string) => Promise<void>;
 }
 
 const localJsonCache = new Map<string, LocalJsonCacheEntry>();
@@ -171,6 +172,11 @@ const localStorage: BlogStorageAdapter = {
     await fs.writeFile(localPath, new Uint8Array(body));
     return `${LOCAL_CACHE_ASSET_BASE_PATH}/${filePath}`;
   },
+  async deleteAsset(pathname) {
+    await fs.rm(path.join(LOCAL_CACHE_PUBLIC_ASSETS_DIR, pathname), {
+      force: true,
+    });
+  },
 };
 
 const isBlobNotFoundError = (error: unknown) =>
@@ -270,6 +276,9 @@ const blobStorage: BlogStorageAdapter = {
     });
 
     return result.url;
+  },
+  async deleteAsset(pathname) {
+    await del(`${BLOB_ASSETS_PREFIX}/${pathname}`);
   },
 };
 

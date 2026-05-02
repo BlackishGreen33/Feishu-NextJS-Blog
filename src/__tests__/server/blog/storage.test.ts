@@ -6,6 +6,7 @@ import { Article, ArticleIndex, BlogSyncState } from '@/common/types/blog';
 
 jest.mock('@vercel/blob', () => ({
   BlobNotFoundError: class BlobNotFoundError extends Error {},
+  del: jest.fn(),
   head: jest.fn(),
   put: jest.fn(),
 }));
@@ -170,6 +171,8 @@ describe('blog storage local cache', () => {
     await expect(storage.readSyncState()).resolves.toEqual(sampleSyncState);
     await expect(storage.assetExists('image/example.png')).resolves.toBe(true);
     await expect(storage.assetExists('image/missing.png')).resolves.toBe(false);
+    await storage.deleteAsset('image/example.png');
+    await expect(storage.assetExists('image/example.png')).resolves.toBe(false);
     await expect(
       fs.readFile(path.join(tempDir, 'data', 'feishu-blog', 'index.json')),
     ).rejects.toMatchObject({ code: 'ENOENT' });
@@ -245,5 +248,19 @@ describe('blog storage blob cache', () => {
       }),
     );
     expect(headMock).not.toHaveBeenCalled();
+  });
+
+  it('deletes blob assets by storage pathname', async () => {
+    const { del } = await import('@vercel/blob');
+    const delMock = jest.mocked(del);
+
+    const { getBlogStorage } = await import('@/server/blog/storage');
+    const storage = getBlogStorage();
+
+    await storage.deleteAsset('image/example.png');
+
+    expect(delMock).toHaveBeenCalledWith(
+      'feishu-blog/assets/image/example.png',
+    );
   });
 });

@@ -74,6 +74,7 @@ type StorageMock = {
   writeSyncState: jest.Mock;
   assetExists: jest.Mock;
   writeAsset: jest.Mock;
+  deleteAsset: jest.Mock;
 };
 
 const createStorageMock = (): StorageMock => ({
@@ -86,21 +87,10 @@ const createStorageMock = (): StorageMock => ({
   writeSyncState: jest.fn(),
   assetExists: jest.fn(),
   writeAsset: jest.fn(),
+  deleteAsset: jest.fn(),
 });
 
-const setupSyncMocks = ({
-  storage,
-  client,
-}: {
-  storage: StorageMock;
-  client: Record<string, jest.Mock>;
-}) => {
-  jest.doMock('@/server/blog/storage', () => ({
-    getBlogStorage: () => storage,
-  }));
-  jest.doMock('@/server/blog/feishu', () => ({
-    FeishuClient: jest.fn(() => client),
-  }));
+const mockFeishuDocxRenderer = () => {
   jest.doMock('feishu-docx/dist/index.js', () => ({
     MarkdownRenderer: class MarkdownRenderer {
       fileTokens: Record<string, { token: string; type: string }>;
@@ -124,12 +114,29 @@ const setupSyncMocks = ({
   }));
 };
 
+const setupSyncMocks = ({
+  storage,
+  client,
+}: {
+  storage: StorageMock;
+  client: Record<string, jest.Mock>;
+}) => {
+  jest.doMock('@/server/blog/storage', () => ({
+    getBlogStorage: () => storage,
+  }));
+  jest.doMock('@/server/blog/feishu', () => ({
+    FeishuClient: jest.fn(() => client),
+  }));
+  mockFeishuDocxRenderer();
+};
+
 describe('syncFeishuArticles', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockFeishuDocxRenderer();
     process.env = {
       ...originalEnv,
       FEISHU_APP_ID: 'app-id',
@@ -230,6 +237,7 @@ describe('syncFeishuArticles', () => {
     expect(storage.writeArticle).not.toHaveBeenCalled();
     expect(result.reusedArticles).toBe(1);
     expect(result.changedArticles).toBe(0);
+    expect(result.fallbackArticles).toBe(0);
     expect(storage.writeIndex).toHaveBeenCalledWith(
       expect.objectContaining({
         articles: [expect.objectContaining({ slug: 'existing-doc' })],
@@ -240,6 +248,52 @@ describe('syncFeishuArticles', () => {
         documents: expect.not.objectContaining({
           'node-removed': expect.anything(),
         }),
+      }),
+    );
+  });
+
+  it('falls back to the previous article when a changed document fails to refresh', async () => {
+    const storage = createStorageMock();
+    const client = {
+      listDocNodesBySpace: jest.fn().mockResolvedValue([node]),
+      getNode: jest.fn().mockResolvedValue({
+        ...node,
+        obj_edit_time: '1776561900',
+      }),
+      getDocumentInfo: jest.fn().mockResolvedValue({
+        title: 'Updated Doc',
+        revision_id: 'rev-2',
+        cover: { token: 'cover-1' },
+      }),
+      getDocumentBlocks: jest.fn().mockRejectedValue(new Error('temporary')),
+      downloadAsset: jest.fn(),
+    };
+    storage.readSyncState.mockResolvedValue(previousSyncState);
+    storage.readArticle.mockResolvedValue(article);
+    setupSyncMocks({ storage, client });
+
+    const { syncFeishuArticles } = await import('@/server/blog/sync');
+    const result = await syncFeishuArticles();
+
+    expect(client.getDocumentBlocks).toHaveBeenCalledWith('doc-1');
+    expect(storage.writeArticle).not.toHaveBeenCalled();
+    expect(result.changedArticles).toBe(0);
+    expect(result.fallbackArticles).toBe(1);
+    expect(result.reusedArticles).toBe(0);
+    expect(storage.writeIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        articles: [expect.objectContaining({ slug: 'existing-doc' })],
+      }),
+    );
+    expect(storage.writeSyncState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documents: {
+          'node-1': expect.objectContaining({
+            slug: 'existing-doc',
+            revisionId: 'rev-1',
+            objEditTime: '1776561839',
+          }),
+        },
       }),
     );
   });
@@ -310,6 +364,7 @@ describe('syncFeishuArticles', () => {
       }),
     );
     expect(result.changedArticles).toBe(1);
+    expect(result.fallbackArticles).toBe(0);
     expect(result.downloadedAssets).toBe(1);
     expect(result.reusedAssets).toBe(1);
     expect(storage.writeSyncState).toHaveBeenCalledWith(
@@ -328,6 +383,100 @@ describe('syncFeishuArticles', () => {
             url: '/local-feishu-assets/image/img-new.png',
           }),
         }),
+      }),
+    );
+  });
+
+  it('prunes unused asset state and deletes stale asset files', async () => {
+    const storage = createStorageMock();
+    const staleSyncState: BlogSyncState = {
+      ...previousSyncState,
+      assets: {
+        ...previousSyncState.assets,
+        'img-stale': {
+          pathname: 'image/img-stale.png',
+          url: '/local-feishu-assets/image/img-stale.png',
+          contentType: 'image/png',
+          updatedAt: '2026-04-20T00:00:00.000Z',
+        },
+      },
+    };
+    const client = {
+      listDocNodesBySpace: jest.fn().mockResolvedValue([node]),
+      getNode: jest.fn().mockResolvedValue(node),
+      getDocumentInfo: jest.fn().mockResolvedValue({
+        title: 'Existing Doc',
+        revision_id: 'rev-1',
+        cover: { token: 'cover-1' },
+      }),
+      getDocumentBlocks: jest.fn(),
+      downloadAsset: jest.fn(),
+    };
+    storage.readSyncState.mockResolvedValue(staleSyncState);
+    storage.readArticle.mockResolvedValue(article);
+    setupSyncMocks({ storage, client });
+
+    const { syncFeishuArticles } = await import('@/server/blog/sync');
+    const result = await syncFeishuArticles();
+
+    expect(storage.deleteAsset).toHaveBeenCalledWith('image/img-stale.png');
+    expect(result.deletedAssets).toBe(1);
+    expect(result.failedAssetDeletes).toBe(0);
+    expect(storage.writeSyncState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assets: {
+          'img-existing': previousSyncState.assets['img-existing'],
+        },
+      }),
+    );
+  });
+
+  it('keeps stale asset metadata when physical deletion fails', async () => {
+    const storage = createStorageMock();
+    const staleSyncState: BlogSyncState = {
+      ...previousSyncState,
+      assets: {
+        ...previousSyncState.assets,
+        'img-stale': {
+          pathname: 'image/img-stale.png',
+          url: '/local-feishu-assets/image/img-stale.png',
+          contentType: 'image/png',
+          updatedAt: '2026-04-20T00:00:00.000Z',
+        },
+      },
+    };
+    const client = {
+      listDocNodesBySpace: jest.fn().mockResolvedValue([node]),
+      getNode: jest.fn().mockResolvedValue(node),
+      getDocumentInfo: jest.fn().mockResolvedValue({
+        title: 'Existing Doc',
+        revision_id: 'rev-1',
+        cover: { token: 'cover-1' },
+      }),
+      getDocumentBlocks: jest.fn(),
+      downloadAsset: jest.fn(),
+    };
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    storage.readSyncState.mockResolvedValue(staleSyncState);
+    storage.readArticle.mockResolvedValue(article);
+    storage.deleteAsset.mockRejectedValue(new Error('delete failed'));
+    setupSyncMocks({ storage, client });
+
+    const { syncFeishuArticles } = await import('@/server/blog/sync');
+    const result = await syncFeishuArticles();
+
+    expect(result.deletedAssets).toBe(0);
+    expect(result.failedAssetDeletes).toBe(1);
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Failed to delete unused asset image/img-stale.png',
+      expect.any(Error),
+    );
+    expect(storage.writeSyncState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assets: {
+          'img-existing': previousSyncState.assets['img-existing'],
+          'img-stale': staleSyncState.assets['img-stale'],
+        },
       }),
     );
   });
