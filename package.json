@@ -105,5 +105,18 @@
     "**/*.{js,jsx,ts,tsx,html,css,json}": [
       "pnpm prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@tootallnate/once": "3.0.1",
+      "dompurify": "3.4.0",
+      "fast-glob": "3.3.3",
+      "js-yaml@3": "3.14.2",
+      "micromatch": "4.0.8",
+      "picomatch@2": "2.3.2",
+      "postcss": "8.5.10",
+      "uuid": "14.0.0",
+      "yaml@1": "1.10.3"
+    }
   }
 }
