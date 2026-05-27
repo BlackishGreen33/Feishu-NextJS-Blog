@@ -2,7 +2,12 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 
-import { Article, ArticleIndex, BlogSyncState } from '@/common/types/blog';
+import {
+  Article,
+  ArticleIndex,
+  ArticleSearchIndex,
+  BlogSyncState,
+} from '@/common/types/blog';
 
 jest.mock('@vercel/blob', () => ({
   BlobNotFoundError: class BlobNotFoundError extends Error {},
@@ -37,6 +42,20 @@ const sampleArticle: Article = {
   ...sampleArticleSummary,
   content: '# Hello Agent',
   contentFormat: 'markdown',
+};
+
+const sampleSearchIndex: ArticleSearchIndex = {
+  generatedAt: sampleIndex.generatedAt,
+  source: sampleIndex.source,
+  articles: [
+    {
+      ...sampleArticleSummary,
+      tagNames: ['AI'],
+      bodyText: 'Hello Agent',
+      searchableText:
+        'hello agent local cache should not dirty tracked seed data. ai hello agent',
+    },
+  ],
 };
 
 const sampleSyncState: BlogSyncState = {
@@ -92,6 +111,11 @@ describe('blog storage local cache', () => {
       'utf8',
     );
     await fs.writeFile(
+      path.join(seededDataDir, 'search-index.json'),
+      JSON.stringify(sampleSearchIndex, null, 2),
+      'utf8',
+    );
+    await fs.writeFile(
       path.join(seededDataDir, 'articles', `${sampleArticle.slug}.json`),
       JSON.stringify(sampleArticle, null, 2),
       'utf8',
@@ -101,6 +125,7 @@ describe('blog storage local cache', () => {
     const storage = getBlogStorage();
 
     await expect(storage.readIndex()).resolves.toEqual(sampleIndex);
+    await expect(storage.readSearchIndex()).resolves.toEqual(sampleSearchIndex);
     await expect(storage.readArticle(sampleArticle.slug)).resolves.toEqual(
       sampleArticle,
     );
@@ -129,6 +154,7 @@ describe('blog storage local cache', () => {
     const storage = getBlogStorage();
 
     await storage.writeIndex(sampleIndex);
+    await storage.writeSearchIndex(sampleSearchIndex);
     await storage.writeArticle(sampleArticle);
     await storage.writeSyncState(sampleSyncState);
     const assetUrl = await storage.writeAsset({
@@ -138,6 +164,11 @@ describe('blog storage local cache', () => {
 
     await expect(
       fs.readFile(path.join(tempDir, '.cache', 'feishu-blog', 'index.json')),
+    ).resolves.toBeTruthy();
+    await expect(
+      fs.readFile(
+        path.join(tempDir, '.cache', 'feishu-blog', 'search-index.json'),
+      ),
     ).resolves.toBeTruthy();
     await expect(
       fs.readFile(
@@ -169,6 +200,7 @@ describe('blog storage local cache', () => {
       ),
     ).resolves.toContain('"revisionId": "rev-1"');
     await expect(storage.readSyncState()).resolves.toEqual(sampleSyncState);
+    await expect(storage.readSearchIndex()).resolves.toEqual(sampleSearchIndex);
     await expect(storage.assetExists('image/example.png')).resolves.toBe(true);
     await expect(storage.assetExists('image/missing.png')).resolves.toBe(false);
     await storage.deleteAsset('image/example.png');
@@ -238,10 +270,20 @@ describe('blog storage blob cache', () => {
     const storage = getBlogStorage();
 
     await storage.writeIndex(sampleIndex);
+    await storage.writeSearchIndex(sampleSearchIndex);
     await expect(storage.readIndex()).resolves.toEqual(sampleIndex);
+    await expect(storage.readSearchIndex()).resolves.toEqual(sampleSearchIndex);
     expect(putMock).toHaveBeenCalledWith(
       'feishu-blog/index.json',
       JSON.stringify(sampleIndex, null, 2),
+      expect.objectContaining({
+        allowOverwrite: true,
+        contentType: 'application/json',
+      }),
+    );
+    expect(putMock).toHaveBeenCalledWith(
+      'feishu-blog/search-index.json',
+      JSON.stringify(sampleSearchIndex, null, 2),
       expect.objectContaining({
         allowOverwrite: true,
         contentType: 'application/json',

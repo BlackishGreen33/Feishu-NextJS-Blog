@@ -20,6 +20,7 @@ export type ArticleSummary = {
   slug: string;
   title: string;
   summary: string;
+  matchedExcerpt?: string;
   cover: string | null;
   publishedAt: string;
   updatedAt: string;
@@ -40,6 +41,18 @@ export type ArticleIndex = {
   generatedAt: string;
   source: 'fixture' | 'feishu';
   articles: ArticleSummary[];
+};
+
+export type ArticleSearchEntry = ArticleSummary & {
+  tagNames: string[];
+  bodyText: string;
+  searchableText: string;
+};
+
+export type ArticleSearchIndex = {
+  generatedAt: string;
+  source: ArticleIndex['source'];
+  articles: ArticleSearchEntry[];
 };
 
 export type BlogSyncAssetState = {

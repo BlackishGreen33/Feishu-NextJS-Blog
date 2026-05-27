@@ -17,6 +17,7 @@ import {
 import { getServerEnv } from '@/server/env';
 
 import { FeishuClient, FeishuWikiNode } from './feishu';
+import { buildArticleSearchIndex } from './search';
 import { getBlogStorage } from './storage';
 import {
   calculateReadingTime,
@@ -751,6 +752,11 @@ export const syncFeishuArticles = async (
     source: 'feishu',
     articles: publicArticles,
   };
+  const searchIndex = buildArticleSearchIndex({
+    generatedAt,
+    source: 'feishu',
+    articles,
+  });
 
   const activeAssetTokens = new Set(
     Object.values(nextDocuments).flatMap((document) => document.assetTokens),
@@ -763,6 +769,7 @@ export const syncFeishuArticles = async (
   );
 
   await storage.writeIndex(index);
+  await storage.writeSearchIndex(searchIndex);
   await storage.writeSyncState({
     generatedAt,
     source: 'feishu',

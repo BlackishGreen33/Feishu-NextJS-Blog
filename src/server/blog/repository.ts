@@ -4,6 +4,7 @@ import {
   ArticleListResult,
 } from '@/common/types/blog';
 
+import { searchArticleSummaries } from './search';
 import { getBlogStorage } from './storage';
 import { sortArticlesByDate } from './utils';
 
@@ -38,32 +39,31 @@ export const listArticles = async ({
   featured,
   includeDraft = false,
 }: ArticleListParams = {}): Promise<ArticleListResult> => {
+  const storage = getBlogStorage();
   const index = await getArticleIndex(includeDraft);
   const normalizedSearch = search?.trim().toLowerCase();
   const normalizedTag = tag?.trim().toLowerCase();
 
-  const filtered = index.articles.filter((article) => {
-    if (featured && !article.featured) return false;
+  const filtered = normalizedSearch
+    ? searchArticleSummaries({
+        articles: index.articles,
+        searchIndex: await storage.readSearchIndex(),
+        query: normalizedSearch,
+        tag: normalizedTag,
+        featured,
+      })
+    : index.articles.filter((article) => {
+        if (featured && !article.featured) return false;
 
-    if (
-      normalizedTag &&
-      !article.tags.some((item) => item.slug === normalizedTag)
-    ) {
-      return false;
-    }
+        if (
+          normalizedTag &&
+          !article.tags.some((item) => item.slug === normalizedTag)
+        ) {
+          return false;
+        }
 
-    if (!normalizedSearch) return true;
-
-    const haystack = [
-      article.title,
-      article.summary,
-      ...article.tags.map((item) => item.name),
-    ]
-      .join(' ')
-      .toLowerCase();
-
-    return haystack.includes(normalizedSearch);
-  });
+        return true;
+      });
 
   const totalPosts = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalPosts / perPage));

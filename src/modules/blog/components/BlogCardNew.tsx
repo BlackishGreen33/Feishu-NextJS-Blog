@@ -20,6 +20,7 @@ const BlogCardNew = ({
   publishedAt,
   slug,
   summary,
+  matchedExcerpt,
   readingTimeMinutes,
   tags,
   isExcerpt = true,
@@ -59,7 +60,7 @@ const BlogCardNew = ({
             </h3>
             {isExcerpt && (
               <p className='line-clamp-3 text-sm leading-7 text-neutral-600 dark:text-neutral-400'>
-                {summary}
+                {matchedExcerpt || summary}
               </p>
             )}
           </div>

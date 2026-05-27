@@ -68,6 +68,8 @@ type StorageMock = {
   name: 'local';
   readIndex: jest.Mock;
   writeIndex: jest.Mock;
+  readSearchIndex: jest.Mock;
+  writeSearchIndex: jest.Mock;
   readArticle: jest.Mock;
   writeArticle: jest.Mock;
   readSyncState: jest.Mock;
@@ -81,6 +83,8 @@ const createStorageMock = (): StorageMock => ({
   name: 'local',
   readIndex: jest.fn(),
   writeIndex: jest.fn(),
+  readSearchIndex: jest.fn(),
+  writeSearchIndex: jest.fn(),
   readArticle: jest.fn(),
   writeArticle: jest.fn(),
   readSyncState: jest.fn(),
@@ -243,6 +247,17 @@ describe('syncFeishuArticles', () => {
         articles: [expect.objectContaining({ slug: 'existing-doc' })],
       }),
     );
+    expect(storage.writeSearchIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        articles: [
+          expect.objectContaining({
+            slug: 'existing-doc',
+            bodyText: 'Existing content',
+            searchableText: expect.stringContaining('existing content'),
+          }),
+        ],
+      }),
+    );
     expect(storage.writeSyncState).toHaveBeenCalledWith(
       expect.objectContaining({
         documents: expect.not.objectContaining({
@@ -283,6 +298,16 @@ describe('syncFeishuArticles', () => {
     expect(storage.writeIndex).toHaveBeenCalledWith(
       expect.objectContaining({
         articles: [expect.objectContaining({ slug: 'existing-doc' })],
+      }),
+    );
+    expect(storage.writeSearchIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        articles: [
+          expect.objectContaining({
+            slug: 'existing-doc',
+            bodyText: 'Existing content',
+          }),
+        ],
       }),
     );
     expect(storage.writeSyncState).toHaveBeenCalledWith(
@@ -361,6 +386,17 @@ describe('syncFeishuArticles', () => {
         content: expect.stringContaining(
           '/local-feishu-assets/image/img-existing.png',
         ),
+      }),
+    );
+    expect(storage.writeSearchIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        articles: [
+          expect.objectContaining({
+            slug: 'updated-doc',
+            bodyText: expect.stringContaining('Body'),
+            searchableText: expect.stringContaining('updated doc'),
+          }),
+        ],
       }),
     );
     expect(result.changedArticles).toBe(1);

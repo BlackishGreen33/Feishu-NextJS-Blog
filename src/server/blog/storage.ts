@@ -2,7 +2,12 @@ import { BlobNotFoundError, del, head, put } from '@vercel/blob';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { Article, ArticleIndex, BlogSyncState } from '@/common/types/blog';
+import {
+  Article,
+  ArticleIndex,
+  ArticleSearchIndex,
+  BlogSyncState,
+} from '@/common/types/blog';
 import { getServerEnv } from '@/server/env';
 
 const SEEDED_DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
@@ -18,6 +23,7 @@ const LOCAL_CACHE_ASSET_BASE_PATH = '/local-feishu-assets';
 
 const BLOB_PREFIX = 'feishu-blog';
 const BLOB_INDEX_PATH = `${BLOB_PREFIX}/index.json`;
+const BLOB_SEARCH_INDEX_PATH = `${BLOB_PREFIX}/search-index.json`;
 const BLOB_SYNC_STATE_PATH = `${BLOB_PREFIX}/sync-state.json`;
 const BLOB_ARTICLES_PREFIX = `${BLOB_PREFIX}/articles`;
 const BLOB_ASSETS_PREFIX = `${BLOB_PREFIX}/assets`;
@@ -44,6 +50,8 @@ export interface BlogStorageAdapter {
   name: 'local' | 'blob';
   readIndex: () => Promise<ArticleIndex | null>;
   writeIndex: (index: ArticleIndex) => Promise<void>;
+  readSearchIndex: () => Promise<ArticleSearchIndex | null>;
+  writeSearchIndex: (index: ArticleSearchIndex) => Promise<void>;
   readArticle: (slug: string) => Promise<Article | null>;
   writeArticle: (article: Article) => Promise<void>;
   readSyncState: () => Promise<BlogSyncState | null>;
@@ -127,6 +135,19 @@ const localStorage: BlogStorageAdapter = {
   async writeIndex(index) {
     await ensureLocalDirs();
     await writeJsonFile(path.join(LOCAL_CACHE_DATA_DIR, 'index.json'), index);
+  },
+  async readSearchIndex() {
+    return readFirstJsonFile<ArticleSearchIndex>([
+      path.join(LOCAL_CACHE_DATA_DIR, 'search-index.json'),
+      path.join(SEEDED_DATA_DIR, 'search-index.json'),
+    ]);
+  },
+  async writeSearchIndex(index) {
+    await ensureLocalDirs();
+    await writeJsonFile(
+      path.join(LOCAL_CACHE_DATA_DIR, 'search-index.json'),
+      index,
+    );
   },
   async readArticle(slug) {
     return readFirstJsonFile<Article>([
@@ -240,6 +261,12 @@ const blobStorage: BlogStorageAdapter = {
   },
   async writeIndex(index) {
     await writeBlobJson(BLOB_INDEX_PATH, index);
+  },
+  async readSearchIndex() {
+    return readBlobJson<ArticleSearchIndex>(BLOB_SEARCH_INDEX_PATH);
+  },
+  async writeSearchIndex(index) {
+    await writeBlobJson(BLOB_SEARCH_INDEX_PATH, index);
   },
   async readArticle(slug) {
     return readBlobJson<Article>(`${BLOB_ARTICLES_PREFIX}/${slug}.json`);
