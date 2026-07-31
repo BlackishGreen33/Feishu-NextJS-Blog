@@ -1,0 +1,11 @@
+diff --git a/dist/commonjs/index.js b/dist/commonjs/index.js
+index be9df86be09c7655787a65c55ae6da01858894c3..2e9d2facbf7cb45a02905765b7cce06fffbe6372 100644
+--- a/dist/commonjs/index.js
++++ b/dist/commonjs/index.js
+@@ -260,4 +260,6 @@ function expand_(str, max, maxLength, isTop) {
+     }
+     return acc;
+ }
++// minimatch < 10 expects require('brace-expansion') to be directly callable.
++module.exports = Object.assign(expand, exports);
+ //# sourceMappingURL=index.js.map
