@@ -1,4 +1,5 @@
 import {
+  Article,
   ArticleIndex,
   ArticleSearchIndex,
   ArticleSummary,
@@ -189,5 +190,93 @@ describe('blog repository full-text search', () => {
       'partial-body-match',
       'featured-tag-match',
     ]);
+  });
+});
+
+describe('blog repository slug redirects', () => {
+  const currentSummary: ArticleSummary = {
+    id: 'article-1',
+    slug: 'new-title',
+    title: 'New title',
+    summary: 'Current article',
+    cover: null,
+    publishedAt: '2026-04-20T00:00:00.000Z',
+    updatedAt: '2026-04-21T00:00:00.000Z',
+    tags: [],
+    featured: false,
+    draft: false,
+    readingTimeMinutes: 1,
+    sourceNodeToken: 'node-1',
+    sourceDocumentId: 'doc-1',
+  };
+  const staleArticle: Article = {
+    ...currentSummary,
+    slug: 'old-title',
+    title: 'Old title',
+    content: 'Stale content',
+    contentFormat: 'markdown',
+  };
+  const redirectingIndex = {
+    generatedAt: '2026-04-21T00:00:00.000Z',
+    source: 'feishu',
+    articles: [currentSummary],
+    redirects: {
+      'old-title': {
+        sourceNodeToken: 'node-1',
+        targetSlug: 'new-title',
+      },
+    },
+  } satisfies ArticleIndex & {
+    redirects: Record<string, { sourceNodeToken: string; targetSlug: string }>;
+  };
+  let currentIndex = redirectingIndex;
+  const readArticle = jest.fn().mockResolvedValue(staleArticle);
+
+  beforeEach(() => {
+    jest.resetModules();
+    currentIndex = redirectingIndex;
+    readArticle.mockClear();
+    jest.doMock('@/server/blog/storage', () => ({
+      getBlogStorage: () => ({
+        readIndex: jest.fn().mockImplementation(async () => currentIndex),
+        readArticle,
+      }),
+    }));
+  });
+
+  afterEach(() => {
+    jest.dontMock('@/server/blog/storage');
+  });
+
+  it('does not serve stale JSON when a slug is no longer active', async () => {
+    const { getArticleBySlug } = await import('@/server/blog/repository');
+
+    await expect(getArticleBySlug('old-title')).resolves.toBeNull();
+    expect(readArticle).not.toHaveBeenCalled();
+  });
+
+  it('resolves a published redirect to the active slug', async () => {
+    const { getArticleRedirectBySlug } =
+      await import('@/server/blog/repository');
+
+    await expect(getArticleRedirectBySlug('old-title')).resolves.toBe(
+      'new-title',
+    );
+  });
+
+  it('rejects a redirect whose target belongs to another Article', async () => {
+    currentIndex = {
+      ...redirectingIndex,
+      redirects: {
+        'old-title': {
+          sourceNodeToken: 'node-other',
+          targetSlug: 'new-title',
+        },
+      },
+    };
+    const { getArticleRedirectBySlug } =
+      await import('@/server/blog/repository');
+
+    await expect(getArticleRedirectBySlug('old-title')).resolves.toBeNull();
   });
 });

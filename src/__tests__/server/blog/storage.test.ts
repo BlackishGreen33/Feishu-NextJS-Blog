@@ -199,6 +199,8 @@ describe('blog storage local cache', () => {
     await expect(storage.readSearchIndex()).resolves.toEqual(sampleSearchIndex);
     await expect(storage.assetExists('image/example.png')).resolves.toBe(true);
     await expect(storage.assetExists('image/missing.png')).resolves.toBe(false);
+    await storage.deleteArticle(sampleArticle.slug);
+    await expect(storage.readArticle(sampleArticle.slug)).resolves.toBeNull();
     await storage.deleteAsset('image/example.png');
     await expect(storage.assetExists('image/example.png')).resolves.toBe(false);
     await expect(
@@ -300,5 +302,17 @@ describe('blog storage blob cache', () => {
     expect(delMock).toHaveBeenCalledWith(
       'feishu-blog/assets/image/example.png',
     );
+  });
+
+  it('deletes blob articles by slug', async () => {
+    const { del } = await import('@vercel/blob');
+    const delMock = jest.mocked(del);
+
+    const { getBlogStorage } = await import('@/server/blog/storage');
+    const storage = getBlogStorage();
+
+    await storage.deleteArticle('old-title');
+
+    expect(delMock).toHaveBeenCalledWith('feishu-blog/articles/old-title.json');
   });
 });

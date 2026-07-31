@@ -84,10 +84,12 @@ type StorageMock = jest.Mocked<ArticleSyncPublicationAdapter>;
 
 const createStorageMock = (): StorageMock => ({
   name: 'local',
+  readIndex: jest.fn(),
   writeIndex: jest.fn(),
   writeSearchIndex: jest.fn(),
   readArticle: jest.fn(),
   writeArticle: jest.fn(),
+  deleteArticle: jest.fn(),
   readSyncState: jest.fn(),
   writeSyncState: jest.fn(),
   assetExists: jest.fn(),
@@ -483,6 +485,17 @@ describe('syncFeishuArticles', () => {
 
   it('rebuilds changed articles while reusing known assets and downloading new ones', async () => {
     const storage = createStorageMock();
+    storage.readIndex.mockResolvedValue({
+      generatedAt: '2026-04-20T00:00:00.000Z',
+      source: 'feishu',
+      articles: [article],
+      redirects: {
+        'legacy-doc': {
+          sourceNodeToken: 'node-1',
+          targetSlug: 'existing-doc',
+        },
+      },
+    });
     const source = createSourceMock();
     source.inspectDocument.mockResolvedValue({
       ...revision,
@@ -552,6 +565,25 @@ describe('syncFeishuArticles', () => {
         ],
       }),
     );
+    expect(storage.writeIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirects: {
+          'existing-doc': {
+            sourceNodeToken: 'node-1',
+            targetSlug: 'updated-doc',
+          },
+          'legacy-doc': {
+            sourceNodeToken: 'node-1',
+            targetSlug: 'updated-doc',
+          },
+        },
+      }),
+    );
+    expect(storage.deleteArticle).toHaveBeenCalledWith('existing-doc');
+    expect(storage.deleteArticle).toHaveBeenCalledWith('legacy-doc');
+    expect(storage.writeIndex.mock.invocationCallOrder[0]).toBeLessThan(
+      storage.deleteArticle.mock.invocationCallOrder[0],
+    );
     expect(result.changedArticles).toBe(1);
     expect(result.fallbackArticles).toBe(0);
     expect(result.downloadedAssets).toBe(1);
@@ -572,6 +604,96 @@ describe('syncFeishuArticles', () => {
             url: '/local-feishu-assets/image/img-new.png',
           }),
         }),
+      }),
+    );
+  });
+
+  it('recovers the previous slug from the index when sync state is missing', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    storage.readIndex.mockResolvedValue({
+      generatedAt: '2026-04-20T00:00:00.000Z',
+      source: 'feishu',
+      articles: [article],
+    });
+    storage.readSyncState.mockResolvedValue(null);
+    storage.readArticle.mockResolvedValue(article);
+    source.inspectDocument.mockResolvedValue({
+      ...revision,
+      title: 'Updated Doc',
+      updatedAt: '1776561900',
+      revisionId: 'rev-2',
+      coverToken: undefined,
+    });
+    source.readDocument.mockResolvedValue({
+      markdown: ['---', 'title: Updated Doc', '---', '# Updated Doc'].join(
+        '\n',
+      ),
+      fileTokens: {},
+      meta: {},
+    });
+
+    await createTestSync(source, storage)();
+
+    expect(storage.readArticle).toHaveBeenCalledWith('existing-doc');
+    expect(storage.writeIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirects: {
+          'existing-doc': {
+            sourceNodeToken: 'node-1',
+            targetSlug: 'updated-doc',
+          },
+        },
+      }),
+    );
+    expect(storage.deleteArticle).toHaveBeenCalledWith('existing-doc');
+  });
+
+  it('never reuses a permanent alias as an active Article slug', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    storage.readIndex.mockResolvedValue({
+      generatedAt: '2026-04-20T00:00:00.000Z',
+      source: 'feishu',
+      articles: [article],
+      redirects: {
+        'legacy-doc': {
+          sourceNodeToken: 'node-1',
+          targetSlug: 'existing-doc',
+        },
+      },
+    });
+    storage.readSyncState.mockResolvedValue(previousSyncState);
+    storage.readArticle.mockResolvedValue(article);
+    source.inspectDocument.mockResolvedValue({
+      ...revision,
+      updatedAt: '1776561900',
+      revisionId: 'rev-2',
+      coverToken: undefined,
+    });
+    source.readDocument.mockResolvedValue({
+      markdown: ['---', 'slug: legacy-doc', '---', '# Existing Doc'].join('\n'),
+      fileTokens: {},
+      meta: {},
+    });
+
+    await createTestSync(source, storage)();
+
+    expect(storage.writeArticle).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'legacy-doc-node-1' }),
+    );
+    expect(storage.writeIndex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirects: {
+          'existing-doc': {
+            sourceNodeToken: 'node-1',
+            targetSlug: 'legacy-doc-node-1',
+          },
+          'legacy-doc': {
+            sourceNodeToken: 'node-1',
+            targetSlug: 'legacy-doc-node-1',
+          },
+        },
       }),
     );
   });

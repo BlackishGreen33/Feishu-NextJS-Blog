@@ -1,4 +1,5 @@
 import {
+  ensureUniqueSlug,
   extractFirstImage,
   replaceTokens,
   stripLeadingHeading,
@@ -10,6 +11,14 @@ describe('blog utils', () => {
   it('creates stable slugs', () => {
     expect(toSlug('My First Post')).toBe('my-first-post');
     expect(toSlug('飛書 同步 架構')).toBe('飛書-同步-架構');
+  });
+
+  it('keeps incrementing when a slug and its first fallback are reserved', () => {
+    const reserved = new Set(['article', 'article-node-1']);
+
+    expect(ensureUniqueSlug('article', 'node-1', reserved)).toBe(
+      'article-node-1-2',
+    );
   });
 
   it('summarizes markdown content', () => {
