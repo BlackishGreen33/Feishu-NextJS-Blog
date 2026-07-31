@@ -238,6 +238,43 @@ describe('syncFeishuArticles', () => {
     );
   });
 
+  it('parses frontmatter after the renderer-generated heading', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    source.inspectDocument.mockResolvedValue({
+      ...revision,
+      coverToken: undefined,
+    });
+    source.readDocument.mockResolvedValue({
+      markdown: [
+        '# Existing Doc',
+        '',
+        '---',
+        'date: 2023-05-10',
+        'tags: [CSS, 技術分享]',
+        '---',
+        '',
+        'Body',
+      ].join('\n'),
+      fileTokens: {},
+      meta: {},
+    });
+
+    await createTestSync(source, storage)();
+
+    const syncedArticle = storage.writeArticle.mock.calls[0]?.[0];
+    expect(syncedArticle).toEqual(
+      expect.objectContaining({
+        publishedAt: '2023-05-10T00:00:00.000Z',
+        content: 'Body',
+      }),
+    );
+    expect(syncedArticle?.tags.map((tag) => tag.name)).toEqual([
+      'CSS',
+      '技術分享',
+    ]);
+  });
+
   it('keeps wiki-hidden documents as drafts when the document title is public', async () => {
     const storage = createStorageMock();
     const source = createSourceMock();

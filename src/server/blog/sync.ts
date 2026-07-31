@@ -428,7 +428,9 @@ const runFeishuArticleSync = async (
         const { markdown, fileTokens, meta } = await source.readDocument(
           document.document,
         );
-        const parsed = matter(markdown);
+        const sourceTitle =
+          document.document.documentTitle || document.document.title;
+        const parsed = matter(stripLeadingHeading(markdown, sourceTitle));
         const frontmatter = normalizeFrontmatter({
           ...meta,
           ...(parsed.data as Record<string, unknown>),
