@@ -348,6 +348,20 @@ const runFeishuArticleSync = async (
       const previousSlug =
         previousState?.slug ||
         previousSlugByNodeToken.get(document.sourceNodeToken);
+      const readPreviousArticle = async () => {
+        if (!previousSlug) return undefined;
+
+        const article = await storage.readArticle(previousSlug);
+
+        if (
+          article?.slug !== previousSlug ||
+          article.sourceNodeToken !== document.sourceNodeToken
+        ) {
+          return undefined;
+        }
+
+        return article;
+      };
       let revision: SourceDocumentRevision;
 
       try {
@@ -363,7 +377,7 @@ const runFeishuArticleSync = async (
           return null;
         }
 
-        const previousArticle = await storage.readArticle(previousSlug);
+        const previousArticle = await readPreviousArticle();
 
         if (!previousArticle) {
           return null;
@@ -388,9 +402,7 @@ const runFeishuArticleSync = async (
       }
 
       const isUnchanged = hasSameDocumentVersion(previousState, revision);
-      const previousArticle = previousSlug
-        ? await storage.readArticle(previousSlug)
-        : undefined;
+      const previousArticle = await readPreviousArticle();
 
       return {
         document: revision,

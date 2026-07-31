@@ -91,15 +91,22 @@ export const getLatestArticles = async (limit = 6) => {
 
 export const getArticleBySlug = async (slug: string, includeDraft = false) => {
   const index = await getArticleIndex(includeDraft);
+  const indexedArticle = index.articles.find(
+    (article) => article.slug === slug,
+  );
 
-  if (!index.articles.some((article) => article.slug === slug)) {
+  if (!indexedArticle) {
     return null;
   }
 
   const storage = getBlogStorage();
   const article = await storage.readArticle(slug);
 
-  if (!includeArticle(article, includeDraft)) {
+  if (
+    !includeArticle(article, includeDraft) ||
+    article?.slug !== indexedArticle.slug ||
+    article.sourceNodeToken !== indexedArticle.sourceNodeToken
+  ) {
     return null;
   }
 
