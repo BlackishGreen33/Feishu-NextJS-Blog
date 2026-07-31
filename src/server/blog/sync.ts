@@ -6,6 +6,7 @@ import {
   Article,
   ArticleFrontmatter,
   ArticleIndex,
+  ArticleSlugRedirect,
   ArticleSummary,
   ArticleTag,
 } from '@/common/types/blog';
@@ -69,6 +70,7 @@ type RawArticle = {
 
 type DocumentMetadata = {
   document: SourceDocumentRevision;
+  previousSlug?: string;
   previousState?: BlogSyncDocumentState;
   previousArticle?: Article | null;
   revisionId?: string;
@@ -83,8 +85,10 @@ const DOCUMENT_SYNC_CONCURRENCY = 3;
 export type ArticleSyncPublicationAdapter = Pick<
   BlogStorageAdapter,
   | 'name'
+  | 'readIndex'
   | 'readArticle'
   | 'writeArticle'
+  | 'deleteArticle'
   | 'readSyncState'
   | 'writeSyncState'
   | 'assetExists'
@@ -215,8 +219,14 @@ const parseArticle = (raw: RawArticle, slug: string): Article => {
 const buildSlugMap = (
   documents: DocumentMetadata[],
   rawArticlesByNodeToken: Map<string, RawArticle>,
+  reservedAliases: Set<string>,
 ) => {
-  const slugs = new Set<string>();
+  const slugs = new Set([
+    ...reservedAliases,
+    ...documents.flatMap((document) =>
+      document.previousSlug ? [document.previousSlug] : [],
+    ),
+  ]);
   const mapping = new Map<string, string>();
 
   documents.forEach((document) => {
@@ -229,7 +239,15 @@ const buildSlugMap = (
             rawArticle.frontmatter.title ||
             rawArticle.title,
         )
-      : document.previousState?.slug || toSlug(document.document.title);
+      : document.previousSlug || toSlug(document.document.title);
+
+    if (
+      document.previousSlug === preferredSlug &&
+      !reservedAliases.has(preferredSlug)
+    ) {
+      slugs.delete(preferredSlug);
+    }
+
     const slug = ensureUniqueSlug(
       preferredSlug,
       document.document.sourceNodeToken.slice(-6),
@@ -239,6 +257,26 @@ const buildSlugMap = (
   });
 
   return mapping;
+};
+
+const buildArticleRedirects = (
+  previousRedirects: Record<string, ArticleSlugRedirect>,
+  slugChanges: Record<string, ArticleSlugRedirect>,
+  articles: ArticleSummary[],
+) => {
+  const activeSlugByNodeToken = new Map(
+    articles.map((article) => [article.sourceNodeToken, article.slug]),
+  );
+
+  return Object.entries({ ...previousRedirects, ...slugChanges }).reduce<
+    Record<string, ArticleSlugRedirect>
+  >((acc, [from, redirect]) => {
+    const targetSlug = activeSlugByNodeToken.get(redirect.sourceNodeToken);
+
+    acc[from] = targetSlug ? { ...redirect, targetSlug } : redirect;
+
+    return acc;
+  }, {});
 };
 
 const rewriteArticleContent = async (
@@ -284,7 +322,17 @@ const runFeishuArticleSync = async (
   storage: ArticleSyncPublicationAdapter,
 ): Promise<SyncResult> => {
   const documents = await source.listDocuments();
-  const previousSyncState = normalizeSyncState(await storage.readSyncState());
+  const [storedSyncState, previousIndex] = await Promise.all([
+    storage.readSyncState(),
+    storage.readIndex(),
+  ]);
+  const previousSyncState = normalizeSyncState(storedSyncState);
+  const previousSlugByNodeToken = new Map(
+    previousIndex?.articles.map((article) => [
+      article.sourceNodeToken,
+      article.slug,
+    ]) || [],
+  );
   const assetManager = createArticleAssetManager({
     publication: storage,
     source,
@@ -297,6 +345,9 @@ const runFeishuArticleSync = async (
     async (document) => {
       const previousState =
         previousSyncState.documents[document.sourceNodeToken];
+      const previousSlug =
+        previousState?.slug ||
+        previousSlugByNodeToken.get(document.sourceNodeToken);
       let revision: SourceDocumentRevision;
 
       try {
@@ -308,11 +359,11 @@ const runFeishuArticleSync = async (
           error,
         );
 
-        if (!previousState) {
+        if (!previousSlug) {
           return null;
         }
 
-        const previousArticle = await storage.readArticle(previousState.slug);
+        const previousArticle = await storage.readArticle(previousSlug);
 
         if (!previousArticle) {
           return null;
@@ -321,27 +372,29 @@ const runFeishuArticleSync = async (
         return {
           document: {
             ...document,
-            revisionId: previousState.revisionId,
-            updatedAt: previousState.objEditTime,
-            coverToken: previousState.coverToken,
+            revisionId: previousState?.revisionId,
+            updatedAt: previousState?.objEditTime || document.updatedAt,
+            coverToken: previousState?.coverToken,
           },
+          previousSlug,
           previousState,
           previousArticle,
-          revisionId: previousState.revisionId,
-          objEditTime: previousState.objEditTime,
-          coverToken: previousState.coverToken,
+          revisionId: previousState?.revisionId,
+          objEditTime: previousState?.objEditTime || document.updatedAt,
+          coverToken: previousState?.coverToken,
           shouldRefresh: true,
           inspectionFailed: true,
         } satisfies DocumentMetadata;
       }
 
       const isUnchanged = hasSameDocumentVersion(previousState, revision);
-      const previousArticle = previousState
-        ? await storage.readArticle(previousState.slug)
+      const previousArticle = previousSlug
+        ? await storage.readArticle(previousSlug)
         : undefined;
 
       return {
         document: revision,
+        previousSlug,
         previousState,
         previousArticle,
         revisionId: revision.revisionId,
@@ -405,26 +458,34 @@ const runFeishuArticleSync = async (
       rawArticlesByNodeToken.has(document.document.sourceNodeToken),
   );
 
-  const nodeTokenToSlug = buildSlugMap(activeDocuments, rawArticlesByNodeToken);
+  const nodeTokenToSlug = buildSlugMap(
+    activeDocuments,
+    rawArticlesByNodeToken,
+    new Set(Object.keys(previousIndex?.redirects || {})),
+  );
   const articles: Article[] = [];
   const nextDocuments: BlogSyncState['documents'] = {};
   let fallbackArticles = 0;
   let reusedArticles = 0;
-  const slugRewrites = activeDocuments.reduce<Record<string, string>>(
-    (acc, document) => {
-      const slug = nodeTokenToSlug.get(document.document.sourceNodeToken);
+  const slugChanges = activeDocuments.reduce<
+    Record<string, ArticleSlugRedirect>
+  >((acc, document) => {
+    const slug = nodeTokenToSlug.get(document.document.sourceNodeToken);
 
-      if (
-        slug &&
-        document.previousState?.slug &&
-        document.previousState.slug !== slug
-      ) {
-        acc[`/blog/${document.previousState.slug}`] = `/blog/${slug}`;
-      }
+    if (slug && document.previousSlug && document.previousSlug !== slug) {
+      acc[document.previousSlug] = {
+        sourceNodeToken: document.document.sourceNodeToken,
+        targetSlug: slug,
+      };
+    }
 
-      return acc;
-    },
-    {},
+    return acc;
+  }, {});
+  const slugRewrites = Object.fromEntries(
+    Object.entries(slugChanges).map(([from, redirect]) => [
+      `/blog/${from}`,
+      `/blog/${redirect.targetSlug}`,
+    ]),
   );
 
   for (const document of activeDocuments) {
@@ -516,11 +577,17 @@ const runFeishuArticleSync = async (
     })),
   );
   const generatedAt = new Date().toISOString();
+  const redirects = buildArticleRedirects(
+    previousIndex?.redirects || {},
+    slugChanges,
+    publicArticles,
+  );
 
   const index: ArticleIndex = {
     generatedAt,
     source: 'feishu',
     articles: publicArticles,
+    redirects,
   };
   const searchIndex = buildArticleSearchIndex({
     generatedAt,
@@ -541,6 +608,11 @@ const runFeishuArticleSync = async (
     documents: nextDocuments,
     assets: nextAssets,
   });
+  await mapWithConcurrency(
+    Object.keys(redirects),
+    DOCUMENT_SYNC_CONCURRENCY,
+    (slug) => storage.deleteArticle(slug),
+  );
   const assetStats = assetManager.getStats();
 
   return {

@@ -51,6 +51,7 @@ export interface BlogStorageAdapter {
   writeSearchIndex: (index: ArticleSearchIndex) => Promise<void>;
   readArticle: (slug: string) => Promise<Article | null>;
   writeArticle: (article: Article) => Promise<void>;
+  deleteArticle: (slug: string) => Promise<void>;
   readSyncState: () => Promise<BlogSyncState | null>;
   writeSyncState: (state: BlogSyncState) => Promise<void>;
   assetExists: (pathname: string) => Promise<boolean>;
@@ -158,6 +159,11 @@ const localStorage: BlogStorageAdapter = {
       path.join(LOCAL_CACHE_ARTICLES_DIR, `${article.slug}.json`),
       article,
     );
+  },
+  async deleteArticle(slug) {
+    const filePath = path.join(LOCAL_CACHE_ARTICLES_DIR, `${slug}.json`);
+    await fs.rm(filePath, { force: true });
+    localJsonCache.delete(filePath);
   },
   async readSyncState() {
     return readJsonFile<BlogSyncState>(
@@ -273,6 +279,14 @@ const blobStorage: BlogStorageAdapter = {
       `${BLOB_ARTICLES_PREFIX}/${article.slug}.json`,
       article,
     );
+  },
+  async deleteArticle(slug) {
+    const pathname = `${BLOB_ARTICLES_PREFIX}/${slug}.json`;
+    await del(pathname);
+    blobJsonCache.set(pathname, {
+      expiresAt: Date.now() + BLOB_JSON_CACHE_TTL_MS,
+      value: null,
+    });
   },
   async readSyncState() {
     return readBlobJson<BlogSyncState>(BLOB_SYNC_STATE_PATH);

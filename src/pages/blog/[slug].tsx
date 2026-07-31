@@ -3,7 +3,7 @@ import { NextSeo } from 'next-seo';
 
 import BackButton from '@/common/components/elements/BackButton';
 import Container from '@/common/components/elements/Container';
-import { getCanonicalUrl } from '@/common/config/seo';
+import { getCanonicalUrl, getLocalePath } from '@/common/config/seo';
 import {
   SITE_DEFAULT_BLOG_COVER,
   SITE_URL,
@@ -12,7 +12,11 @@ import {
 import { BlogDetailProps } from '@/common/types/blog';
 import { useI18n } from '@/i18n';
 import BlogDetail from '@/modules/blog/components/BlogDetail';
-import { getAllArticleSlugs, getArticleBySlug } from '@/server/blog/repository';
+import {
+  getAllArticleSlugs,
+  getArticleBySlug,
+  getArticleRedirectBySlug,
+} from '@/server/blog/repository';
 
 interface BlogDetailPageProps {
   blog: BlogDetailProps;
@@ -75,6 +79,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (typeof slug !== 'string') {
     return {
       notFound: true,
+    };
+  }
+
+  const redirectSlug = await getArticleRedirectBySlug(slug);
+
+  if (redirectSlug) {
+    return {
+      redirect: {
+        destination: getLocalePath(`/blog/${redirectSlug}`, context.locale),
+        permanent: true,
+      },
+      revalidate: 60,
     };
   }
 

@@ -90,6 +90,12 @@ export const getLatestArticles = async (limit = 6) => {
 };
 
 export const getArticleBySlug = async (slug: string, includeDraft = false) => {
+  const index = await getArticleIndex(includeDraft);
+
+  if (!index.articles.some((article) => article.slug === slug)) {
+    return null;
+  }
+
   const storage = getBlogStorage();
   const article = await storage.readArticle(slug);
 
@@ -98,6 +104,26 @@ export const getArticleBySlug = async (slug: string, includeDraft = false) => {
   }
 
   return article;
+};
+
+export const getArticleRedirectBySlug = async (
+  slug: string,
+  includeDraft = false,
+) => {
+  const index = await getArticleIndex(includeDraft);
+  const redirect = index.redirects?.[slug];
+
+  if (!redirect || index.articles.some((article) => article.slug === slug)) {
+    return null;
+  }
+
+  const target = index.articles.find(
+    (article) => article.slug === redirect.targetSlug,
+  );
+
+  return target?.sourceNodeToken === redirect.sourceNodeToken
+    ? redirect.targetSlug
+    : null;
 };
 
 export const getAllArticleSlugs = async () => {

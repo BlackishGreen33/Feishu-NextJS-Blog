@@ -37,10 +37,16 @@ export type Article = ArticleSummary & {
   contentFormat: 'markdown';
 };
 
+export type ArticleSlugRedirect = {
+  sourceNodeToken: string;
+  targetSlug: string;
+};
+
 export type ArticleIndex = {
   generatedAt: string;
   source: 'fixture' | 'feishu';
   articles: ArticleSummary[];
+  redirects?: Record<string, ArticleSlugRedirect>;
 };
 
 export type ArticleSearchEntry = ArticleSummary & {

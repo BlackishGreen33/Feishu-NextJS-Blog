@@ -49,7 +49,15 @@ export const ensureUniqueSlug = (
     return base;
   }
 
-  const next = `${base}-${suffix.toLowerCase()}`;
+  const fallback = `${base}-${suffix.toLowerCase()}`;
+  let next = fallback;
+  let attempt = 2;
+
+  while (existing.has(next)) {
+    next = `${fallback}-${attempt}`;
+    attempt += 1;
+  }
+
   existing.add(next);
   return next;
 };
