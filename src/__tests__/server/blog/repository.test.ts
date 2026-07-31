@@ -230,11 +230,13 @@ describe('blog repository slug redirects', () => {
     redirects: Record<string, { sourceNodeToken: string; targetSlug: string }>;
   };
   let currentIndex = redirectingIndex;
-  const readArticle = jest.fn().mockResolvedValue(staleArticle);
+  let storedArticle = staleArticle;
+  const readArticle = jest.fn().mockImplementation(async () => storedArticle);
 
   beforeEach(() => {
     jest.resetModules();
     currentIndex = redirectingIndex;
+    storedArticle = staleArticle;
     readArticle.mockClear();
     jest.doMock('@/server/blog/storage', () => ({
       getBlogStorage: () => ({
@@ -253,6 +255,17 @@ describe('blog repository slug redirects', () => {
 
     await expect(getArticleBySlug('old-title')).resolves.toBeNull();
     expect(readArticle).not.toHaveBeenCalled();
+  });
+
+  it('does not serve active-slug JSON that belongs to another Article', async () => {
+    storedArticle = {
+      ...staleArticle,
+      slug: 'new-title',
+      sourceNodeToken: 'node-other',
+    };
+    const { getArticleBySlug } = await import('@/server/blog/repository');
+
+    await expect(getArticleBySlug('new-title')).resolves.toBeNull();
   });
 
   it('resolves a published redirect to the active slug', async () => {

@@ -412,6 +412,31 @@ describe('syncFeishuArticles', () => {
     errorSpy.mockRestore();
   });
 
+  it('does not reuse previous-slug JSON that belongs to another Source Document', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    source.inspectDocument.mockResolvedValue({
+      ...revision,
+      updatedAt: '1776561900',
+      revisionId: 'rev-2',
+    });
+    source.readDocument.mockRejectedValue(new Error('temporary'));
+    storage.readSyncState.mockResolvedValue(previousSyncState);
+    storage.readArticle.mockResolvedValue({
+      ...article,
+      sourceNodeToken: 'node-other',
+    });
+
+    const result = await createTestSync(source, storage)();
+
+    expect(result.totalArticles).toBe(0);
+    expect(storage.writeIndex).toHaveBeenCalledWith(
+      expect.objectContaining({ articles: [] }),
+    );
+    errorSpy.mockRestore();
+  });
+
   it('retains the previous Article when source inspection fails', async () => {
     const storage = createStorageMock();
     const source = createSourceMock();
