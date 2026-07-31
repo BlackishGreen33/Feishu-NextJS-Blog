@@ -2,12 +2,8 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 
-import {
-  Article,
-  ArticleIndex,
-  ArticleSearchIndex,
-  BlogSyncState,
-} from '@/common/types/blog';
+import { Article, ArticleIndex, ArticleSearchIndex } from '@/common/types/blog';
+import { BlogSyncState } from '@/server/blog/sync-state';
 
 jest.mock('@vercel/blob', () => ({
   BlobNotFoundError: class BlobNotFoundError extends Error {},

@@ -2,13 +2,10 @@ import { BlobNotFoundError, del, head, put } from '@vercel/blob';
 import fs from 'fs/promises';
 import path from 'path';
 
-import {
-  Article,
-  ArticleIndex,
-  ArticleSearchIndex,
-  BlogSyncState,
-} from '@/common/types/blog';
+import { Article, ArticleIndex, ArticleSearchIndex } from '@/common/types/blog';
 import { getServerEnv } from '@/server/env';
+
+import { BlogSyncState } from './sync-state';
 
 const SEEDED_DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
 const SEEDED_ARTICLES_DIR = path.join(SEEDED_DATA_DIR, 'articles');

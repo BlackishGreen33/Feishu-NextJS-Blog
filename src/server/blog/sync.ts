@@ -1,6 +1,4 @@
 /* eslint-disable no-console */
-import type { FileToken } from 'feishu-docx/dist/index.js';
-import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
 import matter from 'gray-matter';
 
 import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
@@ -10,24 +8,27 @@ import {
   ArticleIndex,
   ArticleSummary,
   ArticleTag,
-  BlogSyncAssetState,
-  BlogSyncDocumentState,
-  BlogSyncState,
 } from '@/common/types/blog';
 import { getServerEnv } from '@/server/env';
 
-import { FeishuClient, FeishuWikiNode } from './feishu';
+import { ArticleAssetManager, createArticleAssetManager } from './assets';
 import { buildArticleSearchIndex } from './search';
-import { getBlogStorage } from './storage';
+import {
+  ArticleSourceAdapter,
+  createFeishuArticleSource,
+  SourceAsset,
+  SourceDocument,
+  SourceDocumentRevision,
+} from './source';
+import { BlogStorageAdapter, getBlogStorage } from './storage';
+import { BlogSyncDocumentState, BlogSyncState } from './sync-state';
 import {
   calculateReadingTime,
   ensureUniqueSlug,
-  extensionFromType,
   extractLinkedTokens,
   isHiddenTitle,
-  parseContentDispositionName,
+  mapWithConcurrency,
   replaceTokens,
-  sanitizeFileName,
   sortArticlesByDate,
   stripLeadingHeading,
   summarizeMarkdown,
@@ -57,10 +58,9 @@ type SyncResult = {
 };
 
 type RawArticle = {
-  node: FeishuWikiNode;
+  document: SourceDocumentRevision;
   title: string;
-  markdown: string;
-  fileTokens: Record<string, FileToken>;
+  fileTokens: Record<string, SourceAsset>;
   frontmatter: ArticleFrontmatter;
   content: string;
   documentCoverToken?: string;
@@ -68,86 +68,45 @@ type RawArticle = {
 };
 
 type DocumentMetadata = {
-  node: FeishuWikiNode;
-  documentInfo: Awaited<ReturnType<FeishuClient['getDocumentInfo']>>;
+  document: SourceDocumentRevision;
   previousState?: BlogSyncDocumentState;
   previousArticle?: Article | null;
   revisionId?: string;
   objEditTime?: string;
   coverToken?: string;
   shouldRefresh: boolean;
+  inspectionFailed?: boolean;
 };
 
-type AssetSyncStats = {
-  downloadedAssets: number;
-  reusedAssets: number;
-  deletedAssets: number;
-  failedAssetDeletes: number;
-};
-
-type AssetResolver = {
-  assets: Record<string, BlogSyncAssetState>;
-  resolveAsset: (
-    fileToken: FileToken,
-    directory?: string,
-  ) => Promise<BlogSyncAssetState>;
-};
-
-const baseRequiredEnvKeys = ['FEISHU_APP_ID', 'FEISHU_APP_SECRET'] as const;
 const DOCUMENT_SYNC_CONCURRENCY = 3;
-const ASSET_SYNC_CONCURRENCY = 4;
 
-const getSyncSpaceId = () => getServerEnv().feishu.spaceId;
+export type ArticleSyncPublicationAdapter = Pick<
+  BlogStorageAdapter,
+  | 'name'
+  | 'readArticle'
+  | 'writeArticle'
+  | 'readSyncState'
+  | 'writeSyncState'
+  | 'assetExists'
+  | 'writeAsset'
+  | 'deleteAsset'
+  | 'writeIndex'
+  | 'writeSearchIndex'
+>;
 
-const getMissingEnvKeys = () => {
-  const missing: string[] = baseRequiredEnvKeys.filter(
-    (key) => !process.env[key]?.trim(),
-  );
+type ArticleSyncBindings =
+  | {
+      availability: 'missing-config';
+      missingKeys: readonly string[];
+      publication: ArticleSyncPublicationAdapter;
+    }
+  | {
+      availability: 'ready';
+      source: ArticleSourceAdapter;
+      publication: ArticleSyncPublicationAdapter;
+    };
 
-  if (!getSyncSpaceId()) {
-    missing.push('FEISHU_SPACE_ID');
-  }
-
-  return missing;
-};
-
-const mapWithConcurrency = async <Input, Output>(
-  items: Input[],
-  concurrency: number,
-  mapper: (item: Input, index: number) => Promise<Output>,
-) => {
-  const results = new Array<Output>(items.length);
-  let nextIndex = 0;
-
-  const workers = Array.from(
-    { length: Math.min(concurrency, items.length) },
-    async () => {
-      while (nextIndex < items.length) {
-        const currentIndex = nextIndex;
-        nextIndex += 1;
-        results[currentIndex] = await mapper(items[currentIndex], currentIndex);
-      }
-    },
-  );
-
-  await Promise.all(workers);
-  return results;
-};
-
-const normalizeOptionalString = (value?: string | number | null) => {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return String(value);
-};
-
-const getDocumentRevisionId = (
-  documentInfo: Awaited<ReturnType<FeishuClient['getDocumentInfo']>>,
-) =>
-  normalizeOptionalString(
-    documentInfo?.revision_id ?? documentInfo?.latest_revision_id,
-  );
+type RunFeishuArticleSync = (options?: SyncOptions) => Promise<SyncResult>;
 
 const normalizeSyncState = (state: BlogSyncState | null): BlogSyncState => ({
   generatedAt: state?.generatedAt || '',
@@ -158,12 +117,12 @@ const normalizeSyncState = (state: BlogSyncState | null): BlogSyncState => ({
 
 const hasSameDocumentVersion = (
   previous: BlogSyncDocumentState | undefined,
-  current: Pick<
-    DocumentMetadata,
-    'coverToken' | 'objEditTime' | 'revisionId' | 'node'
-  >,
+  current: Pick<SourceDocumentRevision, 'coverToken' | 'revisionId'> & {
+    sourceDocumentId: string;
+    updatedAt?: string;
+  },
 ) => {
-  if (!previous || previous.sourceDocumentId !== current.node.obj_token) {
+  if (!previous || previous.sourceDocumentId !== current.sourceDocumentId) {
     return false;
   }
 
@@ -175,8 +134,8 @@ const hasSameDocumentVersion = (
     return previous.revisionId === current.revisionId;
   }
 
-  if (current.objEditTime) {
-    return previous.objEditTime === current.objEditTime;
+  if (current.updatedAt) {
+    return previous.objEditTime === current.updatedAt;
   }
 
   return false;
@@ -188,10 +147,18 @@ const buildTagList = (input: ArticleFrontmatter['tags']): ArticleTag[] =>
     slug: toSlug(name),
   }));
 
+const normalizeFrontmatterDate = (value: unknown) => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return value instanceof Date ? value.toISOString() : undefined;
+};
+
 const normalizeFrontmatter = (value: Record<string, unknown>) => ({
   slug: typeof value.slug === 'string' ? value.slug : undefined,
   title: typeof value.title === 'string' ? value.title : undefined,
-  date: typeof value.date === 'string' ? value.date : undefined,
+  date: normalizeFrontmatterDate(value.date),
   tags: value.tags as ArticleFrontmatter['tags'],
   summary: typeof value.summary === 'string' ? value.summary : undefined,
   cover: typeof value.cover === 'string' ? value.cover : undefined,
@@ -200,15 +167,15 @@ const normalizeFrontmatter = (value: Record<string, unknown>) => ({
   hide: toBoolean(value.hide),
 });
 
-export const resolveArticleDates = (
+const resolveArticleDates = (
   frontmatterDate: string | undefined,
-  node: Pick<FeishuWikiNode, 'obj_create_time' | 'obj_edit_time'>,
+  document: Pick<SourceDocument, 'createdAt' | 'updatedAt'>,
 ) => ({
   publishedAt: toIsoDate(
-    frontmatterDate || node.obj_create_time || node.obj_edit_time || undefined,
+    frontmatterDate || document.createdAt || document.updatedAt || undefined,
   ),
   updatedAt: toIsoDate(
-    node.obj_edit_time || frontmatterDate || node.obj_create_time || undefined,
+    document.updatedAt || frontmatterDate || document.createdAt || undefined,
   ),
 });
 
@@ -218,16 +185,16 @@ const parseArticle = (raw: RawArticle, slug: string): Article => {
   const summary = raw.frontmatter.summary || summarizeMarkdown(raw.content);
   const { publishedAt, updatedAt } = resolveArticleDates(
     raw.frontmatter.date,
-    raw.node,
+    raw.document,
   );
   const draft =
     raw.frontmatter.draft ||
     raw.frontmatter.hide ||
-    isHiddenTitle(raw.node.title || '');
+    isHiddenTitle(raw.document.title || '');
   const cover = raw.documentCoverUrl || SITE_DEFAULT_BLOG_COVER;
 
   return {
-    id: raw.node.node_token,
+    id: raw.document.sourceNodeToken,
     slug,
     title,
     summary,
@@ -238,192 +205,11 @@ const parseArticle = (raw: RawArticle, slug: string): Article => {
     featured: raw.frontmatter.featured || false,
     draft,
     readingTimeMinutes: calculateReadingTime(raw.content),
-    sourceNodeToken: raw.node.node_token,
-    sourceDocumentId: raw.node.obj_token,
+    sourceNodeToken: raw.document.sourceNodeToken,
+    sourceDocumentId: raw.document.sourceDocumentId,
     content: raw.content,
     contentFormat: 'markdown',
   };
-};
-
-const createMarkdownRenderer = (
-  documentId: string,
-  blocks: Awaited<ReturnType<FeishuClient['getDocumentBlocks']>>,
-) => {
-  const renderer = new MarkdownRenderer({
-    document: { document_id: documentId },
-    blocks,
-  });
-
-  const markdown = renderer.parse();
-
-  return {
-    markdown,
-    fileTokens: renderer.fileTokens,
-    meta: renderer.meta || {},
-  };
-};
-
-export const buildAssetPath = ({
-  fileToken,
-  contentType,
-  originalName,
-  directory = fileToken.type,
-}: {
-  fileToken: FileToken;
-  contentType: string | null;
-  originalName?: string | null;
-  directory?: string;
-}) => {
-  const extension = extensionFromType(contentType, originalName);
-  const safeName = sanitizeFileName(
-    originalName
-      ? `${fileToken.token}-${originalName}`
-      : `${fileToken.token}${extension}`,
-  );
-
-  return `${directory}/${safeName || `${fileToken.token}${extension}`}`;
-};
-
-const writeAssetFromToken = async (
-  storage: ReturnType<typeof getBlogStorage>,
-  client: FeishuClient,
-  fileToken: FileToken,
-  directory: string = fileToken.type,
-) => {
-  const download = await client.downloadAsset(fileToken);
-  const originalName = parseContentDispositionName(download.contentDisposition);
-  const pathname = buildAssetPath({
-    fileToken,
-    contentType: download.contentType,
-    originalName,
-    directory,
-  });
-
-  const url = await storage.writeAsset({
-    body: download.body,
-    contentType: download.contentType,
-    pathname,
-  });
-
-  return {
-    pathname,
-    url,
-    contentType: download.contentType,
-    updatedAt: new Date().toISOString(),
-  };
-};
-
-const createAssetResolver = (
-  storage: ReturnType<typeof getBlogStorage>,
-  client: FeishuClient,
-  initialAssets: Record<string, BlogSyncAssetState>,
-  stats: AssetSyncStats,
-): AssetResolver => {
-  const assets = { ...initialAssets };
-  const inFlightAssets = new Map<string, Promise<BlogSyncAssetState>>();
-
-  const resolveAsset: AssetResolver['resolveAsset'] = async (
-    fileToken,
-    directory = fileToken.type,
-  ) => {
-    const existing = assets[fileToken.token];
-
-    if (existing && (await storage.assetExists(existing.pathname))) {
-      stats.reusedAssets += 1;
-      return existing;
-    }
-
-    const pendingAsset = inFlightAssets.get(fileToken.token);
-
-    if (pendingAsset) {
-      return pendingAsset;
-    }
-
-    const nextAsset = writeAssetFromToken(
-      storage,
-      client,
-      fileToken,
-      directory,
-    ).then((asset) => {
-      stats.downloadedAssets += 1;
-      assets[fileToken.token] = asset;
-      return asset;
-    });
-
-    inFlightAssets.set(fileToken.token, nextAsset);
-
-    try {
-      return await nextAsset;
-    } finally {
-      inFlightAssets.delete(fileToken.token);
-    }
-  };
-
-  return {
-    assets,
-    resolveAsset,
-  };
-};
-
-const downloadAssets = async (
-  assetResolver: AssetResolver,
-  fileTokens: Record<string, FileToken>,
-) => {
-  const assetEntries: Record<string, string> = {};
-  const uniqueFileTokens = [
-    ...new Map(
-      Object.values(fileTokens).map((fileToken) => [
-        fileToken.token,
-        fileToken,
-      ]),
-    ).values(),
-  ];
-
-  const assets = await mapWithConcurrency(
-    uniqueFileTokens,
-    ASSET_SYNC_CONCURRENCY,
-    async (fileToken) => ({
-      fileToken,
-      asset: await assetResolver.resolveAsset(fileToken),
-    }),
-  );
-
-  assets.forEach(({ fileToken, asset }) => {
-    assetEntries[fileToken.token] = asset.url;
-  });
-
-  return assetEntries;
-};
-
-const pruneUnusedAssets = async (
-  storage: ReturnType<typeof getBlogStorage>,
-  assets: Record<string, BlogSyncAssetState>,
-  activeAssetTokens: Set<string>,
-  stats: AssetSyncStats,
-) => {
-  const nextAssets: Record<string, BlogSyncAssetState> = {};
-
-  await mapWithConcurrency(
-    Object.entries(assets),
-    ASSET_SYNC_CONCURRENCY,
-    async ([token, asset]) => {
-      if (activeAssetTokens.has(token)) {
-        nextAssets[token] = asset;
-        return;
-      }
-
-      try {
-        await storage.deleteAsset(asset.pathname);
-        stats.deletedAssets += 1;
-      } catch (error) {
-        stats.failedAssetDeletes += 1;
-        nextAssets[token] = asset;
-        console.warn(`Failed to delete unused asset ${asset.pathname}`, error);
-      }
-    },
-  );
-
-  return nextAssets;
 };
 
 const buildSlugMap = (
@@ -434,27 +220,29 @@ const buildSlugMap = (
   const mapping = new Map<string, string>();
 
   documents.forEach((document) => {
-    const rawArticle = rawArticlesByNodeToken.get(document.node.node_token);
+    const rawArticle = rawArticlesByNodeToken.get(
+      document.document.sourceNodeToken,
+    );
     const preferredSlug = rawArticle
       ? toSlug(
           rawArticle.frontmatter.slug ||
             rawArticle.frontmatter.title ||
             rawArticle.title,
         )
-      : document.previousState?.slug || toSlug(document.node.title);
+      : document.previousState?.slug || toSlug(document.document.title);
     const slug = ensureUniqueSlug(
       preferredSlug,
-      document.node.node_token.slice(-6),
+      document.document.sourceNodeToken.slice(-6),
       slugs,
     );
-    mapping.set(document.node.node_token, slug);
+    mapping.set(document.document.sourceNodeToken, slug);
   });
 
   return mapping;
 };
 
 const rewriteArticleContent = async (
-  assetResolver: AssetResolver,
+  assetManager: ArticleAssetManager,
   rawArticle: RawArticle,
   nodeTokenToSlug: Map<string, string>,
 ) => {
@@ -468,7 +256,7 @@ const rewriteArticleContent = async (
     return acc;
   }, {});
 
-  const assets = await downloadAssets(assetResolver, rawArticle.fileTokens);
+  const assets = await assetManager.resolveArticleAssets(rawArticle.fileTokens);
   const assetTokens = new Set(Object.keys(assets));
   const content = replaceTokens(rawArticle.content, {
     ...internalLinks,
@@ -477,17 +265,10 @@ const rewriteArticleContent = async (
   let cover: string | undefined;
 
   if (rawArticle.documentCoverToken) {
-    cover =
-      assets[rawArticle.documentCoverToken] ||
-      (
-        await assetResolver.resolveAsset(
-          {
-            token: rawArticle.documentCoverToken,
-            type: 'image',
-          },
-          'cover',
-        )
-      ).url;
+    cover = await assetManager.resolveCover(
+      rawArticle.documentCoverToken,
+      assets,
+    );
     assetTokens.add(rawArticle.documentCoverToken);
   }
 
@@ -498,101 +279,89 @@ const rewriteArticleContent = async (
   };
 };
 
-export const syncFeishuArticles = async (
-  options: SyncOptions = {},
+const runFeishuArticleSync = async (
+  source: ArticleSourceAdapter,
+  storage: ArticleSyncPublicationAdapter,
 ): Promise<SyncResult> => {
-  const missingEnvKeys = getMissingEnvKeys();
-  const storage = getBlogStorage();
-
-  if (missingEnvKeys.length > 0) {
-    if (options.optional) {
-      return {
-        skipped: true,
-        reason: `Missing env: ${missingEnvKeys.join(', ')}`,
-        storage: storage.name,
-      };
-    }
-
-    throw new Error(`Missing Feishu env vars: ${missingEnvKeys.join(', ')}`);
-  }
-
-  const {
-    feishu: { appId, appSecret },
-  } = getServerEnv();
-  const client = new FeishuClient(appId, appSecret);
-
-  const spaceId = getSyncSpaceId();
-
-  if (!spaceId) {
-    throw new Error('Missing Feishu sync space.');
-  }
-
-  const nodes = await client.listDocNodesBySpace(spaceId);
+  const documents = await source.listDocuments();
   const previousSyncState = normalizeSyncState(await storage.readSyncState());
-  const assetStats: AssetSyncStats = {
-    downloadedAssets: 0,
-    reusedAssets: 0,
-    deletedAssets: 0,
-    failedAssetDeletes: 0,
-  };
-  const assetResolver = createAssetResolver(
-    storage,
-    client,
-    previousSyncState.assets,
-    assetStats,
-  );
+  const assetManager = createArticleAssetManager({
+    publication: storage,
+    source,
+    initialAssets: previousSyncState.assets,
+  });
 
   const metadataResults = await mapWithConcurrency(
-    nodes,
+    documents,
     DOCUMENT_SYNC_CONCURRENCY,
-    async (node) => {
-      try {
-        const latestNode =
-          (await client.getNode(node.space_id, node.node_token)) || node;
-        const documentInfo = await client.getDocumentInfo(latestNode.obj_token);
-        const revisionId = getDocumentRevisionId(documentInfo);
-        const objEditTime = normalizeOptionalString(latestNode.obj_edit_time);
-        const coverToken = documentInfo?.cover?.token;
-        const previousState =
-          previousSyncState.documents[latestNode.node_token];
-        const isUnchanged = hasSameDocumentVersion(previousState, {
-          node: latestNode,
-          revisionId,
-          objEditTime,
-          coverToken,
-        });
-        const previousArticle = previousState
-          ? await storage.readArticle(previousState.slug)
-          : undefined;
+    async (document) => {
+      const previousState =
+        previousSyncState.documents[document.sourceNodeToken];
+      let revision: SourceDocumentRevision;
 
-        return {
-          node: latestNode,
-          documentInfo,
-          previousState,
-          previousArticle,
-          revisionId,
-          objEditTime,
-          coverToken,
-          shouldRefresh: !isUnchanged || !previousArticle,
-        } satisfies DocumentMetadata;
+      try {
+        revision = await source.inspectDocument(document);
       } catch (error) {
         // Keep the sync resilient: skip one broken doc instead of aborting all.
-        console.error(`Failed to inspect document ${node.obj_token}`, error);
-        return null;
+        console.error(
+          `Failed to inspect document ${document.sourceDocumentId}`,
+          error,
+        );
+
+        if (!previousState) {
+          return null;
+        }
+
+        const previousArticle = await storage.readArticle(previousState.slug);
+
+        if (!previousArticle) {
+          return null;
+        }
+
+        return {
+          document: {
+            ...document,
+            revisionId: previousState.revisionId,
+            updatedAt: previousState.objEditTime,
+            coverToken: previousState.coverToken,
+          },
+          previousState,
+          previousArticle,
+          revisionId: previousState.revisionId,
+          objEditTime: previousState.objEditTime,
+          coverToken: previousState.coverToken,
+          shouldRefresh: true,
+          inspectionFailed: true,
+        } satisfies DocumentMetadata;
       }
+
+      const isUnchanged = hasSameDocumentVersion(previousState, revision);
+      const previousArticle = previousState
+        ? await storage.readArticle(previousState.slug)
+        : undefined;
+
+      return {
+        document: revision,
+        previousState,
+        previousArticle,
+        revisionId: revision.revisionId,
+        objEditTime: revision.updatedAt,
+        coverToken: revision.coverToken,
+        shouldRefresh: !isUnchanged || !previousArticle,
+      } satisfies DocumentMetadata;
     },
   );
   const metadata = metadataResults.filter(Boolean) as DocumentMetadata[];
 
   const rawArticleResults = await mapWithConcurrency(
-    metadata.filter((document) => document.shouldRefresh),
+    metadata.filter(
+      (document) => document.shouldRefresh && !document.inspectionFailed,
+    ),
     DOCUMENT_SYNC_CONCURRENCY,
     async (document) => {
       try {
-        const blocks = await client.getDocumentBlocks(document.node.obj_token);
-        const { markdown, fileTokens, meta } = createMarkdownRenderer(
-          document.node.obj_token,
-          blocks,
+        const { markdown, fileTokens, meta } = await source.readDocument(
+          document.document,
         );
         const parsed = matter(markdown);
         const frontmatter = normalizeFrontmatter({
@@ -601,26 +370,25 @@ export const syncFeishuArticles = async (
         });
 
         return {
-          node: document.node,
+          document: document.document,
           title:
             frontmatter.title ||
-            document.documentInfo?.title ||
-            document.node.title,
-          markdown,
+            document.document.documentTitle ||
+            document.document.title,
           fileTokens,
           frontmatter,
           content: stripLeadingHeading(
             parsed.content.trim(),
             frontmatter.title ||
-              document.documentInfo?.title ||
-              document.node.title,
+              document.document.documentTitle ||
+              document.document.title,
           ),
           documentCoverToken: document.coverToken,
         } satisfies RawArticle;
       } catch (error) {
         // Keep the sync resilient: skip one broken doc instead of aborting all.
         console.error(
-          `Failed to sync document ${document.node.obj_token}`,
+          `Failed to sync document ${document.document.sourceDocumentId}`,
           error,
         );
         return null;
@@ -629,12 +397,12 @@ export const syncFeishuArticles = async (
   );
   const rawArticles = rawArticleResults.filter(Boolean) as RawArticle[];
   const rawArticlesByNodeToken = new Map(
-    rawArticles.map((article) => [article.node.node_token, article]),
+    rawArticles.map((article) => [article.document.sourceNodeToken, article]),
   );
   const activeDocuments = metadata.filter(
     (document) =>
       Boolean(document.previousArticle) ||
-      rawArticlesByNodeToken.has(document.node.node_token),
+      rawArticlesByNodeToken.has(document.document.sourceNodeToken),
   );
 
   const nodeTokenToSlug = buildSlugMap(activeDocuments, rawArticlesByNodeToken);
@@ -644,7 +412,7 @@ export const syncFeishuArticles = async (
   let reusedArticles = 0;
   const slugRewrites = activeDocuments.reduce<Record<string, string>>(
     (acc, document) => {
-      const slug = nodeTokenToSlug.get(document.node.node_token);
+      const slug = nodeTokenToSlug.get(document.document.sourceNodeToken);
 
       if (
         slug &&
@@ -660,16 +428,18 @@ export const syncFeishuArticles = async (
   );
 
   for (const document of activeDocuments) {
-    const slug = nodeTokenToSlug.get(document.node.node_token);
+    const slug = nodeTokenToSlug.get(document.document.sourceNodeToken);
     if (!slug) continue;
 
-    const rawArticle = rawArticlesByNodeToken.get(document.node.node_token);
+    const rawArticle = rawArticlesByNodeToken.get(
+      document.document.sourceNodeToken,
+    );
     let article: Article;
     let assetTokens: string[];
 
     if (rawArticle) {
       const rewritten = await rewriteArticleContent(
-        assetResolver,
+        assetManager,
         rawArticle,
         nodeTokenToSlug,
       );
@@ -712,7 +482,7 @@ export const syncFeishuArticles = async (
     }
 
     articles.push(article);
-    nextDocuments[document.node.node_token] =
+    nextDocuments[document.document.sourceNodeToken] =
       document.shouldRefresh && !rawArticle && document.previousState
         ? {
             ...document.previousState,
@@ -720,7 +490,7 @@ export const syncFeishuArticles = async (
           }
         : {
             slug: article.slug,
-            sourceDocumentId: document.node.obj_token,
+            sourceDocumentId: document.document.sourceDocumentId,
             objEditTime: document.objEditTime,
             revisionId: document.revisionId,
             coverToken: document.coverToken,
@@ -761,12 +531,7 @@ export const syncFeishuArticles = async (
   const activeAssetTokens = new Set(
     Object.values(nextDocuments).flatMap((document) => document.assetTokens),
   );
-  const nextAssets = await pruneUnusedAssets(
-    storage,
-    assetResolver.assets,
-    activeAssetTokens,
-    assetStats,
-  );
+  const nextAssets = await assetManager.pruneUnusedAssets(activeAssetTokens);
 
   await storage.writeIndex(index);
   await storage.writeSearchIndex(searchIndex);
@@ -776,6 +541,7 @@ export const syncFeishuArticles = async (
     documents: nextDocuments,
     assets: nextAssets,
   });
+  const assetStats = assetManager.getStats();
 
   return {
     storage: storage.name,
@@ -790,3 +556,55 @@ export const syncFeishuArticles = async (
     failedAssetDeletes: assetStats.failedAssetDeletes,
   };
 };
+
+export const createFeishuArticleSync =
+  (resolveBindings: () => ArticleSyncBindings): RunFeishuArticleSync =>
+  async (options = {}) => {
+    const bindings = resolveBindings();
+
+    if (bindings.availability === 'missing-config') {
+      if (options.optional) {
+        return {
+          skipped: true,
+          reason: `Missing env: ${bindings.missingKeys.join(', ')}`,
+          storage: bindings.publication.name,
+        };
+      }
+
+      throw new Error(
+        `Missing Feishu env vars: ${bindings.missingKeys.join(', ')}`,
+      );
+    }
+
+    return runFeishuArticleSync(bindings.source, bindings.publication);
+  };
+
+const resolveProductionBindings = (): ArticleSyncBindings => {
+  const publication = getBlogStorage();
+  const {
+    feishu: { appId, appSecret, spaceId },
+  } = getServerEnv();
+  const missingKeys = [
+    ...(!appId ? ['FEISHU_APP_ID'] : []),
+    ...(!appSecret ? ['FEISHU_APP_SECRET'] : []),
+    ...(!spaceId ? ['FEISHU_SPACE_ID'] : []),
+  ];
+
+  if (missingKeys.length > 0) {
+    return {
+      availability: 'missing-config',
+      missingKeys,
+      publication,
+    };
+  }
+
+  return {
+    availability: 'ready',
+    source: createFeishuArticleSource({ appId, appSecret, spaceId }),
+    publication,
+  };
+};
+
+export const syncFeishuArticles = createFeishuArticleSync(
+  resolveProductionBindings,
+);

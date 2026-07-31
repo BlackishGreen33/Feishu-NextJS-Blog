@@ -7,6 +7,29 @@ const MARKDOWN_LINK_REGEX = /\[([^\]]+)]\(([^)]+)\)/g;
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+export const mapWithConcurrency = async <Input, Output>(
+  items: Input[],
+  concurrency: number,
+  mapper: (item: Input, index: number) => Promise<Output>,
+) => {
+  const results = new Array<Output>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+      }
+    },
+  );
+
+  await Promise.all(workers);
+  return results;
+};
+
 export const toSlug = (input: string) =>
   input
     .trim()
