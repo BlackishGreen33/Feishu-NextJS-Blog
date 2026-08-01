@@ -42,6 +42,7 @@ const previousSyncState: BlogSyncState = {
     'node-1': {
       slug: 'existing-doc',
       sourceDocumentId: 'doc-1',
+      contentVersion: 1,
       objEditTime: '1776561839',
       revisionId: 'rev-1',
       coverToken: 'cover-1',
@@ -273,6 +274,69 @@ describe('syncFeishuArticles', () => {
       'CSS',
       '技術分享',
     ]);
+  });
+
+  it('rebuilds unchanged Articles created by an older content pipeline', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    const legacyRevision = { ...revision, coverToken: undefined };
+    const legacySyncState: BlogSyncState = {
+      ...previousSyncState,
+      documents: {
+        'node-1': {
+          ...previousSyncState.documents['node-1'],
+          contentVersion: undefined,
+          coverToken: undefined,
+        },
+      },
+    };
+    source.inspectDocument.mockResolvedValue(legacyRevision);
+    storage.readSyncState.mockResolvedValue(legacySyncState);
+    storage.readArticle.mockResolvedValue({
+      ...article,
+      summary: 'date: 2023 07 02 tags: [性能優化, React, 技術分享] Body',
+      publishedAt: '2026-07-19T07:53:46.000Z',
+      content: 'date: 2023-07-02\n\ntags: [性能優化, React, 技術分享]\n\nBody',
+    });
+    source.readDocument.mockResolvedValue({
+      markdown: [
+        '# Existing Doc',
+        '',
+        '---',
+        'date: 2023-07-02',
+        'tags: [性能優化, React, 技術分享]',
+        '---',
+        '',
+        'Body',
+      ].join('\n'),
+      fileTokens: {},
+      meta: {},
+    });
+
+    const result = await createTestSync(source, storage)();
+
+    const syncedArticle = storage.writeArticle.mock.calls[0]?.[0];
+    expect(source.readDocument).toHaveBeenCalledWith(legacyRevision);
+    expect(syncedArticle).toEqual(
+      expect.objectContaining({
+        publishedAt: '2023-07-02T00:00:00.000Z',
+        content: 'Body',
+      }),
+    );
+    expect(syncedArticle?.tags.map((tag) => tag.name)).toEqual([
+      '性能優化',
+      'React',
+      '技術分享',
+    ]);
+    expect(result.changedArticles).toBe(1);
+    expect(result.reusedArticles).toBe(0);
+    expect(storage.writeSyncState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documents: {
+          'node-1': expect.objectContaining({ contentVersion: 1 }),
+        },
+      }),
+    );
   });
 
   it('keeps wiki-hidden documents as drafts when the document title is public', async () => {
@@ -709,6 +773,33 @@ describe('syncFeishuArticles', () => {
       }),
     );
     expect(storage.deleteArticle).toHaveBeenCalledWith('existing-doc');
+  });
+
+  it('retries a failed legacy Article refresh when sync state is missing', async () => {
+    const storage = createStorageMock();
+    const source = createSourceMock();
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    storage.readIndex.mockResolvedValue({
+      generatedAt: '2026-04-20T00:00:00.000Z',
+      source: 'feishu',
+      articles: [article],
+    });
+    storage.readSyncState
+      .mockResolvedValueOnce(null)
+      .mockImplementation(async () => storage.writeSyncState.mock.calls[0][0]);
+    storage.readArticle.mockResolvedValue(article);
+    source.readDocument.mockRejectedValue(new Error('temporary'));
+    const runSync = createTestSync(source, storage);
+
+    await runSync();
+    await runSync();
+
+    expect(
+      storage.writeSyncState.mock.calls[0][0].documents['node-1']
+        .contentVersion,
+    ).toBeUndefined();
+    expect(source.readDocument).toHaveBeenCalledTimes(2);
+    errorSpy.mockRestore();
   });
 
   it('never reuses a permanent alias as an active Article slug', async () => {

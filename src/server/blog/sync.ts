@@ -81,6 +81,8 @@ type DocumentMetadata = {
 };
 
 const DOCUMENT_SYNC_CONCURRENCY = 3;
+// Increment when source-to-Article parsing changes.
+const ARTICLE_CONTENT_VERSION = 1;
 
 export type ArticleSyncPublicationAdapter = Pick<
   BlogStorageAdapter,
@@ -127,6 +129,10 @@ const hasSameDocumentVersion = (
   },
 ) => {
   if (!previous || previous.sourceDocumentId !== current.sourceDocumentId) {
+    return false;
+  }
+
+  if (previous.contentVersion !== ARTICLE_CONTENT_VERSION) {
     return false;
   }
 
@@ -557,20 +563,25 @@ const runFeishuArticleSync = async (
     }
 
     articles.push(article);
-    nextDocuments[document.document.sourceNodeToken] =
-      document.shouldRefresh && !rawArticle && document.previousState
-        ? {
-            ...document.previousState,
-            assetTokens,
-          }
+    if (document.shouldRefresh && !rawArticle) {
+      nextDocuments[document.document.sourceNodeToken] = document.previousState
+        ? { ...document.previousState, assetTokens }
         : {
             slug: article.slug,
             sourceDocumentId: document.document.sourceDocumentId,
-            objEditTime: document.objEditTime,
-            revisionId: document.revisionId,
-            coverToken: document.coverToken,
             assetTokens,
           };
+    } else {
+      nextDocuments[document.document.sourceNodeToken] = {
+        slug: article.slug,
+        sourceDocumentId: document.document.sourceDocumentId,
+        contentVersion: ARTICLE_CONTENT_VERSION,
+        objEditTime: document.objEditTime,
+        revisionId: document.revisionId,
+        coverToken: document.coverToken,
+        assetTokens,
+      };
+    }
   }
 
   const publicArticles = sortArticlesByDate(

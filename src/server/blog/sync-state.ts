@@ -8,6 +8,7 @@ export type BlogSyncAssetState = {
 export type BlogSyncDocumentState = {
   slug: string;
   sourceDocumentId: string;
+  contentVersion?: number;
   objEditTime?: string;
   revisionId?: string;
   coverToken?: string;
