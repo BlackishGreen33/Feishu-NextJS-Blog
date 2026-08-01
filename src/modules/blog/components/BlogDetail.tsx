@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import Breakline from '@/common/components/elements/Breakline';
 import MDXComponent from '@/common/components/elements/MDXComponent';
 import { BlogDetailProps } from '@/common/types/blog';
@@ -31,13 +33,13 @@ const BlogDetail = ({
           <h6 className='text-lg font-medium'>{messages.blog.tags}</h6>
           <div className='flex flex-wrap gap-2 pt-2'>
             {tags.map((tag) => (
-              <div
+              <Link
                 key={tag.slug}
-                className='rounded-full bg-neutral-200 px-4 py-1 text-[14px] font-medium text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200'
+                href={{ pathname: '/blog', query: { tag: tag.slug } }}
+                className='rounded-full bg-neutral-200 px-4 py-1 text-[14px] font-medium text-neutral-600 transition-colors hover:bg-neutral-300 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500 dark:bg-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-600 dark:hover:text-white'
               >
-                <span className='mr-1 font-semibold'>#</span>
-                {tag.name}
-              </div>
+                {`#${tag.name}`}
+              </Link>
             ))}
           </div>
         </div>

@@ -20,11 +20,25 @@ const BlogListNew = () => {
   const [page, setPage] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const router = useRouter();
+  const activeTag = Array.isArray(router.query.tag)
+    ? router.query.tag[0] || ''
+    : router.query.tag || '';
 
   const [debouncedSearchTerm] = useDebounceValue(searchTerm, 500);
 
+  const requestParams = new URLSearchParams({
+    page: String(page),
+    per_page: '6',
+  });
+  if (debouncedSearchTerm) {
+    requestParams.set('search', debouncedSearchTerm);
+  }
+  if (activeTag) {
+    requestParams.set('tag', activeTag);
+  }
+
   const { data, error, mutate, isValidating } = useSWR(
-    `/api/blog?page=${page}&per_page=6&search=${debouncedSearchTerm}`,
+    `/api/blog?${requestParams.toString()}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -43,7 +57,11 @@ const BlogListNew = () => {
     router.push(
       {
         pathname: '/blog',
-        query: { page: newPage, search: debouncedSearchTerm },
+        query: {
+          page: newPage,
+          ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+          ...(activeTag && { tag: activeTag }),
+        },
       },
       undefined,
       { shallow: true },
@@ -59,7 +77,11 @@ const BlogListNew = () => {
     router.push(
       {
         pathname: '/blog',
-        query: searchValue ? { page: 1, search: searchValue } : { page: 1 },
+        query: {
+          page: 1,
+          ...(searchValue && { search: searchValue }),
+          ...(activeTag && { tag: activeTag }),
+        },
       },
       undefined,
       { shallow: true },
@@ -73,7 +95,7 @@ const BlogListNew = () => {
     router.push(
       {
         pathname: '/blog',
-        query: { page: 1 },
+        query: { page: 1, ...(activeTag && { tag: activeTag }) },
       },
       undefined,
       { shallow: true },
@@ -82,10 +104,12 @@ const BlogListNew = () => {
 
   useEffect(() => {
     const queryPage = Number(router.query.page);
-    if (!isNaN(queryPage) && queryPage !== page) {
-      setPage(queryPage);
-    }
-  }, [page, router.query.page, searchTerm]);
+    const nextPage =
+      Number.isInteger(queryPage) && queryPage >= 1 ? queryPage : 1;
+    setPage((currentPage) =>
+      currentPage === nextPage ? currentPage : nextPage,
+    );
+  }, [activeTag, router.query.page]);
 
   const renderEmptyState = () =>
     !isValidating &&
@@ -99,12 +123,19 @@ const BlogListNew = () => {
 
   return (
     <div className='space-y-10'>
-      <BlogFeaturedSection />
+      {!activeTag && <BlogFeaturedSection />}
 
       <div className='space-y-5'>
         <div className='mb-6 flex flex-col items-center justify-between gap-3 sm:flex-row'>
           <div className='flex items-center gap-2 px-1 text-xl font-medium'>
-            {searchTerm ? (
+            {activeTag ? (
+              <div>
+                <span className='mr-2 text-neutral-600 dark:text-neutral-400'>
+                  {messages.blog.tags}
+                </span>
+                <span>{`#${activeTag}`}</span>
+              </div>
+            ) : searchTerm ? (
               <div>
                 <span className='mr-2 text-neutral-600 dark:text-neutral-400'>
                   {messages.blog.searchKeyword}
