@@ -21,7 +21,11 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
   }, []);
 
   if (!mounted) {
-    return <div className={compact ? 'h-10 w-10' : 'h-10.5 w-full'} />;
+    return (
+      <div
+        className={compact ? 'aspect-square size-10 shrink-0' : 'h-10.5 w-full'}
+      />
+    );
   }
 
   const isDarkMode = resolvedTheme === 'dark';
@@ -38,7 +42,7 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
             ? messages.theme.switchToLight
             : messages.theme.switchToDark
         }
-        className='inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100 text-neutral-700 transition-colors duration-200 hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:text-neutral-100'
+        className='inline-flex aspect-square size-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100 text-neutral-700 transition-colors duration-200 hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:text-neutral-100'
         data-umami-event={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}
       >
         {isDarkMode ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
