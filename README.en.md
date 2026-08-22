@@ -254,14 +254,22 @@ Useful scripts:
 
 ### Vercel
 
-The repository already includes a cron job in `vercel.json`:
+Feishu document events are delivered to a webhook and then delayed through Vercel Queue:
+
+- Webhook: `/api/webhooks/feishu`
+- Queue consumer: `/api/queues/feishu-sync` (only invoked internally by Vercel Queue)
+- Debounce: sync 2 minutes after the last edit, with a 10-minute maximum wait during continuous editing
+- Firebase Realtime Database stores event deduplication, debounce state, and the global sync lease
+
+The workflow in `.github/workflows/feishu-sync.yml` still calls the sync endpoint as a missed-event safety net and reconciles subscriptions for new documents:
 
 - Endpoint: `/api/cron/feishu-sync`
-- Default schedule: every 6 hours
+- Default schedule: every 6 hours to reduce the risk of exhausting the Vercel Blob Hobby quotas
 
 Recommended production configuration:
 
-- Feishu app credentials
+- Feishu app credentials, `FEISHU_VERIFICATION_TOKEN`, and `FEISHU_ENCRYPT_KEY`
+- Firebase Admin credentials
 - `BLOB_READ_WRITE_TOKEN`
 - `CRON_SECRET`
 - public site URL variables

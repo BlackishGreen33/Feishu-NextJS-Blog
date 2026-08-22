@@ -253,14 +253,22 @@ pnpm build
 
 ### Vercel
 
-倉庫裡的 `vercel.json` 已經內建定時任務：
+飛書文件事件會先送到 webhook，再由 Vercel Queue 延遲觸發同步：
+
+- Webhook：`/api/webhooks/feishu`
+- Queue consumer：`/api/queues/feishu-sync`（只接受 Vercel Queue 內部呼叫）
+- 防抖：最後一次修改後 2 分鐘同步；持續修改最多等待 10 分鐘
+- Firebase Realtime Database 保存事件去重、防抖狀態與全域同步租約
+
+倉庫裡的 `.github/workflows/feishu-sync.yml` 仍會定時呼叫 Vercel 上的同步端點，作為漏事件時的安全網，並補訂閱新文件：
 
 - 端點：`/api/cron/feishu-sync`
-- 預設排程：每 6 小時一次
+- 預設排程：每 6 小時一次（降低 Vercel Blob Hobby 配額耗盡風險）
 
 建議的生產環境配置：
 
-- Feishu app credentials
+- Feishu app credentials、`FEISHU_VERIFICATION_TOKEN`、`FEISHU_ENCRYPT_KEY`
+- Firebase Admin credentials
 - `BLOB_READ_WRITE_TOKEN`
 - `CRON_SECRET`
 - public site URL variables

@@ -575,6 +575,14 @@ export class FeishuClient {
     return payload.data?.document || null;
   }
 
+  async subscribeToDocumentEvents(documentId: string) {
+    await this.request(
+      `/drive/v1/files/${encodeURIComponent(documentId)}/subscribe`,
+      { method: 'POST' },
+      { file_type: 'docx' },
+    );
+  }
+
   async getDocumentBlocks(documentId: string) {
     const blocks: Block[] = [];
     let pageToken: string | undefined;
