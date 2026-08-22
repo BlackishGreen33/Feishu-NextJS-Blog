@@ -19,7 +19,9 @@ export const getServerEnv = () => {
     feishu: {
       appId: normalizeEnv(process.env.FEISHU_APP_ID),
       appSecret: normalizeEnv(process.env.FEISHU_APP_SECRET),
+      encryptKey: normalizeEnv(process.env.FEISHU_ENCRYPT_KEY),
       spaceId: normalizeEnv(process.env.FEISHU_SPACE_ID),
+      verificationToken: normalizeEnv(process.env.FEISHU_VERIFICATION_TOKEN),
     },
     firebaseAdmin: {
       clientEmail: normalizeEnv(process.env.FIREBASE_ADMIN_CLIENT_EMAIL),

@@ -197,4 +197,28 @@ describe('FeishuClient rate limit retries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 1000);
   });
+
+  it('subscribes a docx token to cloud document events', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 0,
+          tenant_access_token: 'tok',
+          expire: 3600,
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse({ code: 0, msg: 'success' }));
+    global.fetch = fetchMock as typeof fetch;
+
+    const client = new FeishuClient('app-subscribe', 'secret');
+    await expect(
+      client.subscribeToDocumentEvents('docx-token'),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://open.feishu.cn/open-apis/drive/v1/files/docx-token/subscribe?file_type=docx',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
 });
