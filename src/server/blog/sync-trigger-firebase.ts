@@ -50,20 +50,20 @@ export const createFirebaseFeishuSyncTriggerStore = (
     },
 
     async acquireLease(input) {
-      let generation = 0;
       const transaction = await stateRef.transaction((currentValue) => {
+        // A cold client can see null before loading existing server state.
+        // Keep the transaction alive so Firebase retries with that state.
+        if (currentValue === null && input.expectedGeneration > 0) return null;
+
         const transition = tryAcquireFeishuSyncLease(currentValue, input);
-        generation = transition.generation;
         return transition.acquired ? transition.state : undefined;
       });
+      const state = normalizeFeishuSyncTriggerState(transaction.snapshot.val());
 
-      if (!transaction.committed) {
-        generation = normalizeFeishuSyncTriggerState(
-          transaction.snapshot.val(),
-        ).generation;
-      }
-
-      return { acquired: transaction.committed, generation };
+      return {
+        acquired: transaction.committed && state.lease?.id === input.leaseId,
+        generation: state.generation,
+      };
     },
 
     async completeLease(input) {
