@@ -162,8 +162,12 @@ export const parseFeishuWebhook = ({
   let payload = envelope;
 
   if (encryptKey && !isPlaintextChallenge) {
-    verifySignature({ clock, encryptKey, headers, rawBody });
     const encrypt = (envelope as { encrypt?: unknown }).encrypt;
+
+    // Encrypted URL verification can arrive without event signature headers.
+    if (headers.signature || typeof encrypt !== 'string' || !encrypt) {
+      verifySignature({ clock, encryptKey, headers, rawBody });
+    }
 
     if (typeof encrypt !== 'string' || !encrypt) {
       throw new FeishuWebhookError('Missing encrypted Feishu payload', 400);
@@ -173,6 +177,10 @@ export const parseFeishuWebhook = ({
       decryptPayload(encrypt, encryptKey),
       'Invalid decrypted Feishu webhook JSON',
     );
+
+    if (payload.type !== 'url_verification' && !headers.signature) {
+      verifySignature({ clock, encryptKey, headers, rawBody });
+    }
   }
 
   requireVerificationToken(payload, verificationToken);

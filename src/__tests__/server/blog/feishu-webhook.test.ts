@@ -79,6 +79,59 @@ describe('parseFeishuWebhook', () => {
     ).toThrow(FeishuWebhookError);
   });
 
+  it('accepts an encrypted URL challenge without event signature headers', () => {
+    expect(
+      parseFeishuWebhook({
+        encryptKey,
+        rawBody: JSON.stringify({
+          encrypt: encryptPayload({
+            challenge: 'challenge-value',
+            token: verificationToken,
+            type: 'url_verification',
+          }),
+        }),
+        verificationToken,
+      }),
+    ).toEqual({ kind: 'challenge', challenge: 'challenge-value' });
+  });
+
+  it('still checks the token for an unsigned encrypted URL challenge', () => {
+    expect(() =>
+      parseFeishuWebhook({
+        encryptKey,
+        rawBody: JSON.stringify({
+          encrypt: encryptPayload({
+            challenge: 'challenge-value',
+            token: 'wrong-token',
+            type: 'url_verification',
+          }),
+        }),
+        verificationToken,
+      }),
+    ).toThrow('Invalid Feishu verification token');
+  });
+
+  it('rejects unsigned encrypted edit events', () => {
+    expect(() =>
+      parseFeishuWebhook({
+        encryptKey,
+        rawBody: JSON.stringify({
+          encrypt: encryptPayload({
+            schema: '2.0',
+            header: {
+              app_id: 'cli_test',
+              event_id: 'event-unsigned',
+              event_type: 'drive.file.edit_v1',
+              token: verificationToken,
+            },
+            event: { file_token: 'docx-token', file_type: 'docx' },
+          }),
+        }),
+        verificationToken,
+      }),
+    ).toThrow('Missing Feishu webhook signature');
+  });
+
   it('verifies, decrypts, and parses an encrypted docx edit event', () => {
     const timestamp = '1724313600';
     const nonce = 'nonce-value';
@@ -117,7 +170,7 @@ describe('parseFeishuWebhook', () => {
   });
 
   it('rejects an encrypted request with an invalid signature before decryption', () => {
-    const rawBody = JSON.stringify({ encrypt: encryptPayload({ ok: true }) });
+    const rawBody = JSON.stringify({ encrypt: 'invalid-ciphertext' });
 
     expect(() =>
       parseFeishuWebhook({
