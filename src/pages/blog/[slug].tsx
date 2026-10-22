@@ -87,7 +87,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (redirectSlug) {
     return {
       redirect: {
-        destination: getLocalePath(`/blog/${redirectSlug}`, context.locale),
+        destination: getLocalePath(
+          `/blog/${encodeURIComponent(redirectSlug)}`,
+          context.locale,
+        ),
         permanent: true,
       },
       revalidate: 60,

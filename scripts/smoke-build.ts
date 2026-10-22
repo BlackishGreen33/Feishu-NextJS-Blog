@@ -105,8 +105,10 @@ const main = async () => {
     assert(!cancelled, 'Smoke was cancelled');
     const id = randomUUID();
     const marker = `body${id.replaceAll('-', '')}`;
-    const slug = `governance-${id}`;
-    const alias = `alias-${id}`;
+    const slug = '10-個初學-css-必須掌握的小技巧';
+    const alias = '10-個-css-小技巧';
+    const encodedSlug =
+      '10-%E5%80%8B%E5%88%9D%E5%AD%B8-css-%E5%BF%85%E9%A0%88%E6%8E%8C%E6%8F%A1%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7';
     const timestamp = '2026-01-01T00:00:00.000Z';
     const article = articleSchema.parse({
       id,
@@ -236,7 +238,7 @@ const main = async () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     assert(ready, 'Production server did not become ready');
-    for (const prefix of ['', '/en']) {
+    for (const prefix of ['', '/en', '/zh-CN']) {
       const page = await fetch(`${origin}${prefix}/blog/${slug}`, {
         signal: AbortSignal.timeout(10_000),
       });
@@ -250,7 +252,13 @@ const main = async () => {
         signal: AbortSignal.timeout(10_000),
       });
       assert.equal(redirect.status, 308);
-      assert.equal(redirect.headers.get('location'), `${prefix}/blog/${slug}`);
+      assert.equal(
+        redirect.headers.get('location'),
+        `${prefix}/blog/${encodedSlug}`,
+      );
+      process.stdout.write(
+        `Permanent Unicode alias redirect passed: ${prefix || 'zh-TW'}\n`,
+      );
     }
     const response = await fetch(`${origin}/api/blog?search=${marker}`, {
       signal: AbortSignal.timeout(10_000),
