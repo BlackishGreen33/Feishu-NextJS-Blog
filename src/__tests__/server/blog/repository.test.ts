@@ -40,6 +40,19 @@ describe('blog repository', () => {
     expect(article?.slug).toBe(firstArticle!.slug);
     expect(article?.content.length).toBeGreaterThan(0);
   });
+
+  it('clamps pages and keeps an empty search on page one', async () => {
+    const index = await getArticleIndex();
+    const last = await listArticles({ page: 99999, perPage: 1 });
+    expect(last.page).toBe(index.articles.length);
+    const empty = await listArticles({
+      page: 20,
+      search: 'unmatched-unique-search-98765',
+    });
+    expect(empty.posts).toEqual([]);
+    expect(empty.page).toBe(1);
+    expect(empty.totalPages).toBe(1);
+  });
 });
 
 describe('blog repository full-text search', () => {
@@ -151,12 +164,8 @@ describe('blog repository full-text search', () => {
     const result = await listArticles({ search: 'runtime cache' });
 
     expect(result.posts).toHaveLength(1);
-    expect(result.posts[0]).toEqual(
-      expect.objectContaining({
-        slug: 'body-match',
-        matchedExcerpt: expect.stringContaining('runtime cache'),
-      }),
-    );
+    expect(result.posts[0]?.slug).toBe('body-match');
+    expect(result.posts[0]?.matchedExcerpt).toContain('runtime cache');
   });
 
   it('ranks title matches above body matches', async () => {
@@ -273,6 +282,30 @@ describe('blog repository slug redirects', () => {
       await import('@/server/blog/repository');
 
     await expect(getArticleRedirectBySlug('old-title')).resolves.toBe(
+      'new-title',
+    );
+  });
+
+  it('keeps draft content and its alias private unless explicitly requested', async () => {
+    currentIndex = {
+      ...redirectingIndex,
+      articles: [{ ...currentSummary, draft: true }],
+    };
+    storedArticle = {
+      ...staleArticle,
+      slug: 'new-title',
+      draft: true,
+    };
+    const { getArticleBySlug, getArticleRedirectBySlug } =
+      await import('@/server/blog/repository');
+
+    await expect(getArticleBySlug('new-title')).resolves.toBeNull();
+    await expect(getArticleRedirectBySlug('old-title')).resolves.toBeNull();
+    expect(readArticle).not.toHaveBeenCalled();
+    await expect(getArticleBySlug('new-title', true)).resolves.toEqual(
+      storedArticle,
+    );
+    await expect(getArticleRedirectBySlug('old-title', true)).resolves.toBe(
       'new-title',
     );
   });

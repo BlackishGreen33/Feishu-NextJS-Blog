@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { ArticleSourceAdapter, SourceAsset } from './source';
 import { BlogStorageAdapter } from './storage';
 import { BlogSyncAssetState } from './sync-state';

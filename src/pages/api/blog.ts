@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { articleQuerySchema } from '@/common/schemas/blog';
 import { getFeaturedArticles, listArticles } from '@/server/blog/repository';
 
 export default async function handler(
@@ -12,15 +13,16 @@ export default async function handler(
       'public, s-maxage=60, stale-while-revalidate=300',
     );
 
-    const { page, per_page, search, tag, featured, featured_limit } = req.query;
+    const { page, per_page, search, tag, featured, featured_limit } =
+      articleQuerySchema.parse(req.query);
     const isFeaturedOnly = featured === 'true';
 
     const result = await listArticles({
       page: Number(page) || 1,
       perPage: Number(per_page) || 9,
-      search: search ? String(search) : undefined,
-      tag: tag ? String(tag) : undefined,
-      featured: isFeaturedOnly || undefined,
+      ...(search ? { search: String(search) } : {}),
+      ...(tag ? { tag: String(tag) } : {}),
+      ...(isFeaturedOnly ? { featured: true } : {}),
     });
 
     const featuredPosts = await getFeaturedArticles(

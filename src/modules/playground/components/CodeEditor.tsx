@@ -3,7 +3,7 @@ import MonacoEditor, { EditorProps } from '@monaco-editor/react';
 interface CodeEditorProps {
   code: string;
   height?: string;
-  onChange: EditorProps['onChange'];
+  onChange: NonNullable<EditorProps['onChange']>;
   isFullScreen?: boolean;
 }
 
@@ -27,9 +27,9 @@ const CodeEditor = ({
   height = '300px',
   isFullScreen = false,
 }: CodeEditorProps) => {
-  const handleEditorMount = (editor: any) => {
+  const handleEditorMount: NonNullable<EditorProps['onMount']> = (editor) => {
     setTimeout(function () {
-      editor.getAction('editor.action.formatDocument').run();
+      void editor.getAction('editor.action.formatDocument')?.run();
     }, 500);
   };
 

@@ -28,6 +28,12 @@ const signPayload = (rawBody: string, timestamp: string, nonce: string) =>
     .digest('hex');
 
 describe('parseFeishuWebhook', () => {
+  it('reports JSON null as a malformed webhook through the public error contract', () => {
+    expect(() =>
+      parseFeishuWebhook({ rawBody: 'null', verificationToken }),
+    ).toThrow(FeishuWebhookError);
+  });
+
   it('accepts a plaintext URL verification challenge with the configured token', () => {
     expect(
       parseFeishuWebhook({

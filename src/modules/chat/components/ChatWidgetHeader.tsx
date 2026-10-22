@@ -13,7 +13,9 @@ const ChatWidgetHeader = () => {
   const { user, signOutUser } = useFirebaseGuestbookAuth();
   const { toggleChat } = useChatStore();
 
-  const handleMaximize = () => Router.push('/guestbook');
+  const handleMaximize = () => {
+    void Router.push('/guestbook');
+  };
 
   return (
     <div className='flex items-center justify-between border-b border-neutral-300 p-4 text-lg font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-300'>
@@ -48,7 +50,9 @@ const ChatWidgetHeader = () => {
       </div>
       {user && (
         <SignOutIcon
-          onClick={() => signOutUser()}
+          onClick={() => {
+            void signOutUser();
+          }}
           size={22}
           className='cursor-pointer text-red-400'
           data-umami-event='Sign Out from Chat Widget'

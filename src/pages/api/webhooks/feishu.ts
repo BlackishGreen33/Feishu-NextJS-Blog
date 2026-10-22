@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import {
+  feishuWebhookConfigSchema,
   FeishuWebhookError,
   MAX_FEISHU_WEBHOOK_BYTES,
   parseFeishuWebhook,
@@ -15,7 +16,16 @@ const readRawBody = async (req: NextApiRequest) => {
   let size = 0;
 
   for await (const chunk of req) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    const value: unknown = chunk;
+    const buffer = Buffer.isBuffer(value)
+      ? value
+      : typeof value === 'string'
+        ? Buffer.from(value)
+        : value instanceof Uint8Array
+          ? Buffer.from(value)
+          : null;
+    if (!buffer)
+      throw new FeishuWebhookError('Invalid Feishu webhook body', 400);
     size += buffer.length;
 
     if (size > MAX_FEISHU_WEBHOOK_BYTES) {
@@ -45,20 +55,30 @@ export default async function handler(
     isVercel,
   } = getServerEnv();
 
-  if (!appId || !verificationToken || (isVercel && !encryptKey)) {
+  if (
+    !feishuWebhookConfigSchema.safeParse({
+      appId,
+      verificationToken,
+      encryptKey,
+      isVercel,
+    }).success
+  ) {
     return res
       .status(503)
       .json({ code: 1, message: 'Feishu webhook is not configured' });
   }
 
   try {
+    const nonce = getHeader(req.headers['x-lark-request-nonce']);
+    const signature = getHeader(req.headers['x-lark-signature']);
+    const timestamp = getHeader(req.headers['x-lark-request-timestamp']);
     const event = parseFeishuWebhook({
       appId,
       encryptKey,
       headers: {
-        nonce: getHeader(req.headers['x-lark-request-nonce']),
-        signature: getHeader(req.headers['x-lark-signature']),
-        timestamp: getHeader(req.headers['x-lark-request-timestamp']),
+        ...(nonce === undefined ? {} : { nonce }),
+        ...(signature === undefined ? {} : { signature }),
+        ...(timestamp === undefined ? {} : { timestamp }),
       },
       rawBody: await readRawBody(req),
       verificationToken,
@@ -75,7 +95,6 @@ export default async function handler(
           fileToken: event.fileToken,
         });
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error(
           'Unable to persist Feishu event',
           error instanceof Error ? error.message : 'Unknown error',

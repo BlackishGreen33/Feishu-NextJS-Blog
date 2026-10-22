@@ -64,7 +64,6 @@ export const ensureFeishuDocumentEventSubscriptions = async () => {
   if (result.failedDocuments > 0) {
     // Keep document tokens private while retaining enough detail to diagnose
     // missing Feishu permissions or subscription limits.
-    // eslint-disable-next-line no-console
     console.error('Feishu document subscription failures', {
       failedDocuments: result.failedDocuments,
       messages: [

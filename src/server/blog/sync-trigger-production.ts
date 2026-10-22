@@ -9,11 +9,12 @@ import {
 
 export const FEISHU_SYNC_QUEUE_TOPIC = 'feishu-sync';
 
-const queue = new QueueClient();
+let queue: QueueClient | undefined;
 
 const createProductionTrigger = () =>
   createFeishuSyncTrigger({
     enqueue: async (message, options) => {
+      queue ??= new QueueClient();
       await queue.send(FEISHU_SYNC_QUEUE_TOPIC, message, options);
     },
     store: createFirebaseFeishuSyncTriggerStore(),

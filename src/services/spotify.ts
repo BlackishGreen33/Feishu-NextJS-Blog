@@ -3,11 +3,16 @@ import querystring from 'querystring';
 
 import { PAIR_DEVICES } from '@/common/constant/devices';
 import {
+  spotifyCredentialsSchema,
+  spotifyDevicesSchema,
+  spotifyPlayingSchema,
+  spotifyTokenSchema,
+  spotifyTopTracksSchema,
+} from '@/common/schemas/spotify';
+import {
   AccessTokenResponseProps,
-  DeviceDataProps,
   DeviceResponseProps,
   NowPlayingResponseProps,
-  SongProps,
   TopTracksResponseProps,
   TrackProps,
 } from '@/common/types/spotify';
@@ -41,10 +46,11 @@ const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
     };
   }
 
-  const { clientId, clientSecret, refreshToken } = getSpotifyCredentials();
+  const { clientId, clientSecret, refreshToken } =
+    spotifyCredentialsSchema.parse(getSpotifyCredentials());
   const token = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-  const response = await axios.post(
+  const response = await axios.post<unknown>(
     TOKEN_ENDPOINT,
     querystring.stringify({
       grant_type: 'refresh_token',
@@ -58,7 +64,7 @@ const getAccessToken = async (): Promise<AccessTokenResponseProps> => {
     },
   );
 
-  return response.data;
+  return spotifyTokenSchema.parse(response.data);
 };
 
 export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
@@ -68,7 +74,7 @@ export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
 
   const { access_token } = await getAccessToken();
 
-  const response = await axios.get(AVAILABLE_DEVICES_ENDPOINT, {
+  const response = await axios.get<unknown>(AVAILABLE_DEVICES_ENDPOINT, {
     headers: {
       Authorization: `Bearer ${access_token}`,
     },
@@ -80,7 +86,7 @@ export const getAvailableDevices = async (): Promise<DeviceResponseProps> => {
     return { status, data: [] };
   }
 
-  const responseData: DeviceDataProps = response.data;
+  const responseData = spotifyDevicesSchema.parse(response.data);
 
   const devices = responseData?.devices?.map((device) => ({
     name: device.name,
@@ -103,7 +109,7 @@ export const getNowPlaying = async (): Promise<NowPlayingResponseProps> => {
 
   const { access_token } = await getAccessToken();
 
-  const response = await axios.get(NOW_PLAYING_ENDPOINT, {
+  const response = await axios.get<unknown>(NOW_PLAYING_ENDPOINT, {
     headers: {
       Authorization: `Bearer ${access_token}`,
     },
@@ -115,13 +121,13 @@ export const getNowPlaying = async (): Promise<NowPlayingResponseProps> => {
     return { status, isPlaying: false, data: null };
   }
 
-  const responseData: SongProps = response.data;
+  const responseData = spotifyPlayingSchema.parse(response.data);
 
   if (!responseData.item) {
     return { status, isPlaying: false, data: null };
   }
 
-  const isPlaying: boolean = responseData?.is_playing;
+  const isPlaying = responseData.is_playing ?? false;
   const album: string = responseData?.item?.album.name ?? '';
   const albumImageUrl: string | undefined =
     responseData?.item?.album?.images?.find((image) => image?.width === 640)
@@ -151,7 +157,7 @@ export const getTopTracks = async (): Promise<TopTracksResponseProps> => {
 
   const { access_token } = await getAccessToken();
 
-  const response = await axios.get(`${TOP_TRACKS_ENDPOINT}?limit=10`, {
+  const response = await axios.get<unknown>(`${TOP_TRACKS_ENDPOINT}?limit=10`, {
     headers: {
       Authorization: `Bearer ${access_token}`,
     },
@@ -163,21 +169,20 @@ export const getTopTracks = async (): Promise<TopTracksResponseProps> => {
     return { status, data: [] };
   }
 
-  const responseData = response.data;
+  const responseData = spotifyTopTracksSchema.parse(response.data);
 
-  const tracks: TrackProps[] = responseData.items.map((track: any) => ({
-    album: {
-      name: track.album.name,
-      image: track.album.images.find(
-        (image: { width: number }) => image.width === 64,
-      ),
-    },
-    artist: track.artists
-      .map((artist: { name: string }) => artist.name)
-      .join(', '),
-    songUrl: track.external_urls.spotify,
-    title: track.name,
-  }));
+  const tracks: TrackProps[] = responseData.items.map((track) => {
+    const image = track.album.images.find((image) => image.width === 64);
+    return {
+      album: {
+        name: track.album.name,
+        image: image ? { ...image, width: 64 } : undefined,
+      },
+      artist: track.artists.map((artist) => artist.name).join(', '),
+      songUrl: track.external_urls.spotify,
+      title: track.name,
+    };
+  });
 
   return { status, data: tracks };
 };

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useState } from 'react';
 
 import ModalWrapper from '@/common/components/elements/ModalWrapper';
@@ -31,14 +30,18 @@ const Playground = ({
       setError(false);
 
       let capturedConsoleOutput = '';
+      // Capturing console is the playground product behavior, not a debug log.
+      /* eslint-disable no-console */
       const originalConsoleLog = console.log;
 
-      console.log = (message) => (capturedConsoleOutput += `${message}\n`);
+      console.log = (message: unknown) =>
+        (capturedConsoleOutput += `${message}\n`);
 
-      const result = new Function(code)();
+      const result: unknown = (new Function(code) as () => unknown)();
       console.log = originalConsoleLog;
+      /* eslint-enable no-console */
 
-      setOutput(capturedConsoleOutput + (result?.toString() ?? ''));
+      setOutput(capturedConsoleOutput + (result == null ? '' : String(result)));
     } catch (error) {
       setError(true);
       if (error instanceof Error) {

@@ -33,7 +33,7 @@ export default async function handler(
 
   try {
     const response = await fetch(source.url, {
-      headers: source.headers,
+      headers: source.headers ?? {},
     });
 
     if (!response.ok) {
@@ -51,7 +51,7 @@ export default async function handler(
     );
 
     return res.status(200).send(Buffer.from(arrayBuffer));
-  } catch (_error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to fetch logo' });
   }
 }

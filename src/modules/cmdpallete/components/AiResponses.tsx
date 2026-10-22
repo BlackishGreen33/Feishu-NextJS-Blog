@@ -49,16 +49,17 @@ const tokenizeMarkdownForTypewriter = (value: string) => {
   const lines = value.split('\n');
 
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
+    const line = lines[index] ?? '';
 
     if (line.startsWith('```')) {
       const codeBlockLines = [line];
 
       while (index + 1 < lines.length) {
         index += 1;
-        codeBlockLines.push(lines[index]);
+        const nextLine = lines[index] ?? '';
+        codeBlockLines.push(nextLine);
 
-        if (lines[index].startsWith('```')) {
+        if (nextLine.startsWith('```')) {
           break;
         }
       }
@@ -210,6 +211,7 @@ const AiResponses = ({
 
   useEffect(() => {
     if (!response && isStreaming) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- A new external stream must clear the previous typewriter state and timers.
       resetTypingState();
       return;
     }

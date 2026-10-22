@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { guestbookCreateBodySchema } from '@/common/schemas/guestbook';
 import {
   createGuestbookMessage,
   listGuestbookMessages,
@@ -59,17 +60,18 @@ export default async function handler(
 
       return res.status(200).json(
         await listGuestbookMessages({
-          authorizationHeader: req.headers.authorization,
-          cursor,
-          limit,
+          authorizationHeader: req.headers.authorization ?? null,
+          cursor: cursor ?? null,
+          ...(limit === undefined ? {} : { limit }),
         }),
       );
     }
 
     if (req.method === 'POST') {
+      const body = guestbookCreateBodySchema.safeParse(req.body);
       const payload = await createGuestbookMessage({
-        authorizationHeader: req.headers.authorization,
-        message: typeof req.body?.message === 'string' ? req.body.message : '',
+        authorizationHeader: req.headers.authorization ?? null,
+        message: body.success ? body.data.message : undefined,
       });
 
       res.setHeader('Cache-Control', 'private, no-store');

@@ -3,30 +3,11 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
 import { formatDate } from '@/common/helpers';
+import type { ContributionCalendar } from '@/common/schemas/dashboard';
 import { useI18n } from '@/i18n';
 
-interface Contribution {
-  date: string;
-  contributionCount: number;
-  color: string;
-}
-
-interface Month {
-  name: string;
-  firstDay: string;
-  totalWeeks: number;
-  contributionsCount: number;
-}
-
 interface CalendarProps {
-  data?: {
-    weeks: {
-      firstDay: string;
-      contributionDays: Contribution[];
-    }[];
-    months: Month[];
-    colors: string[];
-  };
+  data?: ContributionCalendar;
 }
 
 const Calendar = ({ data }: CalendarProps) => {
@@ -41,7 +22,7 @@ const Calendar = ({ data }: CalendarProps) => {
 
   const weeks = data?.weeks ?? [];
   const months =
-    data?.months?.map((month: Month) => {
+    data?.months?.map((month) => {
       const filterContributionDay = weeks
         .filter(
           (week) => week.firstDay.slice(0, 7) === month.firstDay.slice(0, 7),
@@ -80,12 +61,11 @@ const Calendar = ({ data }: CalendarProps) => {
         <div className='flex justify-start gap-[3px] overflow-hidden'>
           {weeks?.map((week) => (
             <div key={week.firstDay}>
-              {week.contributionDays.map((contribution) => {
+              {week.contributionDays.map((contribution, dayIndex) => {
                 const backgroundColor =
                   contribution.contributionCount > 0 && contribution.color;
 
-                const getRandomDelayAnimate =
-                  Math.random() * week.contributionDays.length * 0.15;
+                const getRandomDelayAnimate = dayIndex * 0.15;
 
                 return (
                   <motion.span
@@ -101,7 +81,7 @@ const Calendar = ({ data }: CalendarProps) => {
                       },
                     }}
                     className='my-[2px] block h-[12px] w-[12px] rounded-sm bg-neutral-300 dark:bg-neutral-800'
-                    style={backgroundColor ? { backgroundColor } : undefined}
+                    style={backgroundColor ? { backgroundColor } : {}}
                     onMouseEnter={() =>
                       setSelectContribution({
                         count: contribution.contributionCount,

@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment } from 'react';
 import { useTheme } from 'next-themes';
 import { Listbox, Transition } from '@headlessui/react';
 import clsx from 'clsx';
 import { LuChevronsUpDown } from 'react-icons/lu';
 import { MdDarkMode, MdLightMode } from 'react-icons/md';
 
+import useHasMounted from '@/common/hooks/useHasMounted';
 import { useI18n } from '@/i18n';
 
 interface ThemeSwitcherProps {
@@ -14,11 +15,7 @@ interface ThemeSwitcherProps {
 const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
   const { resolvedTheme, setTheme } = useTheme();
   const { messages } = useI18n();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHasMounted();
 
   if (!mounted) {
     return (
@@ -51,7 +48,10 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
   }
 
   return (
-    <Listbox value={resolvedTheme} onChange={(value) => setTheme(value)}>
+    <Listbox
+      value={resolvedTheme ?? 'light'}
+      onChange={(value) => setTheme(value)}
+    >
       <div className='relative mt-1'>
         <Listbox.Button className='group relative w-full cursor-pointer rounded-lg border-[1.8px] bg-white py-2 pr-10 pl-4 text-left text-neutral-600 focus:outline-none focus-visible:border-neutral-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-200 sm:text-[15px] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 dark:focus-visible:border-neutral-600 dark:focus-visible:ring-offset-neutral-950'>
           <span className='flex items-center gap-2 truncate'>

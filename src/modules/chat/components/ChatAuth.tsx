@@ -60,7 +60,7 @@ const ChatAuth = ({ isWidget = false }: { isWidget?: boolean }) => {
       textColor: 'text-white',
       label: messages.guestbook.signInWithGithub,
     },
-  ];
+  ] as const;
 
   const handleSignIn = async (providerId: GuestbookProviderId) => {
     setErrorMessage(null);
@@ -98,7 +98,9 @@ const ChatAuth = ({ isWidget = false }: { isWidget?: boolean }) => {
             providerConfig.map((button) => (
               <Button
                 key={button.id}
-                onClick={() => handleSignIn(button.id as GuestbookProviderId)}
+                onClick={() => {
+                  void handleSignIn(button.id);
+                }}
                 className={`flex w-full items-center justify-center border ${button.bgColor} py-2.5 shadow-sm transition duration-300 hover:scale-[101%] lg:w-fit ${isWidget && '!w-full'}`}
                 data-umami-event={`Sign In to Chat: ${button.label}`}
               >

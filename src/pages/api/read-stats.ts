@@ -21,7 +21,7 @@ export default async function handler(
     };
 
     res.status(200).json(data);
-  } catch (_error) {
+  } catch {
     res.status(200).json({
       configured: false,
       last_update: null,

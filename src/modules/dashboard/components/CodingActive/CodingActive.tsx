@@ -10,8 +10,9 @@ import SectionHeading from '@/common/components/elements/SectionHeading';
 import SectionSubHeading from '@/common/components/elements/SectionSubHeading';
 import { SITE_WAKATIME_URL } from '@/common/config/site';
 import { getDateFnsLocale } from '@/common/helpers';
+import { readStatsSchema } from '@/common/schemas/dashboard';
 import { useI18n } from '@/i18n';
-import { fetcher } from '@/services/fetcher';
+import { fetchValidated } from '@/services/fetcher';
 
 import CodingActiveList from './CodingActiveList';
 import Overview from './Overview';
@@ -22,7 +23,9 @@ interface CodingActiveProps {
 
 const CodingActive = ({ lastUpdate }: CodingActiveProps) => {
   const { locale, messages } = useI18n();
-  const { data } = useSWR('/api/read-stats', fetcher);
+  const { data } = useSWR('/api/read-stats', (url: string) =>
+    fetchValidated(url, readStatsSchema.parse),
+  );
   const [formattedLastUpdate, setFormattedLastUpdate] = useState<string | null>(
     null,
   );
@@ -39,6 +42,8 @@ const CodingActive = ({ lastUpdate }: CodingActiveProps) => {
           addSuffix: true,
           locale: getDateFnsLocale(locale),
         });
+        // Browser clock formatting must wait until hydration, while SWR/locale can update the date.
+
         setFormattedLastUpdate(distance);
       }
     };

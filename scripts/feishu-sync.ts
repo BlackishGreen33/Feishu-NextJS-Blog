@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { loadEnvConfig } from '@next/env';
 
 import { syncFeishuArticles } from '../src/server/blog/sync';

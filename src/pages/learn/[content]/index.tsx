@@ -37,7 +37,7 @@ const LearnContentPage: NextPage<ContentPageProps> = ({
 
   const { title, description } = content;
 
-  const sortedSubContents = subContents.sort(
+  const sortedSubContents = [...subContents].sort(
     (a, b) => a.frontMatter.id - b.frontMatter.id,
   );
 
@@ -86,7 +86,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const contentSlug = params?.content as string;
+  const contentSlug = typeof params?.content === 'string' ? params.content : '';
 
   const content =
     LEARN_CONTENTS.find((item) => item?.slug === contentSlug) || null;

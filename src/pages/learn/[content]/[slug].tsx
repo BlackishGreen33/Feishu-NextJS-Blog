@@ -8,6 +8,7 @@ import { useSiteConfig } from '@/common/config/site';
 import { LEARN_CONTENTS } from '@/common/constant/learn';
 import { parseUrl } from '@/common/helpers';
 import { loadMdxFiles } from '@/common/libs/mdx';
+import { learnCategorySchema } from '@/common/schemas/learn';
 import { MdxFileContentProps } from '@/common/types/learn';
 import { useI18n } from '@/i18n';
 import ContentDetail from '@/modules/learn/components/ContentDetail';
@@ -46,7 +47,7 @@ const LearnContentDetailPage: NextPage<{ data: MdxFileContentProps }> = ({
           },
           images: [
             {
-              url: meta?.cover_url as string,
+              url: meta.cover_url ?? '',
             },
           ],
           siteName: site.name,
@@ -80,8 +81,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const parentContent = params?.content as string;
-  const slug = params?.slug as string;
+  const parsed = learnCategorySchema.safeParse(params?.content);
+  const parentContent = parsed.success ? parsed.data : '';
+  const slug = typeof params?.slug === 'string' ? params.slug : '';
 
   const parentExists = LEARN_CONTENTS.some(
     (item) => item.slug === parentContent,
@@ -96,7 +98,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     };
   }
 
-  const contentList = await loadMdxFiles(parentContent);
+  const contentList = loadMdxFiles(parentContent);
 
   const contentData = contentList.find((item) => item.slug === slug);
 

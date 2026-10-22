@@ -1,7 +1,7 @@
-const {
+import {
   TYPE_TO_EMOJI,
   validateCommitMessage,
-} = require('../../../scripts/validate-commit-msg.js');
+} from '../../../scripts/validate-commit-msg.js';
 
 describe('validateCommitMessage', () => {
   it.each([
@@ -25,7 +25,7 @@ describe('validateCommitMessage', () => {
       validateCommitMessage('🔥 hotfix(site): patch article route'),
     ).toEqual({
       valid: false,
-      error: expect.stringContaining('Unsupported type "hotfix"'),
+      error: expect.stringContaining('Unsupported type "hotfix"') as unknown,
     });
   });
 

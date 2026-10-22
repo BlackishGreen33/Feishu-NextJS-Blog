@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { aiPromptSchema } from '@/common/schemas/ai';
 import { buildSiteChatContext } from '@/server/ai/context';
-import { postChatPrompt, streamChatPrompt } from '@/services/ai';
+import { postChatPrompt, streamChatPrompt } from '@/server/ai/provider';
 
 export const config = {
   api: {
@@ -23,16 +24,16 @@ export default async function handler(
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { prompt, locale, currentPath, stream } = req.body;
-
-    if (typeof prompt !== 'string' || !prompt.trim()) {
+    const parsed = aiPromptSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({ error: 'Prompt is required.' });
     }
 
+    const { prompt, locale, currentPath, stream } = parsed.data;
     const context = await buildSiteChatContext({
       prompt,
-      locale: typeof locale === 'string' ? locale : undefined,
-      currentPath: typeof currentPath === 'string' ? currentPath : undefined,
+      ...(locale === undefined ? {} : { locale }),
+      ...(currentPath === undefined ? {} : { currentPath }),
     });
 
     if (stream === true) {

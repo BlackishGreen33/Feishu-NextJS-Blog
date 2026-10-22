@@ -1,23 +1,29 @@
-export type BlogSyncAssetState = {
-  pathname: string;
-  url: string;
-  contentType?: string | null;
-  updatedAt: string;
-};
+import { z } from 'zod';
 
-export type BlogSyncDocumentState = {
-  slug: string;
-  sourceDocumentId: string;
-  contentVersion?: number;
-  objEditTime?: string;
-  revisionId?: string;
-  coverToken?: string;
-  assetTokens: string[];
-};
+export const blogSyncAssetStateSchema = z.looseObject({
+  pathname: z.string(),
+  url: z.string(),
+  contentType: z.string().nullable().optional(),
+  updatedAt: z.string(),
+});
 
-export type BlogSyncState = {
-  generatedAt: string;
-  source: 'feishu';
-  documents: Record<string, BlogSyncDocumentState>;
-  assets: Record<string, BlogSyncAssetState>;
-};
+export const blogSyncDocumentStateSchema = z.looseObject({
+  slug: z.string(),
+  sourceDocumentId: z.string(),
+  contentVersion: z.number().optional(),
+  objEditTime: z.string().optional(),
+  revisionId: z.string().optional(),
+  coverToken: z.string().optional(),
+  assetTokens: z.array(z.string()),
+});
+
+export const blogSyncStateSchema = z.looseObject({
+  generatedAt: z.string(),
+  source: z.literal('feishu'),
+  documents: z.record(z.string(), blogSyncDocumentStateSchema),
+  assets: z.record(z.string(), blogSyncAssetStateSchema),
+});
+
+export type BlogSyncAssetState = z.infer<typeof blogSyncAssetStateSchema>;
+export type BlogSyncDocumentState = z.infer<typeof blogSyncDocumentStateSchema>;
+export type BlogSyncState = z.infer<typeof blogSyncStateSchema>;

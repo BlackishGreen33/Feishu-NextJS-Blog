@@ -1,16 +1,8 @@
-export interface ProjectItemProps {
-  title: string;
-  slug: string;
-  description: string;
-  image: string;
-  link_demo?: string;
-  link_github?: string;
-  stacks: string;
-  content?: string;
-  is_show: boolean;
-  is_featured: boolean;
-  updated_at: string;
-}
+import type { z } from 'zod';
+
+import type { projectSchema } from '@/common/schemas/projects';
+
+export type ProjectItemProps = z.infer<typeof projectSchema>;
 
 export interface ProjectsProps {
   projects: ProjectItemProps[];

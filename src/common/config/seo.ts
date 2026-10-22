@@ -11,7 +11,7 @@ const OG_LOCALE: Record<AppLocale, string> = {
 };
 
 const normalizePath = (path = '/') => {
-  const [withoutHash] = path.split('#');
+  const [withoutHash = ''] = path.split('#');
   const [withoutQuery] = withoutHash.split('?');
 
   if (!withoutQuery || withoutQuery === '') {

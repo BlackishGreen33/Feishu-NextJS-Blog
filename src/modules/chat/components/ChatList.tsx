@@ -107,7 +107,7 @@ const ChatList = ({
             <ChatItem
               key={chat.id}
               canModerate={canModerate}
-              currentUserUid={currentUserUid}
+              currentUserUid={currentUserUid ?? null}
               onDelete={onDeleteMessage}
               onModerate={onHideMessage}
               {...chat}

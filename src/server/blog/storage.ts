@@ -2,10 +2,15 @@ import { BlobNotFoundError, del, head, put } from '@vercel/blob';
 import fs from 'fs/promises';
 import path from 'path';
 
+import {
+  articleIndexSchema,
+  articleSchema,
+  articleSearchIndexSchema,
+} from '@/common/schemas/blog';
 import { Article, ArticleIndex, ArticleSearchIndex } from '@/common/types/blog';
 import { getServerEnv } from '@/server/env';
 
-import { BlogSyncState } from './sync-state';
+import { BlogSyncState, blogSyncStateSchema } from './sync-state';
 
 const SEEDED_DATA_DIR = path.join(process.cwd(), 'data', 'feishu-blog');
 const SEEDED_ARTICLES_DIR = path.join(SEEDED_DATA_DIR, 'articles');
@@ -62,17 +67,21 @@ export interface BlogStorageAdapter {
 const localJsonCache = new Map<string, LocalJsonCacheEntry>();
 const blobJsonCache = new Map<string, BlobJsonCacheEntry>();
 
-const readJsonFile = async <T>(filePath: string) => {
+const readJsonFile = async <T>(
+  filePath: string,
+  parse: (value: unknown) => T,
+) => {
   try {
     const stat = await fs.stat(filePath);
     const cached = localJsonCache.get(filePath);
 
     if (cached?.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
-      return cached.value as T;
+      return parse(cached.value);
     }
 
     const content = await fs.readFile(filePath, 'utf8');
-    const value = JSON.parse(content) as T;
+    const raw: unknown = JSON.parse(content);
+    const value = parse(raw);
 
     localJsonCache.set(filePath, {
       mtimeMs: stat.mtimeMs,
@@ -82,7 +91,12 @@ const readJsonFile = async <T>(filePath: string) => {
 
     return value;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
       localJsonCache.delete(filePath);
       return null;
     }
@@ -102,9 +116,12 @@ const writeJsonFile = async <T>(filePath: string, value: T) => {
   });
 };
 
-const readFirstJsonFile = async <T>(filePaths: string[]) => {
+const readFirstJsonFile = async <T>(
+  filePaths: string[],
+  parse: (value: unknown) => T,
+) => {
   for (const filePath of filePaths) {
-    const content = await readJsonFile<T>(filePath);
+    const content = await readJsonFile(filePath, parse);
 
     if (content) {
       return content;
@@ -125,20 +142,26 @@ const ensureLocalDirs = async () => {
 const localStorage: BlogStorageAdapter = {
   name: 'local',
   async readIndex() {
-    return readFirstJsonFile<ArticleIndex>([
-      path.join(LOCAL_CACHE_DATA_DIR, 'index.json'),
-      path.join(SEEDED_DATA_DIR, 'index.json'),
-    ]);
+    return readFirstJsonFile(
+      [
+        path.join(LOCAL_CACHE_DATA_DIR, 'index.json'),
+        path.join(SEEDED_DATA_DIR, 'index.json'),
+      ],
+      articleIndexSchema.parse,
+    );
   },
   async writeIndex(index) {
     await ensureLocalDirs();
     await writeJsonFile(path.join(LOCAL_CACHE_DATA_DIR, 'index.json'), index);
   },
   async readSearchIndex() {
-    return readFirstJsonFile<ArticleSearchIndex>([
-      path.join(LOCAL_CACHE_DATA_DIR, 'search-index.json'),
-      path.join(SEEDED_DATA_DIR, 'search-index.json'),
-    ]);
+    return readFirstJsonFile(
+      [
+        path.join(LOCAL_CACHE_DATA_DIR, 'search-index.json'),
+        path.join(SEEDED_DATA_DIR, 'search-index.json'),
+      ],
+      articleSearchIndexSchema.parse,
+    );
   },
   async writeSearchIndex(index) {
     await ensureLocalDirs();
@@ -148,10 +171,13 @@ const localStorage: BlogStorageAdapter = {
     );
   },
   async readArticle(slug) {
-    return readFirstJsonFile<Article>([
-      path.join(LOCAL_CACHE_ARTICLES_DIR, `${slug}.json`),
-      path.join(SEEDED_ARTICLES_DIR, `${slug}.json`),
-    ]);
+    return readFirstJsonFile(
+      [
+        path.join(LOCAL_CACHE_ARTICLES_DIR, `${slug}.json`),
+        path.join(SEEDED_ARTICLES_DIR, `${slug}.json`),
+      ],
+      articleSchema.parse,
+    );
   },
   async writeArticle(article) {
     await ensureLocalDirs();
@@ -166,8 +192,9 @@ const localStorage: BlogStorageAdapter = {
     localJsonCache.delete(filePath);
   },
   async readSyncState() {
-    return readJsonFile<BlogSyncState>(
+    return readJsonFile(
       path.join(LOCAL_CACHE_DATA_DIR, 'sync-state.json'),
+      blogSyncStateSchema.parse,
     );
   },
   async writeSyncState(state) {
@@ -182,7 +209,12 @@ const localStorage: BlogStorageAdapter = {
       await fs.access(path.join(LOCAL_CACHE_PUBLIC_ASSETS_DIR, pathname));
       return true;
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'ENOENT'
+      ) {
         return false;
       }
 
@@ -205,13 +237,19 @@ const localStorage: BlogStorageAdapter = {
 
 const isBlobNotFoundError = (error: unknown) =>
   error instanceof BlobNotFoundError ||
-  (error as { name?: string }).name === 'BlobNotFoundError';
+  (typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    error.name === 'BlobNotFoundError');
 
-const readBlobJson = async <T>(pathname: string) => {
+const readBlobJson = async <T>(
+  pathname: string,
+  parse: (value: unknown) => T,
+) => {
   const cached = blobJsonCache.get(pathname);
 
   if (cached && cached.expiresAt > Date.now()) {
-    return cached.value as T;
+    return cached.value === null ? null : parse(cached.value);
   }
 
   try {
@@ -222,7 +260,8 @@ const readBlobJson = async <T>(pathname: string) => {
       throw new Error(`Failed to fetch blob ${pathname}: ${response.status}`);
     }
 
-    const value = (await response.json()) as T;
+    const raw: unknown = await response.json();
+    const value = parse(raw);
 
     blobJsonCache.set(pathname, {
       expiresAt: Date.now() + BLOB_JSON_CACHE_TTL_MS,
@@ -260,19 +299,22 @@ const writeBlobJson = async <T>(pathname: string, value: T) => {
 const blobStorage: BlogStorageAdapter = {
   name: 'blob',
   async readIndex() {
-    return readBlobJson<ArticleIndex>(BLOB_INDEX_PATH);
+    return readBlobJson(BLOB_INDEX_PATH, articleIndexSchema.parse);
   },
   async writeIndex(index) {
     await writeBlobJson(BLOB_INDEX_PATH, index);
   },
   async readSearchIndex() {
-    return readBlobJson<ArticleSearchIndex>(BLOB_SEARCH_INDEX_PATH);
+    return readBlobJson(BLOB_SEARCH_INDEX_PATH, articleSearchIndexSchema.parse);
   },
   async writeSearchIndex(index) {
     await writeBlobJson(BLOB_SEARCH_INDEX_PATH, index);
   },
   async readArticle(slug) {
-    return readBlobJson<Article>(`${BLOB_ARTICLES_PREFIX}/${slug}.json`);
+    return readBlobJson(
+      `${BLOB_ARTICLES_PREFIX}/${slug}.json`,
+      articleSchema.parse,
+    );
   },
   async writeArticle(article) {
     await writeBlobJson(
@@ -289,7 +331,7 @@ const blobStorage: BlogStorageAdapter = {
     });
   },
   async readSyncState() {
-    return readBlobJson<BlogSyncState>(BLOB_SYNC_STATE_PATH);
+    return readBlobJson(BLOB_SYNC_STATE_PATH, blogSyncStateSchema.parse);
   },
   async writeSyncState(state) {
     await writeBlobJson(BLOB_SYNC_STATE_PATH, state);

@@ -7,9 +7,10 @@ import useSWR from 'swr';
 
 import Card from '@/common/components/elements/Card';
 import Image from '@/common/components/elements/Image';
+import { lessonCountSchema } from '@/common/schemas/learn';
 import { ContentProps } from '@/common/types/learn';
 import { useI18n } from '@/i18n';
-import { fetcher } from '@/services/fetcher';
+import { fetchValidated } from '@/services/fetcher';
 
 const LearnCard = ({
   title,
@@ -20,9 +21,11 @@ const LearnCard = ({
   level,
 }: ContentProps) => {
   const { messages } = useI18n();
-  const { data } = useSWR(`/api/learn?slug=${slug}`, fetcher);
+  const { data } = useSWR(`/api/learn?slug=${slug}`, (url: string) =>
+    fetchValidated(url, lessonCountSchema.parse),
+  );
 
-  const lessonCount = data?.count ?? '0';
+  const lessonCount = data?.count ?? 0;
 
   return (
     <Link href={`/learn/${slug}`}>

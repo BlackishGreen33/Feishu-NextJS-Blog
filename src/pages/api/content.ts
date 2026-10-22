@@ -1,13 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { loadMdxFiles } from '@/common/libs/mdx';
+import { learnCategorySchema } from '@/common/schemas/learn';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const { category } = req.query;
-  const contentList = await loadMdxFiles(category as string);
+  const category = learnCategorySchema.parse(req.query.category);
+  const contentList = loadMdxFiles(category);
 
   const data = contentList.map((item) => ({
     id: item?.frontMatter?.id,

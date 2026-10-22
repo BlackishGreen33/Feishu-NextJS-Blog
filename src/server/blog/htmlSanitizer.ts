@@ -4,7 +4,7 @@ import { commentHtmlSanitizeSchema } from '@/common/libs/htmlSanitizer';
 
 type SanitizableComment = {
   body_html?: unknown;
-  children?: SanitizableComment[];
+  children?: SanitizableComment[] | undefined;
   [key: string]: unknown;
 };
 

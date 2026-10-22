@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import type { PluggableList } from 'unified';
 
 import cn from '@/common/libs/cn';
 import { feishuHtmlSanitizeSchema } from '@/common/libs/htmlSanitizer';
@@ -109,9 +110,9 @@ const MDXComponent = ({
   children,
   allowRawHtml = true,
 }: MarkdownRendererProps) => {
-  const rehypePlugins = allowRawHtml
-    ? [rehypeRaw, [rehypeSanitize, feishuHtmlSanitizeSchema] as const]
-    : [[rehypeSanitize, feishuHtmlSanitizeSchema] as const];
+  const rehypePlugins: PluggableList = allowRawHtml
+    ? [rehypeRaw, [rehypeSanitize, feishuHtmlSanitizeSchema]]
+    : [[rehypeSanitize, feishuHtmlSanitizeSchema]];
 
   return (
     <ReactMarkdown

@@ -1,4 +1,5 @@
 import { getPublicEnv } from '@/common/config/env';
+import { projectRecordSchema, projectSchema } from '@/common/schemas/projects';
 import { ProjectItemProps } from '@/common/types/projects';
 import { getFirebaseAdminDatabase } from '@/server/firebase-admin';
 
@@ -25,10 +26,7 @@ const buildFirebaseUrl = (pathname: string) => {
   return `${databaseUrl}/${pathname}.json`;
 };
 
-const fetchFirebaseJson = async <T>(
-  pathname: string,
-  init: RequestInit = {},
-) => {
+const fetchFirebaseJson = async (pathname: string, init: RequestInit = {}) => {
   const response = await fetch(buildFirebaseUrl(pathname), {
     ...init,
     cache: 'no-store',
@@ -44,7 +42,8 @@ const fetchFirebaseJson = async <T>(
     );
   }
 
-  return (await response.json()) as T;
+  const payload: unknown = await response.json();
+  return payload;
 };
 
 const normalizeStacks = (value: unknown) => {
@@ -60,9 +59,10 @@ const normalizeStacks = (value: unknown) => {
 };
 
 const normalizeProject = (value: unknown): ProjectItemProps | null => {
-  if (!isRecord(value)) {
-    return null;
-  }
+  const parsed = projectRecordSchema.safeParse(value);
+  if (!parsed.success) return null;
+  value = parsed.data;
+  if (!isRecord(value)) return null;
 
   const title = typeof value.title === 'string' ? value.title : '';
   const slug = typeof value.slug === 'string' ? value.slug : '';
@@ -71,7 +71,7 @@ const normalizeProject = (value: unknown): ProjectItemProps | null => {
     return null;
   }
 
-  return {
+  return projectSchema.parse({
     title,
     slug,
     description: typeof value.description === 'string' ? value.description : '',
@@ -87,7 +87,7 @@ const normalizeProject = (value: unknown): ProjectItemProps | null => {
       typeof value.updated_at === 'string'
         ? value.updated_at
         : new Date(0).toISOString(),
-  };
+  });
 };
 
 const sortProjects = (projects: ProjectItemProps[]) =>
@@ -107,7 +107,7 @@ export const getProjectsFromFirebase = async () => {
   const database = getFirebaseAdminDatabase();
   const payload: unknown = database
     ? (await database.ref(PROJECTS_PATH).get()).val()
-    : await fetchFirebaseJson<unknown>(PROJECTS_PATH);
+    : await fetchFirebaseJson(PROJECTS_PATH);
   const values = Array.isArray(payload)
     ? payload
     : isRecord(payload)
@@ -143,7 +143,7 @@ export const getViewsFromFirebase = async (slug: string) => {
     return 0;
   }
 
-  const payload = await fetchFirebaseJson<unknown>(
+  const payload = await fetchFirebaseJson(
     `${CONTENT_META_PATH}/${toFirebaseKey(slug)}`,
   );
 
@@ -156,7 +156,7 @@ export const incrementViewsInFirebase = async (slug: string) => {
   }
 
   const pathname = `${CONTENT_META_PATH}/${toFirebaseKey(slug)}`;
-  const current = await fetchFirebaseJson<unknown>(pathname);
+  const current = await fetchFirebaseJson(pathname);
   const nextViews = extractViews(current) + 1;
   const nextValue = isRecord(current)
     ? { ...current, slug, views: nextViews }

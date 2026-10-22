@@ -4,18 +4,23 @@ import { useDraggable } from 'react-use-draggable-scroll';
 import useSWR from 'swr';
 
 import BlogCardNewSkeleton from '@/common/components/skeleton/BlogCardNewSkeleton';
+import { articleListResponseSchema } from '@/common/schemas/blog';
 import { BlogItemProps } from '@/common/types/blog';
 import BlogCardNew from '@/modules/blog/components/BlogCardNew';
-import { fetcher } from '@/services/fetcher';
+import { fetchValidated } from '@/services/fetcher';
 
 const BlogCarousel = () => {
-  const { data, isLoading } = useSWR(`/api/blog?page=1&per_page=4`, fetcher, {
-    revalidateOnFocus: false,
-    refreshInterval: 0,
-  });
+  const { data, isLoading } = useSWR(
+    `/api/blog?page=1&per_page=4`,
+    (url: string) => fetchValidated(url, articleListResponseSchema.parse),
+    {
+      revalidateOnFocus: false,
+      refreshInterval: 0,
+    },
+  );
 
   const blogData: BlogItemProps[] = useMemo(() => {
-    return data?.data?.posts || [];
+    return data?.status ? data.data.posts : [];
   }, [data]);
 
   const ref = useRef<HTMLDivElement>(null!);

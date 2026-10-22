@@ -9,7 +9,7 @@ import ChatUserInfo from './ChatUserInfo';
 
 const ChatInput = ({
   onSendMessage,
-  isWidget,
+  isWidget = false,
 }: ChatInputProps & { isWidget?: boolean }) => {
   const { messages } = useI18n();
   const [message, setMessage] = useState('');
@@ -27,8 +27,8 @@ const ChatInput = ({
     try {
       await onSendMessage(message);
       setMessage('');
-    } catch (_error) {
-      // console.error('Error sending message:', error);
+    } catch {
+      // Keep the failed text for retry; the parent displays the error.
     } finally {
       setIsSending(false);
       setTimeout(() => {
@@ -45,7 +45,9 @@ const ChatInput = ({
     <>
       <form
         className='flex items-center gap-x-1 border-t border-neutral-300 p-4 pb-3 dark:border-neutral-800'
-        onSubmit={handleSendMessage}
+        onSubmit={(event) => {
+          void handleSendMessage(event);
+        }}
       >
         <input
           type='text'

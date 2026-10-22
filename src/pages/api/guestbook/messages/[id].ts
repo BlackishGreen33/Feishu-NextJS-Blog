@@ -49,7 +49,7 @@ export default async function handler(
     const id = typeof req.query.id === 'string' ? req.query.id : '';
 
     const payload = await deleteGuestbookMessage({
-      authorizationHeader: req.headers.authorization,
+      authorizationHeader: req.headers.authorization ?? null,
       id,
     });
 

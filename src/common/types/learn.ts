@@ -1,3 +1,7 @@
+import type { z } from 'zod';
+
+import type { lessonMetaSchema } from '@/common/schemas/learn';
+
 export interface ContentLanguage {
   id: string;
   title: string;
@@ -23,23 +27,7 @@ export interface SubContentProps {
   difficulty?: string;
 }
 
-export interface SubContentMetaProps {
-  id: number;
-  chapter_id?: number;
-  chapter_title?: string;
-  title: string;
-  category: string;
-  language?: string;
-  difficulty?: string;
-  source?: string;
-  cover_url?: string;
-  source_url?: string;
-  created_at: string;
-  updated_at: string;
-  is_playground: boolean;
-  is_comment: boolean;
-  initial_code?: string;
-}
+export type SubContentMetaProps = z.infer<typeof lessonMetaSchema>;
 
 export interface MdxFileContentProps {
   slug: string;

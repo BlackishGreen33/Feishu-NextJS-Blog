@@ -33,6 +33,7 @@ export const useFirebaseGuestbookAuth = () => {
     const auth = getFirebaseAuth();
 
     if (!auth) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Missing external Firebase initialization must settle loading after hydration.
       setIsLoading(false);
       return;
     }

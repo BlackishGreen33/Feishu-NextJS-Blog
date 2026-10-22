@@ -63,7 +63,7 @@ describe('FeishuClient rate limit retries', () => {
       ...args: unknown[]
     ) => {
       if (typeof handler === 'function') {
-        handler(...args);
+        (handler as (...values: unknown[]) => void)(...args);
       }
 
       return 0;
@@ -118,6 +118,29 @@ describe('FeishuClient rate limit retries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 1000);
   });
+
+  it.each([
+    {},
+    { data: { items: 'invalid' } },
+    { data: { items: [], has_more: true } },
+  ])(
+    'rejects malformed or incomplete listings instead of returning an empty source: %j',
+    async (payload) => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(
+          createJsonResponse({ tenant_access_token: 'tok', expire: 3600 }),
+        )
+        .mockResolvedValueOnce(
+          createJsonResponse({ code: 0, ...payload }),
+        ) as typeof fetch;
+      const client = new FeishuClient(
+        `malformed-${JSON.stringify(payload)}`,
+        'secret',
+      );
+      await expect(client.listDocNodesBySpace('space')).rejects.toThrow();
+    },
+  );
 
   it('retries regular API requests after a rate-limit payload', async () => {
     const fetchMock = jest
@@ -220,5 +243,51 @@ describe('FeishuClient rate limit retries', () => {
       'https://open.feishu.cn/open-apis/drive/v1/files/docx-token/subscribe?file_type=docx',
       expect.objectContaining({ method: 'POST' }),
     );
+  });
+
+  it('preserves renderer extensions while normalizing mentions, reminders and synced blocks', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({ tenant_access_token: 'tok', expire: 3600 }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          code: 0,
+          data: {
+            items: [
+              {
+                block_id: 'text',
+                block_type: 2,
+                custom: 'kept',
+                text: {
+                  elements: [
+                    { mention_user: { user_id: 'user-1' } },
+                    { reminder: { notify_time: '1776561839000' } },
+                    { text_run: { content: 'plain' } },
+                  ],
+                },
+              },
+              {
+                block_id: 'synced',
+                block_type: 49,
+                source_synced: { token: 'source' },
+              },
+            ],
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({ code: 0, data: { user: { name: 'Jane' } } }),
+      ) as typeof fetch;
+    const blocks = await new FeishuClient(
+      'renderer-contract',
+      'secret',
+    ).getDocumentBlocks('doc');
+    expect(blocks[0]?.text.elements[0]?.text_run?.content).toBe('@Jane');
+    expect(blocks[0]?.text.elements[1]?.text_run?.content).toContain('2026');
+    expect(blocks[0]?.text.elements[2]?.text_run?.content).toBe('plain');
+    expect(blocks[0]).toHaveProperty('custom', 'kept');
+    expect(blocks[1]?.block_type).toBe(999);
   });
 });

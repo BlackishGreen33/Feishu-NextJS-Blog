@@ -5,15 +5,13 @@ import { FiClock as ClockIcon } from 'react-icons/fi';
 
 import Button from '@/common/components/elements/Button';
 import { useSiteConfig } from '@/common/config/site';
+import {
+  type ContactFormData,
+  contactFormSchema,
+} from '@/common/schemas/contact';
 import { useI18n } from '@/i18n';
 
-interface FormDataProps {
-  name: string;
-  email: string;
-  message: string;
-}
-
-const formInitialState: FormDataProps = {
+const formInitialState: ContactFormData = {
   name: '',
   email: '',
   message: '',
@@ -22,24 +20,23 @@ const formInitialState: FormDataProps = {
 const ContactForm = () => {
   const { messages } = useI18n();
   const site = useSiteConfig();
-  const [formData, setFormData] = useState<FormDataProps>(formInitialState);
+  const [formData, setFormData] = useState<ContactFormData>(formInitialState);
 
-  const [formErrors, setFormErrors] = useState<Partial<FormDataProps>>({});
+  const [formErrors, setFormErrors] = useState<Partial<ContactFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
+    if (name !== 'name' && name !== 'email' && name !== 'message') return;
     setFormData({
       ...formData,
       [name]: value,
     });
     setFormErrors({
       ...formErrors,
-      [name]: value
-        ? undefined
-        : messages.contact.form.required[name as keyof FormDataProps],
+      [name]: value ? undefined : messages.contact.form.required[name],
     });
   };
 
@@ -48,16 +45,17 @@ const ContactForm = () => {
 
     const hasErrors = Object.values(formErrors).some((error) => error);
 
-    if (!hasErrors) {
+    if (!hasErrors && contactFormSchema.safeParse(formData).success) {
       setIsLoading(true);
       try {
-        const response = await axios.post('/api/contact', { formData });
+        const response = await axios.post<unknown>('/api/contact', {
+          formData,
+        });
         if (response.status === 200) {
           alert(messages.contact.form.success);
           setFormData(formInitialState);
         }
-      } catch (error) {
-        void error;
+      } catch {
         alert(messages.contact.form.failed);
       }
       setIsLoading(false);
@@ -69,7 +67,7 @@ const ContactForm = () => {
   const isSubmitDisabled = Object.values(formErrors).some((error) => error);
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={(event) => void handleSubmit(event)}>
       <div className='flex flex-grow flex-col gap-5'>
         <div className='flex flex-col gap-5 md:flex-row'>
           <input

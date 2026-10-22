@@ -1,19 +1,18 @@
 import useSWR from 'swr';
 
-import { DeviceProps, NowPlayingProps } from '@/common/types/spotify';
-import { fetcher } from '@/services/fetcher';
+import { deviceSchema, nowPlayingSchema } from '@/common/schemas/spotify';
+import { fetchValidated } from '@/services/fetcher';
 
 import NowPlayingBar from './NowPlayingBar';
 import NowPlayingCard from './NowPlayingCard';
 
 const NowPlayingDock = () => {
-  const { data: playingData } = useSWR<NowPlayingProps | null>(
-    '/api/now-playing',
-    fetcher,
+  const { data: playingData } = useSWR('/api/now-playing', (url: string) =>
+    fetchValidated(url, nowPlayingSchema.nullable().parse),
   );
-  const { data: devicesData = [] } = useSWR<DeviceProps[]>(
+  const { data: devicesData = [] } = useSWR(
     '/api/available-devices',
-    fetcher,
+    (url: string) => fetchValidated(url, deviceSchema.array().parse),
   );
 
   if (!playingData?.songUrl) {

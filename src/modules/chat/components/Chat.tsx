@@ -72,7 +72,7 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
 
       try {
         const response = await fetchGuestbookMessages({
-          cursor,
+          cursor: cursor ?? null,
           limit: pageSize,
           user,
         });
@@ -103,6 +103,7 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Auth-dependent server read initializes loading; retain the existing subscription/reload timing.
     void loadMessages();
   }, [loadMessages]);
 
@@ -110,13 +111,14 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
     try {
       const response = await createGuestbookMessage({ message, user });
 
-      if (!response.message) {
+      const createdMessage = response.message;
+      if (!createdMessage) {
         throw new Error('Missing guestbook message payload.');
       }
 
       setViewer(response.viewer);
       setChatMessages((currentMessages) =>
-        mergeMessages([...currentMessages, response.message as MessageProps]),
+        mergeMessages([...currentMessages, createdMessage]),
       );
       setErrorMessage(null);
     } catch (error) {
@@ -201,9 +203,15 @@ const Chat = ({ isWidget = false }: { isWidget?: boolean }) => {
         loadMoreLabel={messages.guestbook.loadMore}
         loadingMoreLabel={messages.guestbook.loadingMore}
         messages={chatMessages}
-        onHideMessage={handleModerateMessage}
-        onLoadMore={() => loadMessages(nextCursor)}
-        onDeleteMessage={handleDeleteMessage}
+        onHideMessage={(id, status) => {
+          void handleModerateMessage(id, status);
+        }}
+        onLoadMore={() => {
+          void loadMessages(nextCursor);
+        }}
+        onDeleteMessage={(id) => {
+          void handleDeleteMessage(id);
+        }}
         currentUserUid={user?.uid ?? null}
       />
       {errorMessage ? (

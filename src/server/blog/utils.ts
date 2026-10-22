@@ -13,15 +13,13 @@ export const mapWithConcurrency = async <Input, Output>(
   mapper: (item: Input, index: number) => Promise<Output>,
 ) => {
   const results = new Array<Output>(items.length);
-  let nextIndex = 0;
+  const entries = items.entries();
 
   const workers = Array.from(
     { length: Math.min(concurrency, items.length) },
     async () => {
-      while (nextIndex < items.length) {
-        const currentIndex = nextIndex;
-        nextIndex += 1;
-        results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+      for (const [index, item] of entries) {
+        results[index] = await mapper(item, index);
       }
     },
   );
@@ -150,7 +148,7 @@ export const extractLinkedTokens = (content: string) => {
   let match: RegExpExecArray | null = null;
 
   while ((match = MARKDOWN_LINK_REGEX.exec(content)) !== null) {
-    const href = match[2];
+    const href = match[2] ?? '';
     if (/^(https?:|\/)/.test(href)) continue;
     if (href.startsWith('#')) continue;
     tokens.add(href);

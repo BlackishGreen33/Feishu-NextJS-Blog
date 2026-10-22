@@ -60,6 +60,7 @@ describe('/api/webhooks/feishu', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedGetServerEnv.mockReturnValue({
+      isVercel: false,
       feishu: {
         appId: 'cli_test',
         appSecret: 'app-secret',
@@ -173,6 +174,7 @@ describe('/api/webhooks/feishu', () => {
     await handler(methodReq, methodRes);
 
     mockedGetServerEnv.mockReturnValue({
+      isVercel: false,
       feishu: {
         appId: 'cli_test',
         appSecret: 'app-secret',

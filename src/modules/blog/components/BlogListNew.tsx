@@ -8,9 +8,10 @@ import EmptyState from '@/common/components/elements/EmptyState';
 import Pagination from '@/common/components/elements/Pagination';
 import SearchBar from '@/common/components/elements/SearchBar';
 import BlogCardNewSkeleton from '@/common/components/skeleton/BlogCardNewSkeleton';
-import { BlogItemProps } from '@/common/types/blog';
+import { articleListResponseSchema } from '@/common/schemas/blog';
+import { ArticleListResponse, BlogItemProps } from '@/common/types/blog';
 import { useI18n } from '@/i18n';
-import { fetcher } from '@/services/fetcher';
+import { fetchValidated } from '@/services/fetcher';
 
 import BlogCardNew from './BlogCardNew';
 import BlogFeaturedSection from './BlogFeaturedSection';
@@ -37,9 +38,12 @@ const BlogListNew = () => {
     requestParams.set('tag', activeTag);
   }
 
-  const { data, error, mutate, isValidating } = useSWR(
+  const { data, error, mutate, isValidating } = useSWR<
+    ArticleListResponse,
+    Error
+  >(
     `/api/blog?${requestParams.toString()}`,
-    fetcher,
+    (url: string) => fetchValidated(url, articleListResponseSchema.parse),
     {
       revalidateOnFocus: false,
       refreshInterval: 0,
@@ -50,11 +54,11 @@ const BlogListNew = () => {
     posts: blogData = [],
     total_pages: totalPages = 1,
     total_posts = 0,
-  } = data?.data || {};
+  } = (data?.status ? data.data : undefined) || {};
 
   const handlePageChange = async (newPage: number) => {
     await mutate();
-    router.push(
+    void router.push(
       {
         pathname: '/blog',
         query: {
@@ -74,7 +78,7 @@ const BlogListNew = () => {
     setSearchTerm(searchValue);
     setPage(1);
 
-    router.push(
+    void router.push(
       {
         pathname: '/blog',
         query: {
@@ -92,7 +96,7 @@ const BlogListNew = () => {
     setSearchTerm('');
     setPage(1);
 
-    router.push(
+    void router.push(
       {
         pathname: '/blog',
         query: { page: 1, ...(activeTag && { tag: activeTag }) },
@@ -106,6 +110,7 @@ const BlogListNew = () => {
     const queryPage = Number(router.query.page);
     const nextPage =
       Number.isInteger(queryPage) && queryPage >= 1 ? queryPage : 1;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Pages Router query is external state; preserve shallow navigation and Back/Forward page synchronization.
     setPage((currentPage) =>
       currentPage === nextPage ? currentPage : nextPage,
     );
@@ -185,7 +190,9 @@ const BlogListNew = () => {
           <Pagination
             totalPages={totalPages}
             currentPage={page}
-            onPageChange={handlePageChange}
+            onPageChange={(nextPage) => {
+              void handlePageChange(nextPage);
+            }}
           />
         )}
 

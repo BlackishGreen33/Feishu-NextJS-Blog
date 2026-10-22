@@ -24,8 +24,8 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
     if (featuredData.length <= 1) return;
 
     const intervalId = setInterval(() => {
-      setCurrentFeaturedIndex((prevIndex) =>
-        prevIndex === featuredData.length - 1 ? 0 : prevIndex + 1,
+      setCurrentFeaturedIndex(
+        (prevIndex) => (prevIndex + 1) % featuredData.length,
       );
     }, 6000);
 
@@ -36,16 +36,19 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
     return null;
   }
 
-  const currentFeatured = featuredData[currentFeaturedIndex];
+  const activeIndex = currentFeaturedIndex % featuredData.length;
+  const currentFeatured = featuredData[activeIndex];
+  if (!currentFeatured) return null;
   const nextFeatured = () => {
-    setCurrentFeaturedIndex((prevIndex) =>
-      prevIndex === featuredData.length - 1 ? 0 : prevIndex + 1,
+    setCurrentFeaturedIndex(
+      (prevIndex) => (prevIndex + 1) % featuredData.length,
     );
   };
 
   const prevFeatured = () => {
-    setCurrentFeaturedIndex((prevIndex) =>
-      prevIndex === 0 ? featuredData.length - 1 : prevIndex - 1,
+    setCurrentFeaturedIndex(
+      (prevIndex) =>
+        (prevIndex - 1 + featuredData.length) % featuredData.length,
     );
   };
 
@@ -123,7 +126,7 @@ const BlogFeaturedHero = ({ data }: BlogFeaturedProps) => {
               onClick={() => setCurrentFeaturedIndex(index)}
               className={clsx(
                 'relative mb-2 h-16 w-16 overflow-hidden border-2 bg-black transition-all duration-300 hover:scale-105',
-                index === currentFeaturedIndex && 'scale-105 border-sky-300',
+                index === activeIndex && 'scale-105 border-sky-300',
               )}
               style={{ borderRadius: '50%' }}
             >

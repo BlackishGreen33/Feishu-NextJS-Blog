@@ -31,7 +31,7 @@ const ContentList = ({
 
   const [openAccordions, setOpenAccordions] = useState<string[]>(() => {
     const groupKeys = Object.keys(groupedContent);
-    return groupKeys.length === 1 ? [groupKeys[0]] : [];
+    return groupKeys.length === 1 ? groupKeys : [];
   });
 
   const toggleAccordion = (chapterId: string) => {
@@ -76,9 +76,9 @@ const ContentList = ({
                           parent={title}
                           contentSlug={contentSlug}
                           subContentSlug={item?.slug}
-                          title={item?.frontMatter?.title as string}
-                          language={item?.frontMatter?.language as string}
-                          difficulty={item?.frontMatter?.difficulty as string}
+                          title={item.frontMatter.title}
+                          language={item.frontMatter.language ?? ''}
+                          difficulty={item.frontMatter.difficulty ?? ''}
                         />
                       </motion.div>
                     ))}

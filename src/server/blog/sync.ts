@@ -1,42 +1,36 @@
-/* eslint-disable no-console */
 import matter from 'gray-matter';
 
-import { SITE_DEFAULT_BLOG_COVER } from '@/common/config/site';
 import {
   Article,
-  ArticleFrontmatter,
   ArticleIndex,
   ArticleSlugRedirect,
-  ArticleSummary,
-  ArticleTag,
 } from '@/common/types/blog';
-import { getServerEnv } from '@/server/env';
 
-import { ArticleAssetManager, createArticleAssetManager } from './assets';
-import { buildArticleSearchIndex } from './search';
+import {
+  ARTICLE_CONTENT_VERSION,
+  buildArticleRedirects,
+  buildSlugMap,
+  DocumentMetadata,
+  hasSameDocumentVersion,
+  normalizeFrontmatter,
+  parseArticle,
+  RawArticle,
+  rewriteArticleContent,
+} from './article-reconciliation';
+import { createArticleAssetManager } from './assets';
+import { buildArticleSearchIndex, toArticleSummary } from './search';
 import {
   ArticleSourceAdapter,
-  createFeishuArticleSource,
-  SourceAsset,
-  SourceDocument,
+  resolveFeishuArticleSource,
   SourceDocumentRevision,
 } from './source';
 import { BlogStorageAdapter, getBlogStorage } from './storage';
-import { BlogSyncDocumentState, BlogSyncState } from './sync-state';
+import { BlogSyncState } from './sync-state';
 import {
-  calculateReadingTime,
-  ensureUniqueSlug,
-  extractLinkedTokens,
-  isHiddenTitle,
   mapWithConcurrency,
   replaceTokens,
   sortArticlesByDate,
   stripLeadingHeading,
-  summarizeMarkdown,
-  toBoolean,
-  toIsoDate,
-  toSlug,
-  toStringArray,
 } from './utils';
 
 type SyncOptions = {
@@ -58,31 +52,7 @@ type SyncResult = {
   failedAssetDeletes?: number;
 };
 
-type RawArticle = {
-  document: SourceDocumentRevision;
-  title: string;
-  fileTokens: Record<string, SourceAsset>;
-  frontmatter: ArticleFrontmatter;
-  content: string;
-  documentCoverToken?: string;
-  documentCoverUrl?: string;
-};
-
-type DocumentMetadata = {
-  document: SourceDocumentRevision;
-  previousSlug?: string;
-  previousState?: BlogSyncDocumentState;
-  previousArticle?: Article | null;
-  revisionId?: string;
-  objEditTime?: string;
-  coverToken?: string;
-  shouldRefresh: boolean;
-  inspectionFailed?: boolean;
-};
-
 const DOCUMENT_SYNC_CONCURRENCY = 3;
-// Increment when source-to-Article parsing changes.
-const ARTICLE_CONTENT_VERSION = 1;
 
 export type ArticleSyncPublicationAdapter = Pick<
   BlogStorageAdapter,
@@ -120,208 +90,6 @@ const normalizeSyncState = (state: BlogSyncState | null): BlogSyncState => ({
   documents: state?.documents || {},
   assets: state?.assets || {},
 });
-
-const hasSameDocumentVersion = (
-  previous: BlogSyncDocumentState | undefined,
-  current: Pick<SourceDocumentRevision, 'coverToken' | 'revisionId'> & {
-    sourceDocumentId: string;
-    updatedAt?: string;
-  },
-) => {
-  if (!previous || previous.sourceDocumentId !== current.sourceDocumentId) {
-    return false;
-  }
-
-  if (previous.contentVersion !== ARTICLE_CONTENT_VERSION) {
-    return false;
-  }
-
-  if ((previous.coverToken || '') !== (current.coverToken || '')) {
-    return false;
-  }
-
-  if (current.revisionId) {
-    return previous.revisionId === current.revisionId;
-  }
-
-  if (current.updatedAt) {
-    return previous.objEditTime === current.updatedAt;
-  }
-
-  return false;
-};
-
-const buildTagList = (input: ArticleFrontmatter['tags']): ArticleTag[] =>
-  toStringArray(input).map((name) => ({
-    name,
-    slug: toSlug(name),
-  }));
-
-const normalizeFrontmatterDate = (value: unknown) => {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  return value instanceof Date ? value.toISOString() : undefined;
-};
-
-const normalizeFrontmatter = (value: Record<string, unknown>) => ({
-  slug: typeof value.slug === 'string' ? value.slug : undefined,
-  title: typeof value.title === 'string' ? value.title : undefined,
-  date: normalizeFrontmatterDate(value.date),
-  tags: value.tags as ArticleFrontmatter['tags'],
-  summary: typeof value.summary === 'string' ? value.summary : undefined,
-  cover: typeof value.cover === 'string' ? value.cover : undefined,
-  featured: toBoolean(value.featured),
-  draft: toBoolean(value.draft),
-  hide: toBoolean(value.hide),
-});
-
-const resolveArticleDates = (
-  frontmatterDate: string | undefined,
-  document: Pick<SourceDocument, 'createdAt' | 'updatedAt'>,
-) => ({
-  publishedAt: toIsoDate(
-    frontmatterDate || document.createdAt || document.updatedAt || undefined,
-  ),
-  updatedAt: toIsoDate(
-    document.updatedAt || frontmatterDate || document.createdAt || undefined,
-  ),
-});
-
-const parseArticle = (raw: RawArticle, slug: string): Article => {
-  const tags = buildTagList(raw.frontmatter.tags);
-  const title = raw.frontmatter.title || raw.title;
-  const summary = raw.frontmatter.summary || summarizeMarkdown(raw.content);
-  const { publishedAt, updatedAt } = resolveArticleDates(
-    raw.frontmatter.date,
-    raw.document,
-  );
-  const draft =
-    raw.frontmatter.draft ||
-    raw.frontmatter.hide ||
-    isHiddenTitle(raw.document.title || '');
-  const cover = raw.documentCoverUrl || SITE_DEFAULT_BLOG_COVER;
-
-  return {
-    id: raw.document.sourceNodeToken,
-    slug,
-    title,
-    summary,
-    cover,
-    publishedAt,
-    updatedAt,
-    tags,
-    featured: raw.frontmatter.featured || false,
-    draft,
-    readingTimeMinutes: calculateReadingTime(raw.content),
-    sourceNodeToken: raw.document.sourceNodeToken,
-    sourceDocumentId: raw.document.sourceDocumentId,
-    content: raw.content,
-    contentFormat: 'markdown',
-  };
-};
-
-const buildSlugMap = (
-  documents: DocumentMetadata[],
-  rawArticlesByNodeToken: Map<string, RawArticle>,
-  reservedAliases: Set<string>,
-) => {
-  const slugs = new Set([
-    ...reservedAliases,
-    ...documents.flatMap((document) =>
-      document.previousSlug ? [document.previousSlug] : [],
-    ),
-  ]);
-  const mapping = new Map<string, string>();
-
-  documents.forEach((document) => {
-    const rawArticle = rawArticlesByNodeToken.get(
-      document.document.sourceNodeToken,
-    );
-    const preferredSlug = rawArticle
-      ? toSlug(
-          rawArticle.frontmatter.slug ||
-            rawArticle.frontmatter.title ||
-            rawArticle.title,
-        )
-      : document.previousSlug || toSlug(document.document.title);
-
-    if (
-      document.previousSlug === preferredSlug &&
-      !reservedAliases.has(preferredSlug)
-    ) {
-      slugs.delete(preferredSlug);
-    }
-
-    const slug = ensureUniqueSlug(
-      preferredSlug,
-      document.document.sourceNodeToken.slice(-6),
-      slugs,
-    );
-    mapping.set(document.document.sourceNodeToken, slug);
-  });
-
-  return mapping;
-};
-
-const buildArticleRedirects = (
-  previousRedirects: Record<string, ArticleSlugRedirect>,
-  slugChanges: Record<string, ArticleSlugRedirect>,
-  articles: ArticleSummary[],
-) => {
-  const activeSlugByNodeToken = new Map(
-    articles.map((article) => [article.sourceNodeToken, article.slug]),
-  );
-
-  return Object.entries({ ...previousRedirects, ...slugChanges }).reduce<
-    Record<string, ArticleSlugRedirect>
-  >((acc, [from, redirect]) => {
-    const targetSlug = activeSlugByNodeToken.get(redirect.sourceNodeToken);
-
-    acc[from] = targetSlug ? { ...redirect, targetSlug } : redirect;
-
-    return acc;
-  }, {});
-};
-
-const rewriteArticleContent = async (
-  assetManager: ArticleAssetManager,
-  rawArticle: RawArticle,
-  nodeTokenToSlug: Map<string, string>,
-) => {
-  const internalLinks = extractLinkedTokens(rawArticle.content).reduce<
-    Record<string, string>
-  >((acc, token) => {
-    const slug = nodeTokenToSlug.get(token);
-    if (slug) {
-      acc[token] = `/blog/${slug}`;
-    }
-    return acc;
-  }, {});
-
-  const assets = await assetManager.resolveArticleAssets(rawArticle.fileTokens);
-  const assetTokens = new Set(Object.keys(assets));
-  const content = replaceTokens(rawArticle.content, {
-    ...internalLinks,
-    ...assets,
-  });
-  let cover: string | undefined;
-
-  if (rawArticle.documentCoverToken) {
-    cover = await assetManager.resolveCover(
-      rawArticle.documentCoverToken,
-      assets,
-    );
-    assetTokens.add(rawArticle.documentCoverToken);
-  }
-
-  return {
-    content,
-    cover,
-    assetTokens: [...assetTokens],
-  };
-};
 
 const runFeishuArticleSync = async (
   source: ArticleSourceAdapter,
@@ -389,12 +157,15 @@ const runFeishuArticleSync = async (
           return null;
         }
 
+        const revisionId = previousState?.revisionId;
+        const updatedAt = previousState?.objEditTime || document.updatedAt;
+        const coverToken = previousState?.coverToken;
         return {
           document: {
             ...document,
-            revisionId: previousState?.revisionId,
-            updatedAt: previousState?.objEditTime || document.updatedAt,
-            coverToken: previousState?.coverToken,
+            ...(revisionId === undefined ? {} : { revisionId }),
+            ...(updatedAt === undefined ? {} : { updatedAt }),
+            ...(coverToken === undefined ? {} : { coverToken }),
           },
           previousSlug,
           previousState,
@@ -528,7 +299,9 @@ const runFeishuArticleSync = async (
       article = parseArticle(
         {
           ...rawArticle,
-          documentCoverUrl: rewritten.cover,
+          ...(rewritten.cover === undefined
+            ? {}
+            : { documentCoverUrl: rewritten.cover }),
           content: rewritten.content,
         },
         slug,
@@ -584,23 +357,7 @@ const runFeishuArticleSync = async (
     }
   }
 
-  const publicArticles = sortArticlesByDate(
-    articles.map<ArticleSummary>((article) => ({
-      id: article.id,
-      slug: article.slug,
-      title: article.title,
-      summary: article.summary,
-      cover: article.cover,
-      publishedAt: article.publishedAt,
-      updatedAt: article.updatedAt,
-      tags: article.tags,
-      featured: article.featured,
-      draft: article.draft,
-      readingTimeMinutes: article.readingTimeMinutes,
-      sourceNodeToken: article.sourceNodeToken,
-      sourceDocumentId: article.sourceDocumentId,
-    })),
-  );
+  const publicArticles = sortArticlesByDate(articles.map(toArticleSummary));
   const generatedAt = new Date().toISOString();
   const redirects = buildArticleRedirects(
     previousIndex?.redirects || {},
@@ -676,31 +433,10 @@ export const createFeishuArticleSync =
     return runFeishuArticleSync(bindings.source, bindings.publication);
   };
 
-const resolveProductionBindings = (): ArticleSyncBindings => {
-  const publication = getBlogStorage();
-  const {
-    feishu: { appId, appSecret, spaceId },
-  } = getServerEnv();
-  const missingKeys = [
-    ...(!appId ? ['FEISHU_APP_ID'] : []),
-    ...(!appSecret ? ['FEISHU_APP_SECRET'] : []),
-    ...(!spaceId ? ['FEISHU_SPACE_ID'] : []),
-  ];
-
-  if (missingKeys.length > 0) {
-    return {
-      availability: 'missing-config',
-      missingKeys,
-      publication,
-    };
-  }
-
-  return {
-    availability: 'ready',
-    source: createFeishuArticleSource({ appId, appSecret, spaceId }),
-    publication,
-  };
-};
+const resolveProductionBindings = (): ArticleSyncBindings => ({
+  publication: getBlogStorage(),
+  ...resolveFeishuArticleSource(),
+});
 
 export const syncFeishuArticles = createFeishuArticleSync(
   resolveProductionBindings,

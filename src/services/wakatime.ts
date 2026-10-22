@@ -1,5 +1,9 @@
 import axios from 'axios';
 
+import {
+  wakaAllTimeResponseSchema,
+  wakaStatsResponseSchema,
+} from '@/common/schemas/dashboard';
 import { getServerEnv } from '@/server/env';
 
 const STATS_ENDPOINT = 'https://wakatime.com/api/v1/users/current/stats';
@@ -28,10 +32,7 @@ const createEmptyAllTime = (configured: boolean) => ({
   total_seconds: 0,
 });
 
-export const getReadStats = async (): Promise<{
-  status: number;
-  data: any;
-}> => {
+export const getReadStats = async () => {
   const apiKey = getServerEnv().wakatimeApiKey;
 
   if (!apiKey) {
@@ -41,7 +42,7 @@ export const getReadStats = async (): Promise<{
   const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
-    const response = await axios.get(`${STATS_ENDPOINT}/last_7_days`, {
+    const response = await axios.get<unknown>(`${STATS_ENDPOINT}/last_7_days`, {
       headers: {
         Authorization: authorizationHeader,
       },
@@ -53,7 +54,7 @@ export const getReadStats = async (): Promise<{
       return { status: 200, data: createEmptyStats(true) };
     }
 
-    const getData = response.data;
+    const getData = wakaStatsResponseSchema.parse(response.data);
 
     const start_date = getData?.data?.start;
     const end_date = getData?.data?.end;
@@ -93,10 +94,7 @@ export const getReadStats = async (): Promise<{
   }
 };
 
-export const getAllTimeSinceToday = async (): Promise<{
-  status: number;
-  data: any;
-}> => {
+export const getAllTimeSinceToday = async () => {
   const apiKey = getServerEnv().wakatimeApiKey;
 
   if (!apiKey) {
@@ -106,7 +104,7 @@ export const getAllTimeSinceToday = async (): Promise<{
   const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
-    const response = await axios.get(ALL_TIME_SINCE_TODAY, {
+    const response = await axios.get<unknown>(ALL_TIME_SINCE_TODAY, {
       headers: {
         Authorization: authorizationHeader,
       },
@@ -118,7 +116,7 @@ export const getAllTimeSinceToday = async (): Promise<{
       return { status: 200, data: createEmptyAllTime(true) };
     }
 
-    const getData = response.data;
+    const getData = wakaAllTimeResponseSchema.parse(response.data);
 
     const data = {
       configured: true,
