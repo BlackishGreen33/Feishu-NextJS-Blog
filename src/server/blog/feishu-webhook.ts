@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { z } from 'zod';
 
 export const MAX_FEISHU_WEBHOOK_BYTES = 256 * 1024;
 const FEISHU_WEBHOOK_REPLAY_WINDOW_MS = 10 * 60 * 1000;
@@ -18,22 +19,38 @@ type ParseFeishuWebhookInput = {
   verificationToken: string;
 };
 
-type FeishuWebhookPayload = {
-  challenge?: unknown;
-  event?: {
-    file_token?: unknown;
-    file_type?: unknown;
-  };
-  header?: {
-    app_id?: unknown;
-    create_time?: unknown;
-    event_id?: unknown;
-    event_type?: unknown;
-    token?: unknown;
-  };
-  token?: unknown;
-  type?: unknown;
-};
+const webhookPayloadSchema = z.looseObject({
+  challenge: z.unknown().optional(),
+  encrypt: z.unknown().optional(),
+  token: z.unknown().optional(),
+  type: z.unknown().optional(),
+  event: z
+    .looseObject({
+      file_token: z.unknown().optional(),
+      file_type: z.unknown().optional(),
+    })
+    .nullish(),
+  header: z
+    .looseObject({
+      app_id: z.unknown().optional(),
+      create_time: z.unknown().optional(),
+      event_id: z.unknown().optional(),
+      event_type: z.unknown().optional(),
+      token: z.unknown().optional(),
+    })
+    .nullish(),
+});
+type FeishuWebhookPayload = z.infer<typeof webhookPayloadSchema>;
+export const feishuWebhookConfigSchema = z
+  .object({
+    appId: z.string().min(1),
+    verificationToken: z.string().min(1),
+    encryptKey: z.string(),
+    isVercel: z.boolean(),
+  })
+  .refine((value) => !value.isVercel || Boolean(value.encryptKey), {
+    error: 'Missing encryption key',
+  });
 
 export class FeishuWebhookError extends Error {
   constructor(
@@ -56,7 +73,8 @@ const safeEqual = (left: string, right: string) => {
 
 const parseJson = (value: string, message: string) => {
   try {
-    return JSON.parse(value) as FeishuWebhookPayload;
+    const raw: unknown = JSON.parse(value);
+    return webhookPayloadSchema.parse(raw);
   } catch {
     throw new FeishuWebhookError(message, 400);
   }
@@ -162,7 +180,7 @@ export const parseFeishuWebhook = ({
   let payload = envelope;
 
   if (encryptKey && !isPlaintextChallenge) {
-    const encrypt = (envelope as { encrypt?: unknown }).encrypt;
+    const encrypt = envelope.encrypt;
 
     // Encrypted URL verification can arrive without event signature headers.
     if (headers.signature || typeof encrypt !== 'string' || !encrypt) {

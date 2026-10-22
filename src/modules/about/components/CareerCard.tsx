@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { differenceInMonths, differenceInYears, format } from 'date-fns';
+import { differenceInMonths, differenceInYears } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BsBuildings as CompanyIcon } from 'react-icons/bs';
 import { HiChevronRight } from 'react-icons/hi';
@@ -23,7 +23,8 @@ const CareerCard = ({
   link,
   type,
   responsibilities,
-}: CareerProps) => {
+  asOf,
+}: CareerProps & { asOf: number | null }) => {
   const { locale, messages } = useI18n();
   const [isShowResponsibility, setIsShowResponsibility] =
     useState<boolean>(false);
@@ -33,20 +34,20 @@ const CareerCard = ({
     ? formatMonthYear(end_date, locale)
     : messages.common.present;
 
-  const durationYears = differenceInYears(
-    new Date(end_date || Date.now()),
-    new Date(start_date),
-  );
-  const durationMonths =
-    (differenceInMonths(
-      new Date(end_date || Date.now()),
-      new Date(start_date),
-    ) %
-      12) +
-    1;
-
-  const durationText =
-    locale === 'en'
+  const durationEnd = end_date
+    ? new Date(end_date)
+    : asOf === null
+      ? null
+      : new Date(asOf);
+  const durationYears = durationEnd
+    ? differenceInYears(durationEnd, new Date(start_date))
+    : 0;
+  const durationMonths = durationEnd
+    ? (differenceInMonths(durationEnd, new Date(start_date)) % 12) + 1
+    : 0;
+  const durationText = !durationEnd
+    ? ''
+    : locale === 'en'
       ? `${durationYears > 0 ? `${durationYears} yr ` : ''}${durationMonths} mo`
       : `${durationYears > 0 ? `${durationYears} 年 ` : ''}${durationMonths} ${locale === 'zh-CN' ? '个月' : '個月'}`;
   const companyMeta = [company_legal_name, location].filter(Boolean);

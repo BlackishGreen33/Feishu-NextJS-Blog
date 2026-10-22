@@ -35,7 +35,7 @@ const article: Article = {
   contentFormat: 'markdown',
 };
 
-const previousSyncState: BlogSyncState = {
+const previousSyncState = {
   generatedAt: '2026-04-20T00:00:00.000Z',
   source: 'feishu',
   documents: {
@@ -64,7 +64,7 @@ const previousSyncState: BlogSyncState = {
       updatedAt: '2026-04-20T00:00:00.000Z',
     },
   },
-};
+} satisfies BlogSyncState;
 
 const document: SourceDocument = {
   title: 'Existing Doc',
@@ -80,6 +80,8 @@ const revision: SourceDocumentRevision = {
   revisionId: 'rev-1',
   coverToken: 'cover-1',
 };
+
+const { coverToken: _defaultCoverToken, ...revisionWithoutCover } = revision;
 
 type StorageMock = jest.Mocked<ArticleSyncPublicationAdapter>;
 
@@ -243,8 +245,7 @@ describe('syncFeishuArticles', () => {
     const storage = createStorageMock();
     const source = createSourceMock();
     source.inspectDocument.mockResolvedValue({
-      ...revision,
-      coverToken: undefined,
+      ...revisionWithoutCover,
     });
     source.readDocument.mockResolvedValue({
       markdown: [
@@ -279,7 +280,7 @@ describe('syncFeishuArticles', () => {
   it('rebuilds unchanged Articles created by an older content pipeline', async () => {
     const storage = createStorageMock();
     const source = createSourceMock();
-    const legacyRevision = { ...revision, coverToken: undefined };
+    const { coverToken: _coverToken, ...legacyRevision } = revision;
     const legacySyncState: BlogSyncState = {
       ...previousSyncState,
       documents: {
@@ -333,7 +334,7 @@ describe('syncFeishuArticles', () => {
     expect(storage.writeSyncState).toHaveBeenCalledWith(
       expect.objectContaining({
         documents: {
-          'node-1': expect.objectContaining({ contentVersion: 1 }),
+          'node-1': expect.objectContaining({ contentVersion: 1 }) as unknown,
         },
       }),
     );
@@ -422,7 +423,9 @@ describe('syncFeishuArticles', () => {
           expect.objectContaining({
             slug: 'existing-doc',
             bodyText: 'Existing content',
-            searchableText: expect.stringContaining('existing content'),
+            searchableText: expect.stringContaining(
+              'existing content',
+            ) as unknown,
           }),
         ],
       }),
@@ -430,8 +433,8 @@ describe('syncFeishuArticles', () => {
     expect(storage.writeSyncState).toHaveBeenCalledWith(
       expect.objectContaining({
         documents: expect.not.objectContaining({
-          'node-removed': expect.anything(),
-        }),
+          'node-removed': expect.anything() as unknown,
+        }) as unknown,
       }),
     );
   });
@@ -448,10 +451,8 @@ describe('syncFeishuArticles', () => {
         },
       },
     };
-    source.inspectDocument.mockResolvedValue({
-      ...revision,
-      revisionId: undefined,
-    });
+    const { revisionId: _revisionId, ...withoutRevision } = revision;
+    source.inspectDocument.mockResolvedValue(withoutRevision);
     storage.readSyncState.mockResolvedValue(stateWithoutRevision);
     storage.readArticle.mockResolvedValue(article);
 
@@ -506,7 +507,7 @@ describe('syncFeishuArticles', () => {
             slug: 'existing-doc',
             revisionId: 'rev-1',
             objEditTime: '1776561839',
-          }),
+          }) as unknown,
         },
       }),
     );
@@ -563,7 +564,7 @@ describe('syncFeishuArticles', () => {
             slug: 'existing-doc',
             revisionId: 'rev-1',
             objEditTime: '1776561839',
-          }),
+          }) as unknown,
         },
       }),
     );
@@ -624,11 +625,10 @@ describe('syncFeishuArticles', () => {
     });
     const source = createSourceMock();
     source.inspectDocument.mockResolvedValue({
-      ...revision,
+      ...revisionWithoutCover,
       title: 'Updated Doc',
       updatedAt: '1776561900',
       revisionId: 'rev-2',
-      coverToken: undefined,
     });
     source.readDocument.mockResolvedValue({
       markdown: [
@@ -677,7 +677,7 @@ describe('syncFeishuArticles', () => {
         title: 'Updated Doc',
         content: expect.stringContaining(
           '/local-feishu-assets/image/img-existing.png',
-        ),
+        ) as unknown,
       }),
     );
     expect(storage.writeSearchIndex).toHaveBeenCalledWith(
@@ -685,8 +685,8 @@ describe('syncFeishuArticles', () => {
         articles: [
           expect.objectContaining({
             slug: 'updated-doc',
-            bodyText: expect.stringContaining('Body'),
-            searchableText: expect.stringContaining('updated doc'),
+            bodyText: expect.stringContaining('Body') as unknown,
+            searchableText: expect.stringContaining('updated doc') as unknown,
           }),
         ],
       }),
@@ -708,7 +708,7 @@ describe('syncFeishuArticles', () => {
     expect(storage.deleteArticle).toHaveBeenCalledWith('existing-doc');
     expect(storage.deleteArticle).toHaveBeenCalledWith('legacy-doc');
     expect(storage.writeIndex.mock.invocationCallOrder[0]).toBeLessThan(
-      storage.deleteArticle.mock.invocationCallOrder[0],
+      storage.deleteArticle.mock.invocationCallOrder[0] ?? 0,
     );
     expect(result.changedArticles).toBe(1);
     expect(result.fallbackArticles).toBe(0);
@@ -721,15 +721,15 @@ describe('syncFeishuArticles', () => {
             slug: 'updated-doc',
             revisionId: 'rev-2',
             assetTokens: ['img-existing', 'img-new'],
-          }),
+          }) as unknown,
         },
         assets: expect.objectContaining({
           'img-existing': previousSyncState.assets['img-existing'],
           'img-new': expect.objectContaining({
             pathname: 'image/img-new.png',
             url: '/local-feishu-assets/image/img-new.png',
-          }),
-        }),
+          }) as unknown,
+        }) as unknown,
       }),
     );
   });
@@ -745,11 +745,10 @@ describe('syncFeishuArticles', () => {
     storage.readSyncState.mockResolvedValue(null);
     storage.readArticle.mockResolvedValue(article);
     source.inspectDocument.mockResolvedValue({
-      ...revision,
+      ...revisionWithoutCover,
       title: 'Updated Doc',
       updatedAt: '1776561900',
       revisionId: 'rev-2',
-      coverToken: undefined,
     });
     source.readDocument.mockResolvedValue({
       markdown: ['---', 'title: Updated Doc', '---', '# Updated Doc'].join(
@@ -786,7 +785,9 @@ describe('syncFeishuArticles', () => {
     });
     storage.readSyncState
       .mockResolvedValueOnce(null)
-      .mockImplementation(async () => storage.writeSyncState.mock.calls[0][0]);
+      .mockImplementation(
+        async () => storage.writeSyncState.mock.calls[0]?.[0] ?? null,
+      );
     storage.readArticle.mockResolvedValue(article);
     source.readDocument.mockRejectedValue(new Error('temporary'));
     const runSync = createTestSync(source, storage);
@@ -795,8 +796,8 @@ describe('syncFeishuArticles', () => {
     await runSync();
 
     expect(
-      storage.writeSyncState.mock.calls[0][0].documents['node-1']
-        .contentVersion,
+      storage.writeSyncState.mock.calls[0]?.[0].documents['node-1']
+        ?.contentVersion,
     ).toBeUndefined();
     expect(source.readDocument).toHaveBeenCalledTimes(2);
     errorSpy.mockRestore();
@@ -819,10 +820,9 @@ describe('syncFeishuArticles', () => {
     storage.readSyncState.mockResolvedValue(previousSyncState);
     storage.readArticle.mockResolvedValue(article);
     source.inspectDocument.mockResolvedValue({
-      ...revision,
+      ...revisionWithoutCover,
       updatedAt: '1776561900',
       revisionId: 'rev-2',
-      coverToken: undefined,
     });
     source.readDocument.mockResolvedValue({
       markdown: ['---', 'slug: legacy-doc', '---', '# Existing Doc'].join('\n'),

@@ -16,7 +16,8 @@ const IGNORED_DIRS = new Set([
   'output',
   'public',
 ]);
-const PLATFORM_ENV_VARS = new Set(['VERCEL']);
+// JOB_RESULTS comes from PR Gate; npm_execpath is supplied by the package manager.
+const PLATFORM_ENV_VARS = new Set(['VERCEL', 'JOB_RESULTS', 'npm_execpath']);
 
 const resolveScriptKind = (filePath: string) => {
   if (filePath.endsWith('.tsx')) {

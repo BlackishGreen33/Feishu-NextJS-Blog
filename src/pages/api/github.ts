@@ -14,7 +14,7 @@ export default async function handler(
     if (typeof queryParams.type === 'string') {
       type = queryParams.type;
     } else if (Array.isArray(queryParams.type)) {
-      type = queryParams.type[0];
+      type = queryParams.type[0] ?? '';
     }
 
     const response = await getGithubUser(type);

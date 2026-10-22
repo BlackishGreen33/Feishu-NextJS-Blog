@@ -4,7 +4,7 @@ import { DEFAULT_LOCALE, LOCALES, MESSAGES } from './messages';
 import type { AppLocale, Messages } from './messages/base';
 
 const isAppLocale = (value?: string): value is AppLocale =>
-  Boolean(value && LOCALES.includes(value as AppLocale));
+  Boolean(value && LOCALES.some((locale) => locale === value));
 
 export const normalizeLocale = (value?: string): AppLocale =>
   isAppLocale(value) ? value : DEFAULT_LOCALE;

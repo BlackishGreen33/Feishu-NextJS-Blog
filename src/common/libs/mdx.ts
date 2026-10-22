@@ -6,20 +6,26 @@ import remarkGfm from 'remark-gfm';
 import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 
-interface MdxFileProps {
-  slug: string;
-  frontMatter: Record<string, unknown>;
-  content: string;
-}
+import { learnCategorySchema, lessonMetaSchema } from '@/common/schemas/learn';
+import type { MdxFileContentProps } from '@/common/types/learn';
 
-export const loadMdxFiles = (slug: string): MdxFileProps[] => {
-  const dirPath = path.join(process.cwd(), 'src', 'contents', 'learn', slug);
+const getLearnDirectory = (slug: unknown) =>
+  path.join(
+    process.cwd(),
+    'src',
+    'contents',
+    'learn',
+    learnCategorySchema.parse(slug),
+  );
+
+export const loadMdxFiles = (slug: string): MdxFileContentProps[] => {
+  const dirPath = getLearnDirectory(slug);
 
   if (!fs.existsSync(dirPath)) {
     return [];
   }
 
-  const files = fs.readdirSync(dirPath);
+  const files = fs.readdirSync(dirPath).filter((file) => file.endsWith('.mdx'));
 
   const contents = files.map((file) => {
     const filePath = path.join(dirPath, file);
@@ -34,7 +40,7 @@ export const loadMdxFiles = (slug: string): MdxFileProps[] => {
 
     return {
       slug: file.replace('.mdx', ''),
-      frontMatter: data,
+      frontMatter: lessonMetaSchema.parse(data as unknown),
       content: mdxContent,
     };
   });
@@ -43,7 +49,8 @@ export const loadMdxFiles = (slug: string): MdxFileProps[] => {
 };
 
 export const getMdxFileCount = (slug: string) => {
-  const dirPath = path.join(process.cwd(), 'src', 'contents', 'learn', slug);
+  const dirPath = getLearnDirectory(slug);
+  if (!fs.existsSync(dirPath)) return 0;
   const files = fs.readdirSync(dirPath);
   const mdxFiles = files.filter((file) => file.endsWith('.mdx'));
   return mdxFiles.length;

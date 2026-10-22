@@ -29,7 +29,7 @@ const Services = () => {
         </p>
         <Button
           data-umami-event='Click Contact Button'
-          onClick={() => Router.push('/contact')}
+          onClick={() => void Router.push('/contact')}
         >
           {messages.home.contactButton}
         </Button>

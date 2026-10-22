@@ -1,38 +1,33 @@
-import { randomUUID } from 'crypto';
-
-const DEFAULT_DEBOUNCE_MS = 120_000;
-const DEFAULT_MAX_WAIT_MS = 600_000;
-export const FEISHU_SYNC_LEASE_DURATION_SECONDS = 120;
-const DEFAULT_LEASE_DURATION_MS = FEISHU_SYNC_LEASE_DURATION_SECONDS * 1000;
-const DEFAULT_RETENTION_SECONDS = 86_400;
+import { z } from 'zod';
 const RECENT_EVENT_TTL_MS = 86_400_000;
 const MAX_RECENT_EVENTS = 256;
-
-type RecentFeishuEvent = {
-  generation: number;
-  receivedAt: number;
-};
-
-export type FeishuSyncLease = {
-  id: string;
-  generation: number;
-  expiresAt: number;
-};
-
-export type FeishuSyncTriggerState = {
-  version: 1;
-  generation: number;
-  processedGeneration: number;
-  burstStartedAt: number | null;
-  lastEventAt: number | null;
-  recentEvents: Record<string, RecentFeishuEvent>;
-  lease: FeishuSyncLease | null;
-};
-
-export type FeishuSyncWakeup = {
-  eventId: string;
-  generation: number;
-};
+const safeInteger = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+const recentEventSchema = z.object({
+  generation: safeInteger,
+  receivedAt: safeInteger,
+});
+const leaseSchema = z.object({
+  id: z.string(),
+  generation: safeInteger,
+  expiresAt: safeInteger,
+});
+export const feishuSyncWakeupSchema = z.object({
+  eventId: z.string().min(1),
+  generation: safeInteger.positive(),
+});
+const triggerStateSchema = z.object({
+  version: z.literal(1),
+  generation: safeInteger,
+  processedGeneration: safeInteger,
+  burstStartedAt: safeInteger.nullable(),
+  lastEventAt: safeInteger.nullable(),
+  recentEvents: z.record(z.string(), recentEventSchema),
+  lease: leaseSchema.nullable(),
+});
+type RecentFeishuEvent = z.infer<typeof recentEventSchema>;
+export type FeishuSyncLease = z.infer<typeof leaseSchema>;
+export type FeishuSyncTriggerState = z.infer<typeof triggerStateSchema>;
+export type FeishuSyncWakeup = z.infer<typeof feishuSyncWakeupSchema>;
 
 type RecordEventInput = {
   eventId: string;
@@ -62,26 +57,6 @@ export interface FeishuSyncTriggerStore {
   ) => Promise<{ duplicate: boolean; generation: number }>;
   releaseLease: (input: CompleteLeaseInput) => Promise<void>;
 }
-
-type EnqueueOptions = {
-  delaySeconds: number;
-  idempotencyKey: string;
-  retentionSeconds: number;
-};
-
-type CreateFeishuSyncTriggerOptions<SyncResult> = {
-  clock?: () => number;
-  createLeaseId?: () => string;
-  debounceMs?: number;
-  enqueue: (
-    message: FeishuSyncWakeup,
-    options: EnqueueOptions,
-  ) => Promise<void>;
-  leaseDurationMs?: number;
-  maxWaitMs?: number;
-  store: FeishuSyncTriggerStore;
-  sync: () => Promise<SyncResult>;
-};
 
 const createEmptyState = (): FeishuSyncTriggerState => ({
   version: 1,
@@ -149,7 +124,7 @@ export const normalizeFeishuSyncTriggerState = (
       : null
     : null;
 
-  return {
+  return triggerStateSchema.parse({
     version: 1,
     generation: value.generation,
     processedGeneration,
@@ -157,7 +132,7 @@ export const normalizeFeishuSyncTriggerState = (
     lastEventAt: normalizeOptionalTimestamp(value.lastEventAt),
     recentEvents,
     lease,
-  };
+  });
 };
 
 const pruneRecentEvents = (
@@ -267,106 +242,4 @@ export const releaseFeishuSyncLease = (
 ): FeishuSyncTriggerState => {
   const state = normalizeFeishuSyncTriggerState(value);
   return leaseMatches(state, input) ? { ...state, lease: null } : state;
-};
-
-const defaultCreateLeaseId = () => randomUUID();
-
-export const createFeishuSyncTrigger = <SyncResult>({
-  clock = Date.now,
-  createLeaseId = defaultCreateLeaseId,
-  debounceMs = DEFAULT_DEBOUNCE_MS,
-  enqueue,
-  leaseDurationMs = DEFAULT_LEASE_DURATION_MS,
-  maxWaitMs = DEFAULT_MAX_WAIT_MS,
-  store,
-  sync,
-}: CreateFeishuSyncTriggerOptions<SyncResult>) => {
-  const enqueueWakeup = (
-    message: FeishuSyncWakeup,
-    delaySeconds: number,
-    idempotencyKey: string,
-  ) =>
-    enqueue(message, {
-      delaySeconds,
-      idempotencyKey,
-      retentionSeconds: DEFAULT_RETENTION_SECONDS,
-    });
-
-  const runClaimedSync = async (generation: number) => {
-    const leaseId = createLeaseId();
-    const claim = await store.acquireLease({
-      expectedGeneration: generation,
-      leaseDurationMs,
-      leaseId,
-      now: clock(),
-    });
-
-    if (!claim.acquired) {
-      return { status: 'locked' as const, generation: claim.generation };
-    }
-
-    try {
-      const result = await sync();
-      await store.completeLease({ generation, leaseId });
-      return { status: 'synced' as const, generation, result };
-    } catch (error) {
-      await store.releaseLease({ generation, leaseId });
-      throw error;
-    }
-  };
-
-  return {
-    async recordChange({
-      eventId,
-      fileToken: _fileToken,
-    }: {
-      eventId: string;
-      fileToken: string;
-    }) {
-      const recorded = await store.recordEvent({
-        eventId,
-        receivedAt: clock(),
-      });
-      await enqueueWakeup(
-        { eventId, generation: recorded.generation },
-        Math.ceil(debounceMs / 1000),
-        `feishu:${eventId}`,
-      );
-      return recorded;
-    },
-
-    async processWakeup(message: FeishuSyncWakeup) {
-      const state = await store.readState();
-
-      if (state.processedGeneration >= state.generation) {
-        return { status: 'idle' as const };
-      }
-
-      const now = clock();
-      const quietDueAt = (state.lastEventAt ?? now) + debounceMs;
-      const maxWaitDueAt = (state.burstStartedAt ?? now) + maxWaitMs;
-      const dueAt = Math.min(quietDueAt, maxWaitDueAt);
-
-      if (now < dueAt) {
-        const delaySeconds = Math.max(1, Math.ceil((dueAt - now) / 1000));
-        const currentMessage = {
-          eventId: message.eventId,
-          generation: state.generation,
-        };
-        await enqueueWakeup(
-          currentMessage,
-          delaySeconds,
-          `feishu:g${state.generation}:${dueAt}`,
-        );
-        return { status: 'requeued' as const, delaySeconds };
-      }
-
-      return runClaimedSync(state.generation);
-    },
-
-    async runScheduledSync() {
-      const state = await store.readState();
-      return runClaimedSync(state.generation);
-    },
-  };
 };

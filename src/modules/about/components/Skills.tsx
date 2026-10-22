@@ -12,18 +12,22 @@ const Tag = memo(({ icon, title }: { icon: ReactNode; title: string }) => (
 ));
 
 const Skills = () => {
-  const [shuffledSkills, setShuffledSkills] = useState<
-    Array<[string, ReactNode]>
-  >([]);
+  const [skillRows, setSkillRows] = useState<Array<Array<[string, ReactNode]>>>(
+    [],
+  );
 
   useEffect(() => {
-    const skillsArray = Object.entries(STACKS);
-    const shuffledArray = [...skillsArray].sort(() => Math.random() - 0.5);
-    setShuffledSkills(shuffledArray);
+    // One browser initialization keeps SSR placeholders stable; random values never run during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSkillRows(
+      Array.from({ length: 3 }, () =>
+        Object.entries(STACKS).sort(() => Math.random() - 0.5),
+      ),
+    );
   }, []);
 
   const sliders = Array.from({ length: 3 }, (_, index) => {
-    const sliderSkills = [...shuffledSkills].sort(() => Math.random() - 0.5);
+    const sliderSkills = skillRows[index] ?? [];
     return (
       <InfiniteLoopSlider key={index} isReverse={index === 1}>
         {sliderSkills.map(([title, icon], index) => (

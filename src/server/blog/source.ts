@@ -1,6 +1,9 @@
 import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
 
+import { getServerEnv } from '@/server/env';
+
 import { FeishuClient, FeishuWikiNode } from './feishu';
+import { feishuSourceConfigSchema } from './feishu-schema';
 
 export type SourceAsset = {
   token: string;
@@ -57,14 +60,18 @@ const normalizeOptionalString = (value?: string | number | null) => {
   return String(value);
 };
 
-const toSourceDocument = (node: FeishuWikiNode): SourceDocument => ({
-  title: node.title,
-  sourceNodeToken: node.node_token,
-  sourceDocumentId: node.obj_token,
-  sourceSpaceId: node.space_id,
-  createdAt: normalizeOptionalString(node.obj_create_time),
-  updatedAt: normalizeOptionalString(node.obj_edit_time),
-});
+const toSourceDocument = (node: FeishuWikiNode): SourceDocument => {
+  const createdAt = normalizeOptionalString(node.obj_create_time);
+  const updatedAt = normalizeOptionalString(node.obj_edit_time);
+  return {
+    title: node.title,
+    sourceNodeToken: node.node_token,
+    sourceDocumentId: node.obj_token,
+    sourceSpaceId: node.space_id,
+    ...(createdAt === undefined ? {} : { createdAt }),
+    ...(updatedAt === undefined ? {} : { updatedAt }),
+  };
+};
 
 export const createFeishuArticleSource = ({
   appId,
@@ -90,13 +97,16 @@ export const createFeishuArticleSource = ({
         latestDocument.sourceDocumentId,
       );
 
+      const documentTitle = documentInfo?.title;
+      const revisionId = normalizeOptionalString(
+        documentInfo?.revision_id ?? documentInfo?.latest_revision_id,
+      );
+      const coverToken = documentInfo?.cover?.token;
       return {
         ...latestDocument,
-        documentTitle: documentInfo?.title,
-        revisionId: normalizeOptionalString(
-          documentInfo?.revision_id ?? documentInfo?.latest_revision_id,
-        ),
-        coverToken: documentInfo?.cover?.token,
+        ...(documentTitle === undefined ? {} : { documentTitle }),
+        ...(revisionId === undefined ? {} : { revisionId }),
+        ...(coverToken === undefined ? {} : { coverToken }),
       };
     },
 
@@ -117,5 +127,30 @@ export const createFeishuArticleSource = ({
     downloadAsset(asset) {
       return client.downloadAsset(asset);
     },
+  };
+};
+
+export const resolveFeishuArticleSource = () => {
+  const {
+    feishu: { appId, appSecret, spaceId },
+  } = getServerEnv();
+  const missingKeys = [
+    ...(!appId ? ['FEISHU_APP_ID'] : []),
+    ...(!appSecret ? ['FEISHU_APP_SECRET'] : []),
+    ...(!spaceId ? ['FEISHU_SPACE_ID'] : []),
+  ];
+
+  if (missingKeys.length > 0) {
+    return {
+      availability: 'missing-config' as const,
+      missingKeys,
+    };
+  }
+
+  return {
+    availability: 'ready' as const,
+    source: createFeishuArticleSource(
+      feishuSourceConfigSchema.parse({ appId, appSecret, spaceId }),
+    ),
   };
 };

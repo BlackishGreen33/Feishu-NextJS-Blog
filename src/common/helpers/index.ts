@@ -90,8 +90,8 @@ export const groupContentByChapter = (
 export const parseUrl = (url: string): ParsedUrlProps => {
   const parts = url.split('/');
   return {
-    parentSlug: parts[2],
-    contentSlug: parts[3],
+    parentSlug: parts[2] ?? '',
+    contentSlug: parts[3] ?? '',
   };
 };
 

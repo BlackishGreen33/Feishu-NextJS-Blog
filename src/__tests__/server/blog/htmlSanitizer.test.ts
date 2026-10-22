@@ -4,6 +4,26 @@ import {
 } from '@/common/libs/htmlSanitizer';
 
 describe('content sanitize schemas', () => {
+  it('sanitizes actual nested HTML through the installed unified pipeline', () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        require.resolve('tsx/cli'),
+        '--eval',
+        `
+      import assert from 'node:assert/strict';
+      import { sanitizeCommentList } from './src/server/blog/htmlSanitizer';
+      void sanitizeCommentList([{ body_html: '<p>safe<script>bad()</script><a href="javascript:bad()" onclick="bad()">link</a></p>', children: [{ body_html: '<p><a href="https://example.com" onclick="bad()">child</a></p>' }] }]).then(([item]) => {
+        assert.equal(item.body_html, '<p>safe<a>link</a></p>');
+        assert.equal(item.children[0].body_html, '<p><a href="https://example.com">child</a></p>');
+      });
+    `,
+      ],
+      { encoding: 'utf8', cwd: process.cwd(), timeout: 15000 },
+    );
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
   it('keeps Feishu-specific layout attributes on the markdown schema', () => {
     expect(feishuHtmlSanitizeSchema.tagNames).toEqual(
       expect.arrayContaining(['div', 'img', 'input', 'table']),
@@ -40,3 +60,4 @@ describe('content sanitize schemas', () => {
     );
   });
 });
+import { spawnSync } from 'node:child_process';

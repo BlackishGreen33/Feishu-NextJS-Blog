@@ -1,0 +1,9 @@
+--- a/dist/commonjs/index.js
++++ b/dist/commonjs/index.js
+@@ -330,4 +330,6 @@
+     }
+     return acc;
+ }
++// minimatch < 10 expects require('brace-expansion') to be directly callable.
++module.exports = Object.assign(expand, exports);
+ //# sourceMappingURL=index.js.map

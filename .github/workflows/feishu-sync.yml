@@ -6,6 +6,8 @@ on:
     # Keep recurring Blob operations within the Vercel Hobby quotas.
     - cron: '17 */6 * * *'
 
+permissions: {}
+
 concurrency:
   group: feishu-sync
   cancel-in-progress: true

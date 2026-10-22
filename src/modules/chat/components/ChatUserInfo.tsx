@@ -28,7 +28,9 @@ const ChatUserInfo = ({ isWidget = false }: { isWidget?: boolean }) => {
         <>
           <div className='hidden text-neutral-500 md:block'>•</div>
           <div
-            onClick={() => signOutUser()}
+            onClick={() => {
+              void signOutUser();
+            }}
             className='flex cursor-pointer items-center gap-1 font-medium text-red-500'
             data-umami-event='Sign Out from Chat Page'
           >

@@ -1,10 +1,10 @@
 import type { User } from 'firebase/auth';
 
 import {
-  GuestbookMessageMutationResponse,
-  GuestbookMessagesPage,
-  GuestbookModerationStatus,
-} from '@/common/types/chat';
+  guestbookMutationSchema,
+  guestbookPageSchema,
+} from '@/common/schemas/guestbook';
+import { GuestbookModerationStatus } from '@/common/types/chat';
 
 type GuestbookRequestOptions = {
   body?: Record<string, unknown>;
@@ -25,15 +25,13 @@ const getAuthorizationHeader = async (user?: User | null) => {
   return headers;
 };
 
-const requestGuestbookApi = async <T>({
-  body,
-  method = 'GET',
-  url,
-  user,
-}: GuestbookRequestOptions): Promise<T> => {
+const requestGuestbookApi = async <T>(
+  { body, method = 'GET', url, user }: GuestbookRequestOptions,
+  parse: (value: unknown) => T,
+): Promise<T> => {
   const headers = await getAuthorizationHeader(user);
   const response = await fetch(url, {
-    body: body ? JSON.stringify(body) : undefined,
+    ...(body ? { body: JSON.stringify(body) } : {}),
     headers: {
       'Content-Type': 'application/json',
       ...headers,
@@ -41,19 +39,26 @@ const requestGuestbookApi = async <T>({
     method,
   });
 
-  const payload = (await response.json()) as T & { error?: string };
+  const payload: unknown = await response.json();
 
   if (!response.ok) {
-    throw new Error(payload.error || 'Guestbook request failed.');
+    const message =
+      typeof payload === 'object' &&
+      payload !== null &&
+      'error' in payload &&
+      typeof payload.error === 'string'
+        ? payload.error
+        : '';
+    throw new Error(message || 'Guestbook request failed.');
   }
 
-  return payload;
+  return parse(payload);
 };
 
 export const fetchGuestbookMessages = async ({
   cursor,
   limit,
-  user,
+  user = null,
 }: {
   cursor?: string | null;
   limit?: number;
@@ -74,48 +79,57 @@ export const fetchGuestbookMessages = async ({
     ? `/api/guestbook/messages?${query}`
     : '/api/guestbook/messages';
 
-  return requestGuestbookApi<GuestbookMessagesPage>({ url, user });
+  return requestGuestbookApi({ url, user }, guestbookPageSchema.parse);
 };
 
 export const createGuestbookMessage = async ({
   message,
-  user,
+  user = null,
 }: {
   message: string;
   user?: User | null;
 }) =>
-  requestGuestbookApi<GuestbookMessageMutationResponse>({
-    body: { message },
-    method: 'POST',
-    url: '/api/guestbook/messages',
-    user,
-  });
+  requestGuestbookApi(
+    {
+      body: { message },
+      method: 'POST',
+      url: '/api/guestbook/messages',
+      user,
+    },
+    guestbookMutationSchema.parse,
+  );
 
 export const deleteGuestbookMessage = async ({
   id,
-  user,
+  user = null,
 }: {
   id: string;
   user?: User | null;
 }) =>
-  requestGuestbookApi<GuestbookMessageMutationResponse>({
-    method: 'DELETE',
-    url: `/api/guestbook/messages/${id}`,
-    user,
-  });
+  requestGuestbookApi(
+    {
+      method: 'DELETE',
+      url: `/api/guestbook/messages/${id}`,
+      user,
+    },
+    guestbookMutationSchema.parse,
+  );
 
 export const moderateGuestbookMessage = async ({
   id,
   status,
-  user,
+  user = null,
 }: {
   id: string;
   status: GuestbookModerationStatus;
   user?: User | null;
 }) =>
-  requestGuestbookApi<GuestbookMessageMutationResponse>({
-    body: { status },
-    method: 'PATCH',
-    url: `/api/guestbook/messages/${id}/moderation`,
-    user,
-  });
+  requestGuestbookApi(
+    {
+      body: { status },
+      method: 'PATCH',
+      url: `/api/guestbook/messages/${id}/moderation`,
+      user,
+    },
+    guestbookMutationSchema.parse,
+  );

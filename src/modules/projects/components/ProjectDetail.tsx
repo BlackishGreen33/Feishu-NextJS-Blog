@@ -2,6 +2,7 @@ import Image from '@/common/components/elements/Image';
 import MDXComponent from '@/common/components/elements/MDXComponent';
 import Tooltip from '@/common/components/elements/Tooltip';
 import { STACKS } from '@/common/constant/stacks';
+import { parseProjectStacks } from '@/common/schemas/projects';
 import { ProjectItemProps } from '@/common/types/projects';
 
 import ProjectLink from './ProjectLink';
@@ -14,7 +15,7 @@ const ProjectDetail = ({
   link_github,
   content,
 }: ProjectItemProps) => {
-  const stacksArray = JSON.parse(stacks);
+  const stacksArray = parseProjectStacks(stacks);
 
   return (
     <div className='space-y-8'>

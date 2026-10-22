@@ -19,7 +19,7 @@ const RELATED_ARTICLE_LIMIT = 3;
 const LATEST_ARTICLE_LIMIT = 3;
 
 const normalizePath = (value = '/') => {
-  const [withoutHash] = value.split('#');
+  const [withoutHash = ''] = value.split('#');
   const [withoutQuery] = withoutHash.split('?');
 
   if (!withoutQuery || withoutQuery === '') {

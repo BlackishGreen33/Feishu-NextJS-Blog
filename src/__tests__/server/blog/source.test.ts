@@ -82,6 +82,7 @@ describe('createFeishuArticleSource', () => {
     });
 
     const [document] = await source.listDocuments();
+    if (!document) throw new Error('Expected the listed source document');
     const revision = await source.inspectDocument(document);
     const content = await source.readDocument(revision);
     const download = await source.downloadAsset({
@@ -131,6 +132,7 @@ describe('createFeishuArticleSource', () => {
     });
 
     const [document] = await source.listDocuments();
+    if (!document) throw new Error('Expected the listed source document');
     const revision = await source.inspectDocument(document);
     const content = await source.readDocument(revision);
 

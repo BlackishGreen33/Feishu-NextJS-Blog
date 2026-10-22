@@ -4,8 +4,9 @@ import path from 'path';
 import type { ReactElement, ReactNode } from 'react';
 
 import { feishuHtmlSanitizeSchema } from '@/common/libs/htmlSanitizer';
+import { articleSchema } from '@/common/schemas/blog';
 
-const reactMarkdownMock = jest.fn();
+const reactMarkdownMock = jest.fn<void, [unknown]>();
 
 jest.mock('@/common/components/elements/CodeBlock', () => ({
   __esModule: true,
@@ -49,11 +50,13 @@ const loadArticleContent = (fileName: string) => {
     fileName,
   );
 
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')).content as string;
+  return articleSchema.parse(
+    JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown,
+  ).content;
 };
 
 const getMarkdownComponents = () => {
-  const markdownProps = reactMarkdownMock.mock.calls[0][0] as {
+  const markdownProps = reactMarkdownMock.mock.calls[0]?.[0] as {
     components: MarkdownComponents;
   };
 
@@ -71,7 +74,7 @@ describe('MDXComponent', () => {
     );
 
     expect(reactMarkdownMock).toHaveBeenCalledTimes(1);
-    expect(reactMarkdownMock.mock.calls[0][0]).toMatchObject({
+    expect(reactMarkdownMock.mock.calls[0]?.[0]).toMatchObject({
       rehypePlugins: [
         'rehype-raw',
         ['rehype-sanitize', feishuHtmlSanitizeSchema],
@@ -86,7 +89,7 @@ describe('MDXComponent', () => {
       </MDXComponent>,
     );
 
-    expect(reactMarkdownMock.mock.calls[0][0]).toMatchObject({
+    expect(reactMarkdownMock.mock.calls[0]?.[0]).toMatchObject({
       rehypePlugins: [['rehype-sanitize', feishuHtmlSanitizeSchema]],
     });
   });

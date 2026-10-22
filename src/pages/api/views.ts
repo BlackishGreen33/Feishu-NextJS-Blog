@@ -24,14 +24,14 @@ export default async function handler(
       };
 
       return res.json(response);
-    } catch (_error) {
+    } catch {
       return res.status(500).json({ error: 'Failed to fetch content meta' });
     }
   } else if (req.method === 'POST') {
     try {
       const views = await incrementViewsInFirebase(String(slug));
       return res.json({ views });
-    } catch (_error) {
+    } catch {
       return res.status(500).json({ error: 'Failed to update views count' });
     }
   } else {

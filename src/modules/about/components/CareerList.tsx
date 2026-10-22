@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import EmptyState from '@/common/components/elements/EmptyState';
 import { getCareers } from '@/common/constant/careers';
 import { useI18n } from '@/i18n';
@@ -7,14 +9,24 @@ import CareerCard from './CareerCard';
 const CareerList = () => {
   const { locale, messages } = useI18n();
   const careers = getCareers(locale);
+  const [asOf, setAsOf] = useState<number | null>(null);
+  useEffect(() => {
+    // Read the browser clock after hydration, once for the list and all cards.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAsOf(Date.now());
+  }, []);
 
   if (careers.length === 0) {
     return <EmptyState message={messages.about.career.empty} />;
   }
 
   const sortedCareers = [...careers].sort((a, b) => {
-    const aEndDate = new Date(a.end_date || Date.now()).getTime();
-    const bEndDate = new Date(b.end_date || Date.now()).getTime();
+    const aEndDate = a.end_date
+      ? Date.parse(a.end_date)
+      : (asOf ?? Number.POSITIVE_INFINITY);
+    const bEndDate = b.end_date
+      ? Date.parse(b.end_date)
+      : (asOf ?? Number.POSITIVE_INFINITY);
 
     if (aEndDate !== bEndDate) {
       return bEndDate - aEndDate;
@@ -27,7 +39,7 @@ const CareerList = () => {
     <section className='space-y-6'>
       <div className='grid gap-3'>
         {sortedCareers.map((career, index) => (
-          <CareerCard key={index} {...career} />
+          <CareerCard key={index} {...career} asOf={asOf} />
         ))}
       </div>
     </section>

@@ -47,6 +47,17 @@ const createMockResponse = () => {
 };
 
 describe('/api/comments', () => {
+  it('keeps source failures in the existing HTTP 200 failure envelope', async () => {
+    mockedGetBlogComment.mockRejectedValue(new Error('offline'));
+    const res = createMockResponse();
+    await handler(
+      { query: { post_id: '123' } } as unknown as NextApiRequest,
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.payload).toMatchObject({ status: false });
+    expect(mockedSanitizeCommentList).not.toHaveBeenCalled();
+  });
   afterEach(() => {
     mockedGetBlogComment.mockReset();
     mockedSanitizeCommentList.mockReset();
@@ -55,10 +66,16 @@ describe('/api/comments', () => {
   it('sanitizes top-level and nested comment HTML before responding', async () => {
     const rawComments = [
       {
+        id_code: 'top',
+        created_at: '2026-01-01',
+        user: { name: 'Alice', profile_image_90: 'avatar' },
         body_html:
           '<p>top</p><script>alert(1)</script><a href="javascript:alert(1)">bad</a>',
         children: [
           {
+            id_code: 'top',
+            created_at: '2026-01-01',
+            user: { name: 'Alice', profile_image_90: 'avatar' },
             body_html:
               '<p><a href="https://example.com" onclick="alert(1)">child</a></p>',
             children: [],

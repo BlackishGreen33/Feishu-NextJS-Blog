@@ -1,65 +1,30 @@
-export type ArticleTag = {
-  name: string;
-  slug: string;
-};
+import type { z } from 'zod';
 
-export type ArticleFrontmatter = {
-  slug?: string;
-  title?: string;
-  date?: string;
-  tags?: string[] | string;
-  summary?: string;
-  cover?: string;
-  featured?: boolean;
-  draft?: boolean;
-  hide?: boolean;
-};
+import type {
+  articleFrontmatterSchema,
+  articleIndexSchema,
+  articleListResponseSchema,
+  articleSchema,
+  articleSearchEntrySchema,
+  articleSearchIndexSchema,
+  articleSlugRedirectSchema,
+  articleSummarySchema,
+  articleTagSchema,
+} from '@/common/schemas/blog';
+import type { legacyCommentSchema } from '@/common/schemas/comments';
 
-export type ArticleSummary = {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string;
-  matchedExcerpt?: string;
-  cover: string | null;
-  publishedAt: string;
-  updatedAt: string;
-  tags: ArticleTag[];
-  featured: boolean;
-  draft: boolean;
-  readingTimeMinutes: number;
-  sourceNodeToken: string;
-  sourceDocumentId: string;
-};
+export type ArticleTag = z.infer<typeof articleTagSchema>;
 
-export type Article = ArticleSummary & {
-  content: string;
-  contentFormat: 'markdown';
-};
+export type ArticleFrontmatter = z.infer<typeof articleFrontmatterSchema>;
 
-export type ArticleSlugRedirect = {
-  sourceNodeToken: string;
-  targetSlug: string;
-};
+export type ArticleSummary = z.infer<typeof articleSummarySchema>;
+export type Article = z.infer<typeof articleSchema>;
+export type ArticleSlugRedirect = z.infer<typeof articleSlugRedirectSchema>;
+export type ArticleIndex = z.infer<typeof articleIndexSchema>;
+export type ArticleListResponse = z.infer<typeof articleListResponseSchema>;
 
-export type ArticleIndex = {
-  generatedAt: string;
-  source: 'fixture' | 'feishu';
-  articles: ArticleSummary[];
-  redirects?: Record<string, ArticleSlugRedirect>;
-};
-
-export type ArticleSearchEntry = ArticleSummary & {
-  tagNames: string[];
-  bodyText: string;
-  searchableText: string;
-};
-
-export type ArticleSearchIndex = {
-  generatedAt: string;
-  source: ArticleIndex['source'];
-  articles: ArticleSearchEntry[];
-};
+export type ArticleSearchEntry = z.infer<typeof articleSearchEntrySchema>;
+export type ArticleSearchIndex = z.infer<typeof articleSearchIndexSchema>;
 
 export type ArticleListParams = {
   page?: number;
@@ -89,20 +54,4 @@ export type BlogFeaturedProps = {
   data: BlogItemProps[];
 };
 
-export type CommentItemProps = {
-  type_of: string;
-  id_code: string;
-  created_at: string;
-  body_html: string;
-  user: {
-    name: string;
-    username: string;
-    twitter_username: string;
-    github_username: string;
-    user_id: number;
-    website_url: string;
-    profile_image: string;
-    profile_image_90: string;
-  };
-  children: CommentItemProps[];
-};
+export type CommentItemProps = z.infer<typeof legacyCommentSchema>;

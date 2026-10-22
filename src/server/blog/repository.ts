@@ -49,8 +49,8 @@ export const listArticles = async ({
         articles: index.articles,
         searchIndex: await storage.readSearchIndex(),
         query: normalizedSearch,
-        tag: normalizedTag,
-        featured,
+        ...(normalizedTag === undefined ? {} : { tag: normalizedTag }),
+        ...(featured === undefined ? {} : { featured }),
       })
     : index.articles.filter((article) => {
         if (featured && !article.featured) return false;

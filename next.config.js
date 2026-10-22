@@ -22,6 +22,7 @@ const remoteImageHosts = [
 
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ['eventsource-parser'],
   // Pages Router API routes rely on feishu-docx at runtime; bundle server deps
   // to avoid Vercel/Turbopack externalization breaking the cron function.
   bundlePagesRouterDependencies: true,

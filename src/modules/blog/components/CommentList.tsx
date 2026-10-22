@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
 import useSWR from 'swr';
 
 import EmptyState from '@/common/components/elements/EmptyState';
 import Loading from '@/common/components/elements/Loading';
-import { CommentItemProps } from '@/common/types/blog';
-import { fetcher } from '@/services/fetcher';
+import { commentResponseSchema } from '@/common/schemas/comments';
+import { fetchValidated } from '@/services/fetcher';
 
 import CommentItem from './CommentItem';
 
@@ -14,11 +13,12 @@ type CommentListProps = {
 };
 
 const CommentList = ({ id, totalComments }: CommentListProps) => {
-  const { data, isLoading } = useSWR(`/api/comments?post_id=${id}`, fetcher);
+  const { data, isLoading } = useSWR(
+    `/api/comments?post_id=${id}`,
+    (url: string) => fetchValidated(url, commentResponseSchema.parse),
+  );
 
-  const commentsData: CommentItemProps[] = useMemo(() => {
-    return data?.data || [];
-  }, [data]);
+  const commentsData = data?.status ? data.data : [];
 
   if (isLoading) return <Loading />;
 

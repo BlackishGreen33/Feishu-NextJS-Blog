@@ -1,5 +1,5 @@
+import type { ImageProps } from 'next/image';
 import { render, screen } from '@testing-library/react';
-import type { ImgHTMLAttributes } from 'react';
 
 import BlogCardNew from '@/modules/blog/components/BlogCardNew';
 
@@ -9,9 +9,15 @@ jest.mock('next/router', () => ({
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: ImgHTMLAttributes<HTMLImageElement>) => (
+  default: ({ src, alt, className, width, height }: ImageProps) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img {...props} alt={props.alt || ''} />
+    <img
+      src={typeof src === 'string' ? src : 'mock-image'}
+      alt={alt || ''}
+      className={className}
+      width={width}
+      height={height}
+    />
   ),
 }));
 

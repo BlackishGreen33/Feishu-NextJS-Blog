@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { guestbookModerationBodySchema } from '@/common/schemas/guestbook';
 import { moderateGuestbookMessage } from '@/server/guestbook';
 
 const getStatusCode = (error: unknown) => {
@@ -51,10 +52,11 @@ export default async function handler(
     }
 
     const id = typeof req.query.id === 'string' ? req.query.id : '';
+    const body = guestbookModerationBodySchema.safeParse(req.body);
     const payload = await moderateGuestbookMessage({
-      authorizationHeader: req.headers.authorization,
+      authorizationHeader: req.headers.authorization ?? null,
       id,
-      status: req.body?.status,
+      status: body.success ? body.data.status : undefined,
     });
 
     res.setHeader('Cache-Control', 'private, no-store');

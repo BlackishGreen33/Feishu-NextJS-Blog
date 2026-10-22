@@ -1,29 +1,13 @@
-import type { FeishuSyncWakeup } from './sync-trigger';
+import { type FeishuSyncWakeup, feishuSyncWakeupSchema } from './sync-trigger';
 
 const MAX_QUEUE_DELIVERIES = 10;
 const MAX_RETRY_DELAY_SECONDS = 3600;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 export const parseFeishuSyncWakeup = (
   value: unknown,
 ): FeishuSyncWakeup | null => {
-  if (
-    !isRecord(value) ||
-    typeof value.eventId !== 'string' ||
-    !value.eventId ||
-    typeof value.generation !== 'number' ||
-    !Number.isSafeInteger(value.generation) ||
-    value.generation <= 0
-  ) {
-    return null;
-  }
-
-  return {
-    eventId: value.eventId,
-    generation: value.generation,
-  };
+  const result = feishuSyncWakeupSchema.safeParse(value);
+  return result.success ? result.data : null;
 };
 
 export const createFeishuSyncQueueConsumer =
@@ -32,7 +16,6 @@ export const createFeishuSyncQueueConsumer =
     const message = parseFeishuSyncWakeup(value);
 
     if (!message) {
-      // eslint-disable-next-line no-console
       console.warn('Ignoring invalid Feishu sync queue payload');
       return;
     }
@@ -61,7 +44,6 @@ type RetryExhaustionLog = (
 ) => void;
 
 const logRetryExhaustion: RetryExhaustionLog = (message, context) => {
-  // eslint-disable-next-line no-console
   console.error(message, context);
 };
 

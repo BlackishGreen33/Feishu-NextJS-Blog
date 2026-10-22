@@ -1,9 +1,10 @@
 import { motion, Variants } from 'framer-motion';
 
 import cn from '@/common/libs/cn';
+import type { WakaActivity } from '@/common/schemas/dashboard';
 
 interface ProgressProps {
-  data: { name: string; percent?: number };
+  data: Pick<WakaActivity, 'name' | 'percent'>;
   className?: string;
 }
 

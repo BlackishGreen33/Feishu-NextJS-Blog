@@ -24,6 +24,8 @@ const Image = (props: ImageProps) => {
   const isFillImage = Boolean(rest.fill);
 
   useEffect(() => {
+    // A changed external image source resets its loading/fallback lifecycle.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setCurrentSrc(src);
   }, [src]);
@@ -48,7 +50,7 @@ const Image = (props: ImageProps) => {
         )}
         src={currentSrc}
         alt={alt}
-        priority={priority}
+        priority={priority ?? false}
         unoptimized={shouldBypassOptimizer(currentSrc)}
         onLoad={() => setLoading(false)}
         onError={() => {

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { commentQuerySchema } from '@/common/schemas/comments';
 import { sanitizeCommentList } from '@/server/blog/htmlSanitizer';
 import { getBlogComment } from '@/services/devto';
 
@@ -13,10 +14,10 @@ export default async function handler(
       'public, s-maxage=60, stale-while-revalidate=30',
     );
 
-    const { post_id } = req.query;
+    const { post_id } = commentQuerySchema.parse(req.query);
 
     const response = await getBlogComment({
-      post_id: String(post_id),
+      post_id,
     });
 
     const sanitizedComments = Array.isArray(response.data)

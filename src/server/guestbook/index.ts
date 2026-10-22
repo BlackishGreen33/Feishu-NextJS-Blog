@@ -1,43 +1,37 @@
-import type { DecodedIdToken } from 'firebase-admin/auth';
 import type { DataSnapshot } from 'firebase-admin/database';
 
-import { SITE_PROFILE_IMAGE } from '@/common/config/site';
 import {
-  GuestbookMessageRecord,
+  guestbookMessageIdSchema,
+  guestbookMessageInputSchema,
+  guestbookStatusSchema,
+  legacyGuestbookRecordSchema,
+} from '@/common/schemas/guestbook';
+import {
   GuestbookMessagesPage,
-  GuestbookMessageStatus,
   GuestbookModerationStatus,
-  GuestbookViewer,
   MessageProps,
 } from '@/common/types/chat';
 
-import { getServerEnv } from './env';
+import { getGuestbookViewerFromAuthHeader } from './auth';
+export { getGuestbookViewerFromAuthHeader } from './auth';
 import {
-  getFirebaseAdminAuth,
-  getFirebaseAdminDatabase,
-} from './firebase-admin';
+  buildGuestbookRecord,
+  decodeCursor,
+  encodeCursor,
+  getSnapshotMessages,
+  isMissingGuestbookIndexError,
+  normalizeGuestbookMessage,
+  paginateVisibleMessages,
+  sortGuestbookMessages,
+} from './records';
+import { getServerEnv } from '../env';
+import { getFirebaseAdminDatabase } from '../firebase-admin';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_MESSAGES = 3;
 const RATE_LIMIT_PATH_SUFFIX = 'meta/rate-limits';
-
-type GuestbookCursor = {
-  created_at: string;
-  id: string;
-};
-
-type ViewerAuthResult =
-  | {
-      kind: 'authenticated';
-      token: DecodedIdToken;
-      viewer: GuestbookViewer;
-    }
-  | {
-      kind: 'anonymous';
-      viewer: GuestbookViewer;
-    };
 
 const getGuestbookPaths = () => {
   const {
@@ -47,6 +41,7 @@ const getGuestbookPaths = () => {
   } = getServerEnv();
 
   const normalizedGuestbookPath = guestbookPath.replace(/^\/+|\/+$/g, '');
+  if (!normalizedGuestbookPath) throw new Error('GUESTBOOK_NOT_CONFIGURED');
   const pathSegments = normalizedGuestbookPath.split('/').filter(Boolean);
   const guestbookRootPath =
     pathSegments.length > 1
@@ -77,233 +72,6 @@ const clampPageSize = (limit?: number) => {
   return Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
 };
 
-const getMessageDate = (value: unknown) => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return new Date(value).toISOString();
-  }
-
-  if (typeof value === 'string') {
-    const date = new Date(value);
-
-    if (!Number.isNaN(date.getTime())) {
-      return date.toISOString();
-    }
-  }
-
-  return new Date(0).toISOString();
-};
-
-const getMessageTimestamp = (value: unknown, fallback: string) => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  const parsed = new Date(fallback).getTime();
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
-
-const isMessageStatus = (value: unknown): value is GuestbookMessageStatus =>
-  value === 'published' || value === 'hidden' || value === 'deleted';
-
-const normalizeGuestbookMessage = (
-  snapshotKey: string,
-  value: unknown,
-): MessageProps | null => {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const record = value as Record<string, unknown>;
-  const id =
-    typeof record.id === 'string' && record.id ? record.id : snapshotKey;
-  const created_at = getMessageDate(record.created_at ?? record.createdAt);
-  const updated_at = getMessageDate(
-    record.updated_at ?? record.updatedAt ?? created_at,
-  );
-  const deleted_at =
-    record.deleted_at || record.deletedAt
-      ? getMessageDate(record.deleted_at ?? record.deletedAt)
-      : null;
-  const status = isMessageStatus(record.status)
-    ? record.status
-    : record.is_show === false
-      ? 'hidden'
-      : deleted_at
-        ? 'deleted'
-        : 'published';
-
-  return {
-    createdAt: getMessageTimestamp(record.createdAt, created_at),
-    created_at,
-    deletedAt:
-      deleted_at === null
-        ? null
-        : getMessageTimestamp(record.deletedAt, deleted_at),
-    deleted_at,
-    email: typeof record.email === 'string' ? record.email : '',
-    id,
-    image: typeof record.image === 'string' ? record.image : SITE_PROFILE_IMAGE,
-    is_show: status === 'published',
-    message: typeof record.message === 'string' ? record.message : '',
-    name: typeof record.name === 'string' ? record.name : 'Guest',
-    status,
-    uid: typeof record.uid === 'string' ? record.uid : '',
-    updatedAt: getMessageTimestamp(record.updatedAt, updated_at),
-    updated_at,
-  };
-};
-
-const sortGuestbookMessages = (left: MessageProps, right: MessageProps) => {
-  if (left.created_at === right.created_at) {
-    return left.id.localeCompare(right.id);
-  }
-
-  return left.created_at.localeCompare(right.created_at);
-};
-
-const encodeCursor = (cursor: GuestbookCursor) =>
-  Buffer.from(JSON.stringify(cursor)).toString('base64url');
-
-const decodeCursor = (value?: string | null): GuestbookCursor | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    const decoded = JSON.parse(
-      Buffer.from(value, 'base64url').toString('utf8'),
-    ) as GuestbookCursor;
-
-    if (decoded?.created_at && decoded?.id) {
-      return decoded;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
-
-const getSnapshotMessages = (snapshot: DataSnapshot) => {
-  const messages: MessageProps[] = [];
-
-  snapshot.forEach((child) => {
-    const normalized = normalizeGuestbookMessage(child.key || '', child.val());
-
-    if (normalized) {
-      messages.push(normalized);
-    }
-  });
-
-  return messages.sort(sortGuestbookMessages);
-};
-
-const isMissingGuestbookIndexError = (error: unknown) =>
-  error instanceof Error &&
-  error.message.includes('Index not defined') &&
-  error.message.includes('created_at');
-
-const paginateVisibleMessages = ({
-  cursor,
-  messages,
-  requestedLimit,
-}: {
-  cursor?: string | null;
-  messages: MessageProps[];
-  requestedLimit: number;
-}) => {
-  const boundary = decodeCursor(cursor);
-  const visibleMessages = messages.filter(
-    (message) => message.status === 'published',
-  );
-  const filteredMessages = boundary
-    ? visibleMessages.filter(
-        (message) =>
-          message.created_at < boundary.created_at ||
-          (message.created_at === boundary.created_at &&
-            message.id !== boundary.id),
-      )
-    : visibleMessages;
-  const pageMessages = filteredMessages.slice(-requestedLimit);
-  const nextCursor =
-    filteredMessages.length > requestedLimit && pageMessages.length > 0
-      ? encodeCursor({
-          created_at: pageMessages[0].created_at,
-          id: pageMessages[0].id,
-        })
-      : null;
-
-  return {
-    hasMore: Boolean(nextCursor),
-    messages: pageMessages,
-    nextCursor,
-  };
-};
-
-const getAuthorizationToken = (authorizationHeader?: string | null) => {
-  if (!authorizationHeader?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  return authorizationHeader.slice('Bearer '.length).trim();
-};
-
-export const getGuestbookViewerFromAuthHeader = async (
-  authorizationHeader?: string | null,
-  options: { requireAuth?: boolean } = {},
-): Promise<ViewerAuthResult> => {
-  const idToken = getAuthorizationToken(authorizationHeader);
-  const { guestbookAdminUids } = getServerEnv();
-
-  if (!idToken) {
-    if (options.requireAuth) {
-      throw new Error('UNAUTHORIZED');
-    }
-
-    return {
-      kind: 'anonymous',
-      viewer: {
-        canModerate: false,
-        isAuthenticated: false,
-        uid: null,
-      },
-    };
-  }
-
-  const auth = getFirebaseAdminAuth();
-
-  if (!auth) {
-    throw new Error('GUESTBOOK_NOT_CONFIGURED');
-  }
-
-  try {
-    const token = await auth.verifyIdToken(idToken);
-
-    return {
-      kind: 'authenticated',
-      token,
-      viewer: {
-        canModerate: guestbookAdminUids.includes(token.uid),
-        isAuthenticated: true,
-        uid: token.uid,
-      },
-    };
-  } catch {
-    if (options.requireAuth) {
-      throw new Error('UNAUTHORIZED');
-    }
-
-    return {
-      kind: 'anonymous',
-      viewer: {
-        canModerate: false,
-        isAuthenticated: false,
-        uid: null,
-      },
-    };
-  }
-};
-
 const assertGuestbookConfigured = () => {
   if (!hasGuestbookServerConfig()) {
     throw new Error('GUESTBOOK_NOT_CONFIGURED');
@@ -313,7 +81,7 @@ const assertGuestbookConfigured = () => {
 const assertModerationStatus = (
   status: unknown,
 ): status is GuestbookModerationStatus =>
-  status === 'published' || status === 'hidden' || status === 'deleted';
+  guestbookStatusSchema.safeParse(status).success;
 
 export const listGuestbookMessages = async ({
   authorizationHeader,
@@ -356,7 +124,7 @@ export const listGuestbookMessages = async ({
       : [];
 
     return paginateVisibleMessages({
-      cursor,
+      cursor: cursor ?? null,
       messages: fallbackMessages,
       requestedLimit,
     });
@@ -405,11 +173,9 @@ export const listGuestbookMessages = async ({
     let batch = getSnapshotMessages(snapshot);
 
     if (boundary) {
+      const currentBoundary = boundary;
       batch = batch.filter(
-        (message) =>
-          message.created_at < boundary!.created_at ||
-          (message.created_at === boundary!.created_at &&
-            message.id !== boundary!.id),
+        (message) => sortGuestbookMessages(message, currentBoundary) < 0,
       );
     }
 
@@ -442,11 +208,12 @@ export const listGuestbookMessages = async ({
   }
 
   const messages = collected.slice(-requestedLimit).sort(sortGuestbookMessages);
+  const oldestMessage = messages[0];
   const nextCursor =
-    hasMore && messages.length > 0
+    hasMore && oldestMessage
       ? encodeCursor({
-          created_at: messages[0].created_at,
-          id: messages[0].id,
+          created_at: oldestMessage.created_at,
+          id: oldestMessage.id,
         })
       : null;
 
@@ -456,36 +223,6 @@ export const listGuestbookMessages = async ({
     messages,
     nextCursor,
     viewer: viewerAuth.viewer,
-  };
-};
-
-const buildGuestbookRecord = (
-  token: DecodedIdToken,
-  message: string,
-): GuestbookMessageRecord => {
-  const now = Date.now();
-  const isoDate = new Date(now).toISOString();
-
-  return {
-    createdAt: now,
-    created_at: isoDate,
-    deletedAt: null,
-    deleted_at: null,
-    email: token.email || '',
-    id: '',
-    image:
-      (typeof token.picture === 'string' && token.picture) ||
-      SITE_PROFILE_IMAGE,
-    is_show: true,
-    message,
-    name:
-      (typeof token.name === 'string' && token.name) ||
-      token.email?.split('@')[0] ||
-      'Guest',
-    status: 'published',
-    uid: token.uid,
-    updatedAt: now,
-    updated_at: isoDate,
   };
 };
 
@@ -501,10 +238,8 @@ const assertRateLimit = async (uid: string) => {
   const rateLimitRef = database.ref(`${rateLimitPath}/${uid}`);
 
   const transaction = await rateLimitRef.transaction((currentValue) => {
-    const current =
-      currentValue && typeof currentValue === 'object'
-        ? (currentValue as Record<string, unknown>)
-        : null;
+    const parsed = legacyGuestbookRecordSchema.safeParse(currentValue);
+    const current = parsed.success ? parsed.data : null;
 
     const windowStartedAt =
       typeof current?.windowStartedAt === 'number'
@@ -541,19 +276,14 @@ export const createGuestbookMessage = async ({
   message,
 }: {
   authorizationHeader?: string | null;
-  message: string;
+  message: unknown;
 }) => {
   assertGuestbookConfigured();
 
-  const trimmedMessage = message.trim();
-
-  if (!trimmedMessage) {
-    throw new Error('INVALID_MESSAGE');
-  }
-
-  if (trimmedMessage.length > 500) {
-    throw new Error('MESSAGE_TOO_LONG');
-  }
+  const parsed = guestbookMessageInputSchema.safeParse(message);
+  if (!parsed.success)
+    throw new Error(parsed.error.issues[0]?.message || 'INVALID_MESSAGE');
+  const trimmedMessage = parsed.data;
 
   const viewerAuth = await getGuestbookViewerFromAuthHeader(
     authorizationHeader,
@@ -595,6 +325,8 @@ const getGuestbookMessageRef = (id: string) => {
     throw new Error('GUESTBOOK_NOT_CONFIGURED');
   }
 
+  if (!guestbookMessageIdSchema.safeParse(id).success)
+    throw new Error('NOT_FOUND');
   const { guestbookPath } = getGuestbookPaths();
   return database.ref(`${guestbookPath}/${id}`);
 };

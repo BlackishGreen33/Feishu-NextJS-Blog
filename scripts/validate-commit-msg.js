@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-/* eslint-disable no-console */
-
 const fs = require('node:fs');
 const path = require('node:path');
 

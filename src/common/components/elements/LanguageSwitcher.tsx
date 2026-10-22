@@ -44,7 +44,7 @@ const LanguageSwitcher = ({ compact = false }: LanguageSwitcherProps) => {
           <button
             key={option.value}
             type='button'
-            onClick={() => handleSwitchLocale(option.value)}
+            onClick={() => void handleSwitchLocale(option.value)}
             aria-pressed={option.value === locale}
             className={clsx(
               'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:outline-none dark:focus-visible:ring-neutral-700',

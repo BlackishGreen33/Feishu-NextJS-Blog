@@ -10,8 +10,7 @@ const CommentItem = ({ body_html, created_at, user }: CommentItemProps) => {
   useEffect(() => {
     if (contentRef.current) {
       const codeElements = contentRef.current.getElementsByTagName('code');
-      for (let i = 0; i < codeElements.length; i++) {
-        const codeElement = codeElements[i];
+      for (const codeElement of codeElements) {
         codeElement.classList.add('break-words');
         codeElement.classList.add('text-xs');
         codeElement.classList.add('whitespace-pre-wrap');

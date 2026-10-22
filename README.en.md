@@ -111,8 +111,10 @@ flowchart LR
 
 ### 1. Install dependencies
 
+Use Node.js 24 LTS (see `.nvmrc`) and pnpm 10.32.1. Run commands through Corepack to select the project version instead of another pnpm on PATH.
+
 ```bash
-pnpm install
+corepack pnpm install --frozen-lockfile
 ```
 
 ### 2. Create local environment variables
@@ -136,7 +138,7 @@ FEISHU_SPACE_ID=
 ### 3. Sync content from Feishu
 
 ```bash
-pnpm feishu:sync
+corepack pnpm feishu:sync
 ```
 
 If Feishu credentials are missing, the app falls back to the example data already committed in the repository.
@@ -144,7 +146,7 @@ If Feishu credentials are missing, the app falls back to the example data alread
 ### 4. Start the development server
 
 ```bash
-pnpm dev
+corepack pnpm dev
 ```
 
 When Feishu credentials are configured, `predev` attempts one sync before the app boots.
@@ -234,21 +236,25 @@ One-click audit entry points:
 Run these checks before shipping changes:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build
 ```
 
 Useful scripts:
 
-- `pnpm dev`
-- `pnpm feishu:sync`
-- `pnpm lint`
-- `pnpm lint:fix`
-- `pnpm typecheck`
-- `pnpm test`
-- `pnpm build`
+- `corepack pnpm dev`
+- `corepack pnpm feishu:sync`
+- `corepack pnpm lint`
+- `corepack pnpm lint:fix`
+- `corepack pnpm typecheck`
+- `corepack pnpm test`
+- `corepack pnpm build`
+
+CI uses fixed Quality, Test, Build, Security and PR Gate checks. Build runs `corepack pnpm test:smoke`: an isolated temporary copy completes the production build and postbuild, then checks reading, body search, permanent aliases and draft visibility over HTTP. `corepack pnpm check:workflows` requires actionlint 1.7.12 on PATH; CI verifies the official archive with SHA-256.
+
+Dependency changes run `corepack pnpm audit:production` and block production high/critical findings; a weekly workflow scans the remaining production tree. Vulnerabilities and audit service/tool failures use exit codes 1 and 2 respectively. PR Gate only passes when all four required jobs succeed.
 
 ## Deployment
 

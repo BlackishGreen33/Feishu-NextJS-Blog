@@ -110,8 +110,10 @@ flowchart LR
 
 ### 1. 安装依赖
 
+使用 Node.js 24 LTS（版本来源为 `.nvmrc`）与 pnpm 10.32.1；通过 Corepack 执行项目指定的 pnpm，避免使用 PATH 中其他版本。
+
 ```bash
-pnpm install
+corepack pnpm install --frozen-lockfile
 ```
 
 ### 2. 创建本地环境变量
@@ -135,7 +137,7 @@ FEISHU_SPACE_ID=
 ### 3. 从飞书同步内容
 
 ```bash
-pnpm feishu:sync
+corepack pnpm feishu:sync
 ```
 
 如果本地没有飞书凭证，应用会回退到仓库里已经提交的示例数据。
@@ -143,7 +145,7 @@ pnpm feishu:sync
 ### 4. 启动开发服务器
 
 ```bash
-pnpm dev
+corepack pnpm dev
 ```
 
 当飞书凭证已经配置完成时，`predev` 会在启动前尝试同步一次内容。
@@ -233,21 +235,25 @@ draft: false
 在提交前，建议至少跑完这些检查：
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build
 ```
 
 常用脚本：
 
-- `pnpm dev`
-- `pnpm feishu:sync`
-- `pnpm lint`
-- `pnpm lint:fix`
-- `pnpm typecheck`
-- `pnpm test`
-- `pnpm build`
+- `corepack pnpm dev`
+- `corepack pnpm feishu:sync`
+- `corepack pnpm lint`
+- `corepack pnpm lint:fix`
+- `corepack pnpm typecheck`
+- `corepack pnpm test`
+- `corepack pnpm build`
+
+完整 CI 使用固定的 Quality、Test、Build、Security 与 PR Gate。Build 执行 `corepack pnpm test:smoke`，在临时副本完成 production build／postbuild，并用本地 fixture 验证阅读、全文搜索、永久 alias 和草稿可见性。`corepack pnpm check:workflows` 需要 PATH 中的 actionlint 1.7.12；CI 会核对官方 archive 的 SHA-256。
+
+依赖变更 PR 使用 `corepack pnpm audit:production` 阻挡 production high／critical，其余每周扫描；漏洞和扫描服务失败分别以 exit 1／2 报告。PR Gate 只有在四个必要工作全部成功时才通过。
 
 ## 部署
 

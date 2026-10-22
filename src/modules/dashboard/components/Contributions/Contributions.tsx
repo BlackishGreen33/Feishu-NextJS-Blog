@@ -5,8 +5,9 @@ import useSWR from 'swr';
 import EmptyState from '@/common/components/elements/EmptyState';
 import SectionHeading from '@/common/components/elements/SectionHeading';
 import SectionSubHeading from '@/common/components/elements/SectionSubHeading';
+import { githubDataSchema } from '@/common/schemas/dashboard';
 import { useI18n } from '@/i18n';
-import { fetcher } from '@/services/fetcher';
+import { fetchValidated } from '@/services/fetcher';
 
 import Calendar from './Calendar';
 import Overview from './Overview';
@@ -19,7 +20,9 @@ type ContributionsProps = {
 
 const Contributions = ({ username, endpoint }: ContributionsProps) => {
   const { messages } = useI18n();
-  const { data } = useSWR(endpoint, fetcher);
+  const { data } = useSWR(endpoint, (url: string) =>
+    fetchValidated(url, githubDataSchema.parse),
+  );
 
   const isLoading = data === undefined;
   const isConfigured = data?.configured !== false;
@@ -63,7 +66,7 @@ const Contributions = ({ username, endpoint }: ContributionsProps) => {
         />
       )}
 
-      {!isLoading && hasContributionData && (
+      {!isLoading && hasContributionData && contributionCalendar && (
         <div className='space-y-3'>
           <Overview data={contributionCalendar} />
           <Calendar data={contributionCalendar} />

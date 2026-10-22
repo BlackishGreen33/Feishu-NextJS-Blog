@@ -6,6 +6,7 @@ import Card from '@/common/components/elements/Card';
 import Image from '@/common/components/elements/Image';
 import Tooltip from '@/common/components/elements/Tooltip';
 import { STACKS } from '@/common/constant/stacks';
+import { parseProjectStacks } from '@/common/schemas/projects';
 import { ProjectItemProps } from '@/common/types/projects';
 import { useI18n } from '@/i18n';
 
@@ -18,7 +19,7 @@ const ProjectCard = ({
   is_featured,
 }: ProjectItemProps) => {
   const { messages } = useI18n();
-  const stacksArray = JSON.parse(stacks);
+  const stacksArray = parseProjectStacks(stacks);
 
   return (
     <Link href={`/projects/${slug}`}>

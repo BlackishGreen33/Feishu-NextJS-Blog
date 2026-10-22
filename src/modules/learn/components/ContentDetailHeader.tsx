@@ -16,7 +16,7 @@ const ContentDetailHeader = ({
   language,
   source_url,
 }: SubContentMetaProps) => {
-  const { locale, messages } = useI18n();
+  const { locale } = useI18n();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {

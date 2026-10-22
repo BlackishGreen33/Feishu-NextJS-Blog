@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { z } from 'zod';
 
 import { GITHUB_ACCOUNTS } from '@/common/constant/github';
+import { githubGraphqlSchema } from '@/common/schemas/dashboard';
 import { getServerEnv } from '@/server/env';
 
 const GITHUB_USER_ENDPOINT = 'https://api.github.com/graphql';
@@ -32,7 +34,12 @@ const GITHUB_USER_QUERY = `query($username: String!) {
 const PUBLIC_GITHUB_CONTRIBUTIONS_ENDPOINT = (username: string) =>
   `https://github.com/users/${username}/contributions`;
 
-const GITHUB_CONTRIBUTION_COLORS = ['#0e4429', '#006d32', '#26a641', '#39d353'];
+const GITHUB_CONTRIBUTION_COLORS = [
+  '#0e4429',
+  '#006d32',
+  '#26a641',
+  '#39d353',
+] as const;
 
 const createEmptyGithubData = (configured: boolean) => ({
   configured,
@@ -45,20 +52,20 @@ const parseContributionCount = (tooltip: string) => {
   }
 
   const match = tooltip.match(/([\d,]+)\s+contribution/);
-  return match ? Number(match[1].replace(/,/g, '')) : 0;
+  return Number(match?.[1]?.replace(/,/g, '') ?? 0);
 };
 
 const parsePublicGithubContributions = async (username: string) => {
-  const response = await axios.get(
+  const response = await axios.get<unknown>(
     PUBLIC_GITHUB_CONTRIBUTIONS_ENDPOINT(username),
   );
-  const html = response.data as string;
+  const html = z.string().parse(response.data);
 
   const totalContributionsMatch = html.match(
     /<h2[^>]*id="js-contribution-activity-description"[^>]*>\s*([\d,]+)\s*contributions/i,
   );
   const totalContributions = totalContributionsMatch
-    ? Number(totalContributionsMatch[1].replace(/,/g, ''))
+    ? Number(totalContributionsMatch[1]?.replace(/,/g, '') ?? 0)
     : 0;
 
   const months = [
@@ -66,7 +73,7 @@ const parsePublicGithubContributions = async (username: string) => {
       /<td class="ContributionCalendar-label" colspan="(\d+)"[^>]*>[\s\S]*?<span aria-hidden="true"[^>]*>([^<]+)<\/span>/g,
     ),
   ].map((match) => ({
-    name: match[2],
+    name: match[2] ?? '',
     totalWeeks: Number(match[1]),
     firstDay: '',
   }));
@@ -90,16 +97,16 @@ const parsePublicGithubContributions = async (username: string) => {
   >();
 
   for (const match of cellMatches) {
-    const date = match[1];
+    const date = match[1] ?? '';
     const rowIndex = Number(match[2]);
     const columnIndex = Number(match[3]);
     const level = Number(match[4]);
-    const tooltip = match[5];
+    const tooltip = match[5] ?? '';
     const contributionCount = parseContributionCount(tooltip);
     const color =
       contributionCount > 0
         ? GITHUB_CONTRIBUTION_COLORS[Math.max(level - 1, 0)] ||
-          GITHUB_CONTRIBUTION_COLORS[GITHUB_CONTRIBUTION_COLORS.length - 1]
+          GITHUB_CONTRIBUTION_COLORS[3]
         : '';
 
     if (!weekMap.has(columnIndex)) {
@@ -167,7 +174,7 @@ export const fetchGithubData = async (
   }
 
   try {
-    const response = await axios.post(
+    const response = await axios.post<unknown>(
       GITHUB_USER_ENDPOINT,
       {
         query: GITHUB_USER_QUERY,
@@ -183,7 +190,7 @@ export const fetchGithubData = async (
     );
 
     const status: number = response.status;
-    const responseJson = response.data;
+    const responseJson = githubGraphqlSchema.parse(response.data);
 
     if (status >= 400) {
       return {

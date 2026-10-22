@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useRef, useState } from 'react';
+import { Fragment, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { Combobox, Dialog, Transition } from '@headlessui/react';
@@ -16,14 +16,15 @@ import { useDebounceValue } from 'usehooks-ts';
 import { useMenuData } from '@/common/constant/menu';
 import { CommandPaletteContext } from '@/common/context/CommandPaletteContext';
 import useIsMobile from '@/common/hooks/useIsMobile';
-import { BlogItemProps } from '@/common/types/blog';
+import { articleListResponseSchema } from '@/common/schemas/blog';
+import { ArticleListResponse } from '@/common/types/blog';
 import { MenuItemProps } from '@/common/types/menu';
 import { useI18n } from '@/i18n';
 import AiLoading from '@/modules/cmdpallete/components/AiLoading';
 import AiResponses from '@/modules/cmdpallete/components/AiResponses';
 import QueryNotFound from '@/modules/cmdpallete/components/QueryNotFound';
-import { sendMessageStream } from '@/services/ai';
-import { fetcher } from '@/services/fetcher';
+import { useAiAssistant } from '@/modules/cmdpallete/hooks/useAiAssistant';
+import { fetchValidated } from '@/services/fetcher';
 
 interface MenuOptionItemProps extends MenuItemProps {
   click?: () => void;
@@ -35,26 +36,11 @@ interface MenuOptionProps {
   children: MenuOptionItemProps[];
 }
 
-type ArticleSearchResponse = {
-  status: boolean;
-  data?: {
-    posts?: BlogItemProps[];
-  };
-};
-
 const ARTICLE_RESULT_LIMIT = 5;
 
 const CommandPalette = () => {
   const [query, setQuery] = useState('');
-  const [isEmptyState, setEmptyState] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [askAssistantClicked, setAskAssistantClicked] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState('');
-  const [aiFinished, setAiFinished] = useState(false);
-  const [aiStreaming, setAiStreaming] = useState(false);
-  const aiRequestControllerRef = useRef<AbortController | null>(null);
-
   const router = useRouter();
   const { messages } = useI18n();
   const { menuItems, socialMedia, externalLinks } = useMenuData();
@@ -62,22 +48,46 @@ const CommandPalette = () => {
   const { isOpen, setIsOpen } = useContext(CommandPaletteContext);
   const { resolvedTheme, setTheme } = useTheme();
   const [queryDebounce] = useDebounceValue(query, 500);
+  const {
+    askAssistantClicked,
+    aiLoading,
+    aiResponse,
+    aiFinished,
+    aiStreaming,
+    handleAskAiAssistant: askAi,
+    handleAiClose,
+    finishAi,
+  } = useAiAssistant({
+    prompt: queryDebounce,
+    ...(router.locale === undefined ? {} : { locale: router.locale }),
+    currentPath: router.asPath,
+  });
+  const isEmptyState = askAssistantClicked;
+  const handleAskAiAssistant = () => {
+    void askAi();
+  };
   const articleSearchKey = isOpen
     ? `/api/blog?page=1&per_page=${ARTICLE_RESULT_LIMIT}${
         queryDebounce ? `&search=${encodeURIComponent(queryDebounce)}` : ''
       }`
     : null;
-  const { data: articleSearchData, isLoading: isArticleSearchLoading } =
-    useSWR<ArticleSearchResponse>(articleSearchKey, fetcher, {
+  const { data: articleSearchData, isLoading: isArticleSearchLoading } = useSWR<
+    ArticleListResponse,
+    Error
+  >(
+    articleSearchKey,
+    (url: string) => fetchValidated(url, articleListResponseSchema.parse),
+    {
       revalidateOnFocus: false,
       refreshInterval: 0,
-    });
+    },
+  );
 
   const placeholders = messages.commandPalette.placeholders;
 
   const placeholder = placeholders[placeholderIndex];
   const articleOptions: MenuOptionItemProps[] = (
-    articleSearchData?.status ? articleSearchData.data?.posts || [] : []
+    articleSearchData?.status ? articleSearchData.data.posts : []
   ).map((article) => ({
     title: article.title,
     href: `/blog/${article.slug}`,
@@ -163,7 +173,7 @@ const CommandPalette = () => {
     if (menu.isExternal) {
       window.open(menu.href, '_blank');
     } else if (menu.href && menu.href !== '#') {
-      router.push(menu?.href as string);
+      void router.push(menu.href);
     }
   };
 
@@ -176,78 +186,7 @@ const CommandPalette = () => {
     window.open(url, '_blank');
   };
 
-  const handleAskAiAssistant = async () => {
-    aiRequestControllerRef.current?.abort();
-
-    setEmptyState(true);
-    setAskAssistantClicked(true);
-    setAiLoading(true);
-    setAiFinished(false);
-    setAiStreaming(true);
-    setAiResponse('');
-
-    const controller = new AbortController();
-    let hasReceivedChunk = false;
-    aiRequestControllerRef.current = controller;
-
-    await sendMessageStream({
-      prompt: queryDebounce,
-      locale: router.locale,
-      currentPath: router.asPath,
-      signal: controller.signal,
-      onChunk: (chunk) => {
-        if (aiRequestControllerRef.current !== controller) {
-          return;
-        }
-
-        hasReceivedChunk = true;
-        setAiLoading(false);
-        setAiResponse((prev) => prev + chunk);
-      },
-      onComplete: () => {
-        if (aiRequestControllerRef.current !== controller) {
-          return;
-        }
-
-        aiRequestControllerRef.current = null;
-        setAiStreaming(false);
-
-        if (!hasReceivedChunk) {
-          setAiLoading(false);
-        }
-      },
-      onError: (message) => {
-        if (aiRequestControllerRef.current !== controller) {
-          return;
-        }
-
-        aiRequestControllerRef.current = null;
-        setAiStreaming(false);
-        setAiLoading(false);
-        setAiResponse((prev) =>
-          prev
-            ? `${prev}\n\n> ${message}`
-            : message || 'AI 助手暫時不可用，請稍後再試。',
-        );
-      },
-    });
-  };
-
-  const handleAiClose = () => {
-    aiRequestControllerRef.current?.abort();
-    aiRequestControllerRef.current = null;
-    setAskAssistantClicked(false);
-    setAiResponse('');
-    setAiFinished(false);
-    setAiLoading(false);
-    setAiStreaming(false);
-  };
-
   const isActiveRoute = (href: string) => router.asPath.split('?')[0] === href;
-
-  useEffect(() => {
-    if (query) setEmptyState(false);
-  }, [query]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -263,11 +202,11 @@ const CommandPalette = () => {
 
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Closing the external dialog resets its input and request state.
       setQuery('');
-      setEmptyState(false);
       handleAiClose();
     }
-  }, [isOpen]);
+  }, [isOpen, handleAiClose]);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -431,7 +370,7 @@ const CommandPalette = () => {
                         response={aiResponse}
                         isAiFinished={aiFinished}
                         isStreaming={aiStreaming}
-                        onAiFinished={() => setAiFinished(true)}
+                        onAiFinished={finishAi}
                         onAiClose={handleAiClose}
                       />
                     )}

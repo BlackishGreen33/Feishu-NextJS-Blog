@@ -15,7 +15,7 @@ export const normalizeSearchText = (value: string) =>
 const splitSearchTerms = (query: string) =>
   normalizeSearchText(query).split(' ').filter(Boolean);
 
-const toArticleSummary = (article: Article): ArticleSummary => ({
+export const toArticleSummary = (article: Article): ArticleSummary => ({
   id: article.id,
   slug: article.slug,
   title: article.title,

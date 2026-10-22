@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { LuPlay as PlayIcon, LuTrash2 as ClearIcon } from 'react-icons/lu';
@@ -30,10 +29,9 @@ interface CodePlaygroundProps {
 }
 
 const CodePlayground = ({
-  id = undefined,
   code,
   output,
-  isFullScreen,
+  isFullScreen = false,
   onFullScreen,
   onCloseFullScreen,
   onRunCode,
@@ -49,15 +47,8 @@ const CodePlayground = ({
   const handleClearCode = () => onSetCode('');
   const handleClearOutput = () => onSetOutput('');
 
-  const handlePanelResize = () => {
-    const panel = editorRef.current;
-    if (panel !== null) {
-      isMobile && panel.resize(50);
-    }
-  };
-
   useEffect(() => {
-    isMobile && handlePanelResize();
+    if (isMobile) editorRef.current?.resize(50);
   }, [isMobile]);
 
   return (
@@ -138,8 +129,8 @@ const CodePlayground = ({
       </div>
       <PanelFooter
         isFullScreen={isFullScreen}
-        onCloseFullScreen={onCloseFullScreen}
-        onFullScreen={onFullScreen}
+        {...(onCloseFullScreen ? { onCloseFullScreen } : {})}
+        {...(onFullScreen ? { onFullScreen } : {})}
       />
     </>
   );

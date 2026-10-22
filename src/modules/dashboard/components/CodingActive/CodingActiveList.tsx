@@ -1,30 +1,21 @@
 import clsx from 'clsx';
 
+import type { ReadStats } from '@/common/schemas/dashboard';
 import { useI18n } from '@/i18n';
 
 import Progress from './Progress';
 
-interface ItemProps {
-  name: string;
-  hours: number;
-  minutes: number;
-}
-
 interface CodingActiveListProps {
-  data?: {
-    languages?: ItemProps[];
-    categories?: ItemProps[];
-  };
+  data?: ReadStats;
 }
 
-const sumTotalFromArray = <T extends { hours: number; minutes: number }>(
-  data: T[],
-  key: keyof T,
+const sumTotalFromArray = (
+  data: { hours: number; minutes: number }[],
+  key: 'hours' | 'minutes',
 ) => {
   return (
     data.reduce(
-      (previousValue, currentValue) =>
-        previousValue + (currentValue[key] as number),
+      (previousValue, currentValue) => previousValue + currentValue[key],
       0,
     ) ?? 0
   );
@@ -40,11 +31,11 @@ const formatDuration = (hours: number, minutes: number) => {
 
 const CodingActiveList = ({ data }: CodingActiveListProps) => {
   const { locale } = useI18n();
-  const getLanguagesTotalHours = sumTotalFromArray<ItemProps>(
+  const getLanguagesTotalHours = sumTotalFromArray(
     data?.languages || [],
     'hours',
   );
-  const getLanguagesTotalMinutes = sumTotalFromArray<ItemProps>(
+  const getLanguagesTotalMinutes = sumTotalFromArray(
     data?.languages || [],
     'minutes',
   );
@@ -56,11 +47,11 @@ const CodingActiveList = ({ data }: CodingActiveListProps) => {
           getLanguagesTotalMinutes,
         ).replace('小時', locale === 'zh-CN' ? '小时' : '小時');
 
-  const getEditorTotalHours = sumTotalFromArray<ItemProps>(
+  const getEditorTotalHours = sumTotalFromArray(
     data?.categories || [],
     'hours',
   );
-  const getEditorTotalMinutes = sumTotalFromArray<ItemProps>(
+  const getEditorTotalMinutes = sumTotalFromArray(
     data?.categories || [],
     'minutes',
   );

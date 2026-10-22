@@ -1,6 +1,7 @@
 import {
   ensureUniqueSlug,
   extractFirstImage,
+  mapWithConcurrency,
   replaceTokens,
   stripLeadingHeading,
   summarizeMarkdown,
@@ -8,6 +9,24 @@ import {
 } from '@/server/blog/utils';
 
 describe('blog utils', () => {
+  it('keeps bounded concurrency, result order and failure propagation', async () => {
+    let active = 0;
+    let peak = 0;
+    const result = await mapWithConcurrency([3, 1, 2], 2, async (value) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await Promise.resolve();
+      active -= 1;
+      return value * 2;
+    });
+    expect(result).toEqual([6, 2, 4]);
+    expect(peak).toBe(2);
+    await expect(
+      mapWithConcurrency([1], 2, () =>
+        Promise.reject(new Error('source failure')),
+      ),
+    ).rejects.toThrow('source failure');
+  });
   it('creates stable slugs', () => {
     expect(toSlug('My First Post')).toBe('my-first-post');
     expect(toSlug('飛書 同步 架構')).toBe('飛書-同步-架構');

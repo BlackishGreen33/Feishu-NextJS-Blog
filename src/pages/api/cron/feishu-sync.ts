@@ -10,7 +10,6 @@ const reconcileSubscriptions = async () => {
     return await ensureFeishuDocumentEventSubscriptions();
   } catch (error) {
     // Keep detailed provider errors in private function logs.
-    // eslint-disable-next-line no-console
     console.error(
       'Unable to reconcile Feishu document subscriptions',
       error instanceof Error ? error.message : 'Unknown error',
@@ -52,7 +51,6 @@ export default async function handler(
     });
   } catch (error) {
     // Keep detailed provider errors in private function logs.
-    // eslint-disable-next-line no-console
     console.error(
       'Unable to synchronize Feishu articles',
       error instanceof Error ? error.message : 'Unknown error',

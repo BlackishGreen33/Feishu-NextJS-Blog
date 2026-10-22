@@ -34,7 +34,6 @@ SyntaxHighlighter.registerLanguage(languages.css, css);
 
 interface CodeBlockProps extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
-  className?: string;
   isBlock?: boolean;
   node?: unknown;
 }
@@ -53,7 +52,7 @@ export const CodeBlockBase = ({
     : String(children ?? '');
 
   const handleCopy = (code: string) => {
-    copy(code);
+    void copy(code);
     setIsCopied(true);
   };
 
