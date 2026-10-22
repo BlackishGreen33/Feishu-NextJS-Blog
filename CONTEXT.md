@@ -18,7 +18,7 @@ _Avoid_: Article type, content kind
 
 **Slug**:
 分配給 Article、可供閱讀且允許改變的路徑片段。Slug 不是 Article 或 Source Document 的身份。
-Slug 改變時，舊路徑會成為綁定 Source Document 的永久 alias，且不得再次被 Article 使用。alias 會重新導向目前的 Slug；發布 redirect 後，同步會清除舊 Article artifact。
+Slug 分配與永久 alias 的規則見 [Article 身分與永久 Slug alias](src/server/blog/BUSINESS.md)。
 _Avoid_: Article ID, document ID
 
 **Reconciliation**:
