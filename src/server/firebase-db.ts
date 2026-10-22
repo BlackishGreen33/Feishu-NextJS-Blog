@@ -1,5 +1,6 @@
 import { getPublicEnv } from '@/common/config/env';
 import { ProjectItemProps } from '@/common/types/projects';
+import { getFirebaseAdminDatabase } from '@/server/firebase-admin';
 
 const PROJECTS_PATH = 'projects';
 const CONTENT_META_PATH = 'contentmeta';
@@ -75,12 +76,10 @@ const normalizeProject = (value: unknown): ProjectItemProps | null => {
     slug,
     description: typeof value.description === 'string' ? value.description : '',
     image: typeof value.image === 'string' ? value.image : '',
-    link_demo:
-      typeof value.link_demo === 'string' ? value.link_demo : undefined,
-    link_github:
-      typeof value.link_github === 'string' ? value.link_github : undefined,
+    link_demo: typeof value.link_demo === 'string' ? value.link_demo : '',
+    link_github: typeof value.link_github === 'string' ? value.link_github : '',
     stacks: normalizeStacks(value.stacks),
-    content: typeof value.content === 'string' ? value.content : undefined,
+    content: typeof value.content === 'string' ? value.content : '',
     is_show: typeof value.is_show === 'boolean' ? value.is_show : true,
     is_featured:
       typeof value.is_featured === 'boolean' ? value.is_featured : false,
@@ -105,7 +104,10 @@ export const getProjectsFromFirebase = async () => {
     return [];
   }
 
-  const payload = await fetchFirebaseJson<unknown>(PROJECTS_PATH);
+  const database = getFirebaseAdminDatabase();
+  const payload: unknown = database
+    ? (await database.ref(PROJECTS_PATH).get()).val()
+    : await fetchFirebaseJson<unknown>(PROJECTS_PATH);
   const values = Array.isArray(payload)
     ? payload
     : isRecord(payload)
@@ -115,7 +117,7 @@ export const getProjectsFromFirebase = async () => {
   return sortProjects(
     values
       .map((value) => normalizeProject(value))
-      .filter((value): value is ProjectItemProps => Boolean(value)),
+      .filter((value): value is ProjectItemProps => Boolean(value?.is_show)),
   );
 };
 
