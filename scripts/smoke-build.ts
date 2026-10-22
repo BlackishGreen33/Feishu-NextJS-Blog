@@ -41,6 +41,8 @@ const waitForExit = (child: ChildProcess): Promise<void> =>
   });
 
 const main = async () => {
+  const packageManager = process.env.npm_execpath;
+  assert(packageManager, 'Run the smoke check through pnpm test:smoke');
   const source = process.cwd();
   const workspace = await fs.mkdtemp(
     path.join(os.tmpdir(), 'blog-production-smoke-'),
@@ -164,7 +166,8 @@ const main = async () => {
       ),
     ]);
 
-    const build = spawn('corepack', ['pnpm', 'build'], {
+    // Standalone CI installs may not warm Corepack's cache; reuse the active pnpm CLI.
+    const build = spawn(process.execPath, [packageManager, 'run', 'build'], {
       cwd: workspace,
       env,
       stdio: 'inherit',
