@@ -10,7 +10,7 @@
 - 公開查詢先以 index 判斷目前有效 Article，不能只憑磁碟或 Blob 上存在 JSON 就回傳。讀到的 artifact 必須同時符合 index 的 slug 與 sourceNodeToken；不符時不回傳該 Article。同步重用舊 artifact 也須核對這兩個欄位。
 - Article 與 index 的 local／Blob JSON（含快取命中）須先通過[資料契約](../../common/schemas/blog.ts)。缺檔才沿用既有 fallback；JSON 語法或形狀損壞應拋錯，中止同步發布及清理，不能當成空集合或改讀 seed 掩蓋損壞。舊 index 可沒有 redirects，cover 可為 null，額外欄位保留；此試點不額外限制日期字串、URL 或正規化來源 frontmatter。
 - redirect 只有在舊 Slug 不是 active Slug、目標存在於該次可見 Article 集合，且目標 sourceNodeToken 與 alias 一致時才成立。草稿預設不在公開集合；內部明確要求 includeDraft 時沿用其可見性選擇。
-- 詳情路由先處理 redirect，再讀目前 Article。成功導向保留 locale，使用永久 redirect；舊 artifact 在 index／redirect／同步狀態發布後清理。這個先後順序不代表整個儲存流程具有原子性。
+- 詳情路由先處理 redirect，再讀目前 Article。成功導向保留 locale，使用永久 redirect；寫入 HTTP Location 前對目標 Slug 路徑段做 URI 編碼，儲存的 Slug 維持原值，中文舊連結同樣適用。舊 artifact 在 index／redirect／同步狀態發布後清理。這個先後順序不代表整個儲存流程具有原子性。
 
 目前依據：[同步與 Slug 分配](./sync.ts)、[索引與身分查詢](./repository.ts)、[詳情路由](../../pages/blog/%5Bslug%5D.tsx)、[Article 型別](../../common/types/blog.ts)。
 
@@ -43,9 +43,11 @@
 
 驗證沿用 module 的既有 interface，不只測內部 Slug helper：
 
+2026-10-23 正式站的 CSS 舊網址揭露未編碼中文轉址造成 500；先前 fixture 僅有 ASCII Slug。現以實際中文新舊 Slug 驗證三個語系，避免將有效 alias 的資料查詢成功誤當成 HTTP 轉址成功。
+
 - [同步契約測試](../../__tests__/server/blog/sync.test.ts)：改名、index 回復 Slug、錯誤身分 artifact 不重用，以及永久 alias 不再成為 active Slug。
 - [查詢契約測試](../../__tests__/server/blog/repository.test.ts)：舊 JSON 不直接公開、active Slug 下的錯誤身分拒絕、alias 導向及目標身分不符時拒絕。
-- [詳情路由測試](../../__tests__/server/blog-page.test.ts)：舊路徑的永久 redirect、找不到內容與正常閱讀。
+- [詳情路由測試](../../__tests__/server/blog-page.test.ts)：ASCII／中文舊路徑在繁中、英文、簡中保持永久 redirect，目標 URI 可安全寫入 HTTP header。[production HTTP smoke](../../../scripts/smoke-build.ts) 以實際 Next 建置驗證三語系中文 alias 回 308、目標閱讀及搜尋正常。
 - [儲存操作測試](../../__tests__/server/blog/storage.test.ts)：seed fallback、local／Blob 快取、舊資料與額外欄位相容、損壞資料拒絕，以及同步不發布或刪除。
 - [Feishu 操作測試](../../__tests__/server/blog/feishu.test.ts)：限流、下載 headers、清單完整性與 renderer 相容正規化。
 - [Asset 操作測試](../../__tests__/server/blog/assets.test.ts)：多個 Article 消費端共用下載與最後引用消失後才刪除；刪除失敗保留由同步契約測試涵蓋。
