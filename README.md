@@ -255,6 +255,8 @@ corepack pnpm build
 
 相依異動 PR 使用 `corepack pnpm audit:production` 阻擋 production high／critical，其餘每週掃描；漏洞與掃描服務失敗分別以 exit 1／2 回報。PR Gate 只有在四個必要工作都成功時才通過。
 
+剩餘 sprintf-js moderate 的公告狀態、可觸及性、升級相容性與重新評估條件，見[安全處置紀錄](docs/security/sprintf-js.md)。
+
 ## 部署
 
 ### Vercel
