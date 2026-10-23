@@ -26,21 +26,23 @@ const Playground = ({
   };
 
   const handleRunCode = () => {
+    // Capturing console is the playground product behavior, not a debug log.
+    // eslint-disable-next-line no-console
+    const originalConsoleLog = console.log;
     try {
       setError(false);
 
       let capturedConsoleOutput = '';
-      // Capturing console is the playground product behavior, not a debug log.
-      /* eslint-disable no-console */
-      const originalConsoleLog = console.log;
-
-      console.log = (message: unknown) =>
-        (capturedConsoleOutput += `${message}\n`);
-
-      const result: unknown = (new Function(code) as () => unknown)();
-      console.log = originalConsoleLog;
-      /* eslint-enable no-console */
-
+      let result: unknown;
+      try {
+        // eslint-disable-next-line no-console
+        console.log = (message: unknown) =>
+          (capturedConsoleOutput += `${message}\n`);
+        result = (new Function(code) as () => unknown)();
+      } finally {
+        // eslint-disable-next-line no-console
+        console.log = originalConsoleLog;
+      }
       setOutput(capturedConsoleOutput + (result == null ? '' : String(result)));
     } catch (error) {
       setError(true);
