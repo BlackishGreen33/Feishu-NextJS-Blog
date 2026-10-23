@@ -1,6 +1,12 @@
 # sprintf-js 公告處置紀錄
 
-查核日期：2026-10-22。程式基準：`c4d8c6ed5d3472c8ea14d40e7258bc1bcf3e81cc`。本紀錄適用於 Node 24、pnpm 10.32.1 與下列鎖定版本。
+原始查核日期：2026-10-22。程式基準：`c4d8c6ed5d3472c8ea14d40e7258bc1bcf3e81cc`。本紀錄適用於 Node 24、pnpm 10.32.1 與下列鎖定版本。
+
+## 2026-10-23 狀態更新
+
+[上游更正建議 #10497](https://github.com/github/advisory-database/pull/10497) 已於 2026-10-22 19:21:17 UTC 合入；[GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c) 的 withdrawn_at 為 2026-10-22 19:21:04 UTC。本次 production 與全相依 audit 的 moderate 均為 0，相依鏈維持不變，沒有加入忽略規則。
+
+公告撤回不等於套件已修補，也不推翻下文直接呼叫 sprintf 可拋出 RangeError 的觀察。以下保留原時點的調查與相容性比較；其中「GHSA 仍列 moderate」與「等待上游判定」描述的是 2026-10-22 的狀態。
 
 ## 判定與適用範圍
 
