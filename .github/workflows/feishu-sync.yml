@@ -15,7 +15,7 @@ concurrency:
 jobs:
   sync:
     name: Trigger production sync
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: 🔁 Trigger sync endpoint
