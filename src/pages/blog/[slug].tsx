@@ -47,7 +47,7 @@ const BlogDetailPage: NextPage<BlogDetailPageProps> = ({ blog }) => {
           siteName: site.name,
         }}
       />
-      <Container data-aos='fade-up'>
+      <Container>
         <BackButton url='/blog' />
         <BlogDetail {...blog} />
       </Container>

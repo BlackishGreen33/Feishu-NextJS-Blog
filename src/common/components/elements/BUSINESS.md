@@ -2,8 +2,8 @@
 
 ## 掛載、主題與瀏覽器狀態
 
-- ThemeSwitcher 與其他瀏覽器 UI 沿用 useHasMounted：SSR／首次 hydration 顯示 placeholder，掛載後讀 next-themes resolvedTheme。compact 切換保留圓形按鈕與原 light／dark setter。
-- useIsMobile 保留原初始 `<769` 判斷，effect 同步外部視窗後使用 `<821`；本輪不合併這兩個既有 breakpoint。useLoading 在 Router 首次 ready 後解除，沒有改成每次導航重新 loading。
+- ThemeSwitcher 與其他瀏覽器 UI 沿用 useHasMounted：SSR／首次 hydration 顯示 placeholder，掛載後讀 next-themes resolvedTheme。compact 採用 Magic UI circle Theme Toggler 的 MIT 適配版，保留圓形按鈕與 light／dark setter；View Transition 從按鈕展開，250ms ease-out。減少動態效果、API 不可用或失敗時直接切換，卸載與結束時釋放動畫；完整選單沿用既有行為。
+- useIsMobile 在 SSR 與首次 hydration 都先使用未初始化的 viewport，掛載後才讀寬度；保留初始 `<769` 公式，effect 同步後使用 `<821`，不合併既有 breakpoint。useLoading 在 Router 首次 ready 後解除，沒有改成每次導航重新 loading。
 - Image 在來源改變時重置 loading 與 currentSrc；onError 有 fallback 才切換，Feishu 本地資產繼續 bypass optimizer。
 - 掛載、視窗、Router 及圖片 effect 的局部 React 例外各附理由；不把一般衍生狀態偽裝為外部初始化。
 - 語言與 URL 的唯一規則來源為 [i18n owner](../../../i18n/BUSINESS.md)。
@@ -26,3 +26,14 @@
 ### 對應驗證
 
 - [服務測試](../../../__tests__/services/external-displays.test.ts)：缺設定零呼叫、曲目／裝置映射、合法 null、204、來源失敗與錯誤 token。
+
+## 程式碼與互動游標
+
+- Markdown 清洗只保留受限 language class 與程式碼背景 metadata；程式碼沿用 PrismLight 的常用語言及別名，未知語言以原名稱／純文字顯示。One Light／One Dark 跟隨 resolvedTheme，工具列語言名稱與複製按鈕並列，複製不包含樣式標記。
+- 背景資料是完整純文字 UTF-16 的半開區間及固定飛書色碼；非法、重疊或越界資料不套背景，仍顯示原文。背景 span 在語法 token 內，保留前景色，明暗主題採相同色系。
+- 可用按鈕、連結、選單及選擇控制預設 pointer；文字輸入、停用與拖曳／縮放維持各自游標。
+- 真實渲染驗證沿用 Jest 啟動 tsx，覆蓋實際 Markdown／sanitize／Prism，而非只驗證 mock 傳參。
+- 程式碼外框改接 Cult UI Code Block 的 MIT 單段外觀，控制列與正文共用背景，原有 Prism／精確飛書背景不變；本輪 UI 顏色使用 Radix slate／teal 的語意變數。第三方來源及調整見 [授權聲明](THIRD_PARTY_NOTICES.md)。
+- 語言與複製圖示置於右上角，使用浮動控制讓程式碼從頂部排起並繞開控制，不保留整列空白工具列；複製按鈕沒有可見文字，保留 aria-label、勾選回饋與 screen-reader status。
+
+- CodeBlock 沿用共用 useHasMounted，讓 SSR 與第一次 hydration 都使用相同 placeholder；不使用立即 resolve 的 no-SSR loader，避免同一模組已載入時產生不同初始 DOM。回歸測試以真正 Node SSR HTML 在已暖機的 client hydrate，要求沒有 recoverable error。

@@ -40,6 +40,7 @@ const textStyle = z.looseObject({
   strikethrough: z.boolean().optional(),
   underline: z.boolean().optional(),
   text_color: z.number().optional(),
+  background_color: z.number().optional(),
   link: z.looseObject({ url: z.string() }).optional(),
 });
 export const feishuTextElementSchema = z.looseObject({
@@ -94,6 +95,11 @@ export const feishuBlockSchema = z.looseObject({
   ordered: textBlock.optional(),
   bullet: textBlock.optional(),
   todo: textBlock.optional(),
+  code: textBlock
+    .extend({
+      style: z.looseObject({ language: z.number() }),
+    })
+    .optional(),
 });
 export type FeishuBlockInput = z.infer<typeof feishuBlockSchema>;
 export type FeishuTextElement = z.infer<typeof feishuTextElementSchema>;

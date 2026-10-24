@@ -60,3 +60,9 @@
 - [事件同步、queue 與 lease](sync-trigger/BUSINESS.md)
 
 消費端應連回本文件；工程規約與執行命令見 [AGENT.md](../../../AGENT.md)。
+
+## 程式碼文字背景的同步
+
+- 2026-10-24 的內容轉換版本 2 在來源 renderer 保留 code text_run 的背景範圍，未改動來源 revision 的舊版 Article 也須重建。
+- 有背景的 code 使用受限 HTML 與專用 data attribute；文字、換行及表格分隔符號以 entities 穿過既有巢狀轉換。無背景沿用原路徑，YAML／JSON page meta 不改。
+- 一般 fenced code 維持排除；已由分欄／提示框／複雜表格轉成 HTML 的 code 維持原先納入正文萃取的行為。來源以只供後端萃取使用的標記記錄此差別，避免只有加入背景就改變摘要、搜尋及閱讀時間。轉換／讀取失敗保留最後成功內容的規則不變。

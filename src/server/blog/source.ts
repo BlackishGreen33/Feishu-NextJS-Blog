@@ -1,9 +1,8 @@
-import { MarkdownRenderer } from 'feishu-docx/dist/index.js';
-
 import { getServerEnv } from '@/server/env';
 
 import { FeishuClient, FeishuWikiNode } from './feishu';
 import { feishuSourceConfigSchema } from './feishu-schema';
+import { ArticleMarkdownRenderer } from './markdown-renderer';
 
 export type SourceAsset = {
   token: string;
@@ -112,7 +111,7 @@ export const createFeishuArticleSource = ({
 
     async readDocument(document) {
       const blocks = await client.getDocumentBlocks(document.sourceDocumentId);
-      const renderer = new MarkdownRenderer({
+      const renderer = new ArticleMarkdownRenderer({
         document: { document_id: document.sourceDocumentId },
         blocks,
       });

@@ -46,7 +46,7 @@ export type DocumentMetadata = {
   inspectionFailed?: boolean;
 };
 
-export const ARTICLE_CONTENT_VERSION = 1;
+export const ARTICLE_CONTENT_VERSION = 2;
 
 export const hasSameDocumentVersion = (
   previous: BlogSyncDocumentState | undefined,

@@ -57,6 +57,8 @@ export type Messages = {
     notFoundDescription: string;
   };
   common: {
+    copyCode: string;
+    codeCopied: string;
     loading: string;
     loadingEllipsis: string;
     noData: string;
@@ -128,6 +130,9 @@ export type Messages = {
     };
   };
   blog: {
+    tocLabel: string;
+    tocTitle: string;
+    comments: string;
     latestArticles: string;
     featuredArticle: string;
     previousFeatured: string;

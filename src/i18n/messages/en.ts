@@ -64,6 +64,8 @@ const enMessages: Messages = {
       'This page does not exist or has already been removed.',
   },
   common: {
+    copyCode: 'Copy to Clipboard',
+    codeCopied: 'Copied',
     loading: 'Loading',
     loadingEllipsis: 'Loading...',
     noData: 'No data',
@@ -204,6 +206,9 @@ const enMessages: Messages = {
     },
   },
   blog: {
+    tocLabel: 'Article contents',
+    tocTitle: 'Contents',
+    comments: 'Comments',
     latestArticles: 'Latest articles',
     featuredArticle: 'Featured article',
     previousFeatured: 'Previous featured article',

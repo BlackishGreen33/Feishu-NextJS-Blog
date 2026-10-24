@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, memo, ReactNode } from 'react';
 import type { Element } from 'hast';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -8,12 +8,14 @@ import type { PluggableList } from 'unified';
 
 import cn from '@/common/libs/cn';
 import { feishuHtmlSanitizeSchema } from '@/common/libs/htmlSanitizer';
+import rehypeArticleHeadings from '@/common/libs/rehypeArticleHeadings';
 
 import CodeBlock from './CodeBlock';
 
 interface MarkdownRendererProps {
   children: string;
   allowRawHtml?: boolean;
+  withHeadingAnchors?: boolean;
 }
 
 interface TableProps {
@@ -109,19 +111,47 @@ const getImageAlignmentClassName = (align?: string) => {
 const MDXComponent = ({
   children,
   allowRawHtml = true,
+  withHeadingAnchors = false,
 }: MarkdownRendererProps) => {
   const rehypePlugins: PluggableList = allowRawHtml
     ? [rehypeRaw, [rehypeSanitize, feishuHtmlSanitizeSchema]]
     : [[rehypeSanitize, feishuHtmlSanitizeSchema]];
+  if (withHeadingAnchors) rehypePlugins.push(rehypeArticleHeadings);
 
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={rehypePlugins}
       components={{
+        pre: ({ children, node }) => {
+          const code = node?.children[0];
+          if (
+            node?.children.length === 1 &&
+            code?.type === 'element' &&
+            code.tagName === 'code' &&
+            code.children.every((child) => child.type === 'text')
+          ) {
+            return (
+              <CodeBlock
+                isBlock
+                className={
+                  Array.isArray(code.properties.className)
+                    ? code.properties.className.join(' ')
+                    : ''
+                }
+                backgroundMetadata={code.properties.dataFeishuCodeBackground}
+              >
+                {code.children
+                  .map((child) => (child.type === 'text' ? child.value : ''))
+                  .join('')}
+              </CodeBlock>
+            );
+          }
+          return <pre>{children}</pre>;
+        },
         h1: (props) => (
           <h1
-            className='pb-2 text-2xl font-semibold text-neutral-100 first:pt-0 dark:text-neutral-100'
+            className='pb-2 text-2xl font-semibold text-neutral-900 first:pt-0 dark:text-neutral-100'
             {...props}
           />
         ),
@@ -211,10 +241,11 @@ const MDXComponent = ({
             {...props}
           />
         ),
-        code: ({ children, className, node: _node, ...props }) => (
+        code: ({ children, className, node, ...props }) => (
           <CodeBlock
             {...props}
             className={className}
+            backgroundMetadata={node?.properties.dataFeishuCodeBackground}
             isBlock={Boolean(className) || toCodeValue(children).includes('\n')}
           >
             {children}
@@ -286,4 +317,5 @@ const MDXComponent = ({
   );
 };
 
-export default MDXComponent;
+// Keep heading DOM identities stable when the surrounding TOC updates its state.
+export default memo(MDXComponent);

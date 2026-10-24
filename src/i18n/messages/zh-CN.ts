@@ -61,6 +61,8 @@ const zhCNMessages: Messages = {
     notFoundDescription: '这个页面不存在，或者已经被移除。',
   },
   common: {
+    copyCode: '复制代码',
+    codeCopied: '已复制',
     loading: '加载中',
     loadingEllipsis: '加载中...',
     noData: '暂无数据',
@@ -201,6 +203,9 @@ const zhCNMessages: Messages = {
     },
   },
   blog: {
+    tocLabel: '文章目录',
+    tocTitle: '章节目录',
+    comments: '评论',
     latestArticles: '最新文章',
     featuredArticle: '精选文章',
     previousFeatured: '上一则精选',
