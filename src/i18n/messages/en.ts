@@ -18,9 +18,9 @@ const enMessages: Messages = {
     homeServicesCardDescription:
       'I am open to collaborations and development work. Feel free to reach out by email and let’s see how we can work together.',
     aboutPageDescription:
-      'An overview of who I am, my resume, experience, and education.',
+      'Get to know me through my experiences and the path I have taken.',
     contactPageDescription:
-      'Ways to reach me, booking links, and a direct contact form.',
+      'Find me here for a chat, collaboration, or an exchange of ideas.',
     bookCallTitle: 'Book a Feishu Meeting',
     bookCallDescription:
       'If you want to collaborate, talk about engineering, or discuss a project, you can book time with me through Feishu Meetings.',
@@ -52,14 +52,16 @@ const enMessages: Messages = {
     blogTitle: 'Blog',
     dashboardTitle: 'Dashboard',
     guestbookTitle: 'Guestbook',
-    guestbookDescription: 'Leave a note, say hi, or share feedback here.',
+    guestbookDescription: 'Leave a greeting or share what is on your mind.',
     learnTitle: 'Learning Notes',
     learnDescription:
-      'A collection of learning materials, notes, and topics I keep refining.',
+      'Notes, research reflections, and topics I revisit along the way.',
     projectsTitle: 'Projects',
     projectsDescription:
-      'A curated list of projects, experiments, and longer-running work.',
+      'Hands-on projects, experiments, and work I continue to grow.',
     playgroundTitle: 'JavaScript Playground',
+    playgroundDescription:
+      'A simple space to experiment with JS, write code, and see the results',
     notFoundDescription:
       'This page does not exist or has already been removed.',
   },
@@ -224,7 +226,7 @@ const enMessages: Messages = {
   },
   dashboard: {
     pageDescription:
-      'A snapshot of coding activity, GitHub contributions, and a few personal stats.',
+      'Development milestones, coding activity, and contribution stats.',
     weeklyStats: 'Weekly stats',
     weeklyStatsDescription: 'Coding activity over the last 7 days.',
     source: 'Source:',
@@ -290,9 +292,12 @@ const enMessages: Messages = {
       externalLinks: 'External links',
       appearance: 'Appearance',
     },
+    typeLabels: { Pages: 'Page', Link: 'Link' },
     currentPage: 'You are here',
     noResultIntro: 'No result found for',
     noResultOutro: 'on this website.',
+    noResultSuggestion:
+      'Try a shorter keyword or search for a technology name.',
     askAiAssistant: 'Ask AI assistant',
     findInGoogle: 'Search on Google',
     closeWindowHint: 'Press `ESC` to close this window',

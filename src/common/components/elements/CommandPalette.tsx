@@ -327,7 +327,12 @@ const CommandPalette = () => {
                                   <>
                                     {child?.type && (
                                       <div className='rounded-md border border-neutral-400 px-1.5 py-0.5 text-xs text-neutral-500 dark:border-neutral-500'>
-                                        {child?.type}
+                                        {child.type === 'Pages' ||
+                                        child.type === 'Link'
+                                          ? messages.commandPalette.typeLabels[
+                                              child.type
+                                            ]
+                                          : child.type}
                                       </div>
                                     )}
                                   </>
