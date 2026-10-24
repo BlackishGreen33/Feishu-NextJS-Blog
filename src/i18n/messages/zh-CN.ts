@@ -225,7 +225,8 @@ const zhCNMessages: Messages = {
     source: '来源：',
     lastUpdated: '最近更新：',
     wakatimeUnavailable: '暂时无法获取 WakaTime 统计数据。',
-    wakatimeNotConfigured: '尚未配置 WakaTime API Key，暂时无法显示编码统计。',
+    wakatimeNotConfigured:
+      '尚未配置 WakaTime OAuth token，暂时无法显示编码统计。',
     githubContributions: 'GitHub 贡献',
     githubDescription: '这里整理我过去一年的 GitHub 贡献记录。',
     githubUnavailable: '暂时无法获取 GitHub 贡献数据。',

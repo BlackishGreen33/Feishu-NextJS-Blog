@@ -169,8 +169,18 @@ corepack pnpm dev
 | `DEVTO_KEY`                                                             | Optional | dev.to 读取 API 密钥                   |
 | `GITHUB_READ_USER_TOKEN_PERSONAL`                                       | Optional | GitHub GraphQL 读取 Token              |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing 与设备数据         |
-| `WAKATIME_API_KEY`                                                      | Optional | WakaTime 统计数据                      |
+| `WAKATIME_ACCESS_TOKEN`                                                 | Optional | WakaTime OAuth token                   |
 | `MINIMAX_SYSTEM_PROMPT`                                                 | Optional | Command Palette AI 的系统提示词        |
+
+### WakaTime 认证迁移
+
+WakaTime 统计读取改用 OAuth access token，两个统计端点均需 `read_stats` 权限。为限制权限，创建私有 [OAuth App](https://wakatime.com/apps)，通过 authorization-code flow 明确指定 `scope=read_stats`，无需公开上架。`/oauth` 的 personal token 页面目前无法选择 scope，不适合仅授权 `read_stats` 的需求。详见[官方认证文档](https://wakatime.com/developers#authentication)。
+
+- 将原始 token 设为服务端的 `WAKATIME_ACCESS_TOKEN`，不要加上 `Bearer ` 前缀，也不要使用 `NEXT_PUBLIC_`。本地设置在 `.env.local`，部署环境则使用托管平台的秘密环境变量。
+- 先准备好新环境变量，再部署迁移后的程序；本地修改后须重新启动。程序不再读取 `WAKATIME_API_KEY`，也不会回退使用旧 API key。
+- 另行安全保存 OAuth App secret 与 refresh token，按照 token 响应的有效期更新 access token；网站目前只读取 access token，不会自动刷新，也无需部署 App secret 或 refresh token。
+- 通过 `/api/read-stats` 确认周统计与 `all_time_since_today` 均有真实数据；仅 HTTP 200 或 `configured: true` 不代表认证成功，401／403 仍会安全返回 unavailable 空状态。
+- 旧 API key 仍可供编辑器插件上传活动，不要为这次迁移撤销插件使用的 key。
 
 ## 内容工作流
 

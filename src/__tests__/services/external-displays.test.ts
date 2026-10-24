@@ -18,6 +18,7 @@ beforeEach(() => {
     SPOTIFY_CLIENT_ID: '',
     SPOTIFY_CLIENT_SECRET: '',
     SPOTIFY_REFRESH_TOKEN: '',
+    WAKATIME_ACCESS_TOKEN: '',
     WAKATIME_API_KEY: '',
   };
 });
@@ -34,6 +35,9 @@ it('keeps optional integrations empty without contacting providers', async () =>
   await expect(getTopTracks()).resolves.toMatchObject({ data: [] });
   await expect(getReadStats()).resolves.toMatchObject({
     data: { configured: false, languages: [] },
+  });
+  await expect(getAllTimeSinceToday()).resolves.toMatchObject({
+    data: { configured: false, text: null, total_seconds: 0 },
   });
   expect(axios.get).not.toHaveBeenCalled();
   expect(axios.post).not.toHaveBeenCalled();
@@ -72,8 +76,72 @@ it('keeps public GitHub contributions and falls back after invalid GraphQL data'
   });
 });
 
+it('does not use the legacy WakaTime API key without an OAuth token', async () => {
+  process.env.WAKATIME_ACCESS_TOKEN = '   ';
+  process.env.WAKATIME_API_KEY = 'legacy-test-key';
+  await expect(getReadStats()).resolves.toMatchObject({
+    data: { configured: false, languages: [] },
+  });
+  await expect(getAllTimeSinceToday()).resolves.toMatchObject({
+    data: { configured: false, text: null, total_seconds: 0 },
+  });
+  expect(axios.get).not.toHaveBeenCalled();
+});
+
+it('uses OAuth bearer authentication for both WakaTime endpoints', async () => {
+  process.env.WAKATIME_ACCESS_TOKEN = '  test-access-token  ';
+  process.env.WAKATIME_API_KEY = 'legacy-test-key';
+  jest
+    .mocked(axios.get)
+    .mockResolvedValueOnce({
+      status: 200,
+      data: {
+        data: { human_readable_total_including_other_language: '7 hrs' },
+      },
+    })
+    .mockResolvedValueOnce({
+      status: 200,
+      data: { data: { text: '100 hrs', total_seconds: 360000 } },
+    });
+  await expect(getReadStats()).resolves.toMatchObject({
+    status: 200,
+    data: { configured: true, human_readable_total: '7 hrs' },
+  });
+  await expect(getAllTimeSinceToday()).resolves.toEqual({
+    status: 200,
+    data: { configured: true, text: '100 hrs', total_seconds: 360000 },
+  });
+  expect(axios.get).toHaveBeenNthCalledWith(
+    1,
+    'https://wakatime.com/api/v1/users/current/stats/last_7_days',
+    { headers: { Authorization: 'Bearer test-access-token' } },
+  );
+  expect(axios.get).toHaveBeenNthCalledWith(
+    2,
+    'https://wakatime.com/api/v1/users/current/all_time_since_today',
+    { headers: { Authorization: 'Bearer test-access-token' } },
+  );
+});
+
+it.each([401, 403])(
+  'keeps WakaTime configured but unavailable after OAuth HTTP %s errors',
+  async (status) => {
+    process.env.WAKATIME_ACCESS_TOKEN = 'test-access-token';
+    jest.mocked(axios.get).mockRejectedValue({ response: { status } });
+    await expect(getReadStats()).resolves.toMatchObject({
+      status: 200,
+      data: { configured: true, languages: [], human_readable_total: null },
+    });
+    await expect(getAllTimeSinceToday()).resolves.toEqual({
+      status: 200,
+      data: { configured: true, text: null, total_seconds: 0 },
+    });
+    expect(axios.get).toHaveBeenCalledTimes(2);
+  },
+);
+
 it('limits WakaTime languages and returns configured empty data on malformed or failed responses', async () => {
-  process.env.WAKATIME_API_KEY = 'test-key';
+  process.env.WAKATIME_ACCESS_TOKEN = 'test-access-token';
   const languages = ['A', 'B', 'C', 'D'].map((name) => ({
     name,
     hours: 1,

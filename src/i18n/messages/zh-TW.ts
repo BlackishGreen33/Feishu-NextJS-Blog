@@ -225,7 +225,8 @@ const zhTWMessages: Messages = {
     source: '來源：',
     lastUpdated: '最近更新：',
     wakatimeUnavailable: '暫時無法取得 WakaTime 統計資料。',
-    wakatimeNotConfigured: '尚未設定 WakaTime API Key，暫時無法顯示編碼統計。',
+    wakatimeNotConfigured:
+      '尚未設定 WakaTime OAuth token，暫時無法顯示編碼統計。',
     githubContributions: 'GitHub 貢獻',
     githubDescription: '這裡整理我過去一年的 GitHub 貢獻紀錄。',
     githubUnavailable: '暫時無法取得 GitHub 貢獻資料。',
