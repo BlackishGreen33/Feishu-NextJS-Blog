@@ -1,4 +1,5 @@
 import { Article } from '@/common/types/blog';
+import { ARTICLE_CONTENT_VERSION } from '@/server/blog/article-reconciliation';
 import {
   ArticleSourceAdapter,
   SourceDocument,
@@ -42,7 +43,7 @@ const previousSyncState = {
     'node-1': {
       slug: 'existing-doc',
       sourceDocumentId: 'doc-1',
-      contentVersion: 1,
+      contentVersion: ARTICLE_CONTENT_VERSION,
       objEditTime: '1776561839',
       revisionId: 'rev-1',
       coverToken: 'cover-1',
@@ -286,7 +287,7 @@ describe('syncFeishuArticles', () => {
       documents: {
         'node-1': {
           ...previousSyncState.documents['node-1'],
-          contentVersion: undefined,
+          contentVersion: 1,
           coverToken: undefined,
         },
       },
@@ -334,7 +335,9 @@ describe('syncFeishuArticles', () => {
     expect(storage.writeSyncState).toHaveBeenCalledWith(
       expect.objectContaining({
         documents: {
-          'node-1': expect.objectContaining({ contentVersion: 1 }) as unknown,
+          'node-1': expect.objectContaining({
+            contentVersion: ARTICLE_CONTENT_VERSION,
+          }) as unknown,
         },
       }),
     );

@@ -283,6 +283,7 @@ corepack pnpm build
 
 ## 鳴謝
 
+- [Rare UI](https://rareui.com/)：文章章節導航採用 Rail TOC；保留[獨立授權與署名](src/modules/blog/components/RARE_UI_LICENSE.md)。
 - [Feishu Open Platform](https://open.feishu.cn/)
 - [`feishu-docx`](https://www.npmjs.com/package/feishu-docx)
 - [Next.js](https://nextjs.org/)

@@ -15,10 +15,10 @@ export const SITE_RESUME_URL = '/documents/blackishgreen-bg-resume.pdf';
 export const SITE_RESUME_EMBED_URL = '/documents/blackishgreen-bg-resume.pdf';
 export const SITE_BOOK_CALL_URL =
   'https://vcnay0rphntt.feishu.cn/scheduler/5dc709a0aba45373';
-export const SITE_GISCUS_REPO = '';
-export const SITE_GISCUS_REPO_ID = '';
-export const SITE_GISCUS_CATEGORY = '';
-export const SITE_GISCUS_CATEGORY_ID = '';
+export const SITE_GISCUS_REPO = 'BlackishGreen33/Feishu-NextJS-Blog';
+export const SITE_GISCUS_REPO_ID = 'R_kgDOJ_e_BA';
+export const SITE_GISCUS_CATEGORY = 'Announcements';
+export const SITE_GISCUS_CATEGORY_ID = 'DIC_kwDOJ_e_BM4CYKGS';
 
 export const getSiteConfig = (locale?: string) => {
   const messages = getMessages(locale);

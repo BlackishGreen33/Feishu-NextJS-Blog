@@ -61,6 +61,8 @@ const zhTWMessages: Messages = {
     notFoundDescription: '這個頁面不存在，或是已經被移除。',
   },
   common: {
+    copyCode: '複製程式碼',
+    codeCopied: '已複製',
     loading: '載入中',
     loadingEllipsis: '載入中...',
     noData: '目前沒有資料',
@@ -201,6 +203,9 @@ const zhTWMessages: Messages = {
     },
   },
   blog: {
+    tocLabel: '文章目錄',
+    tocTitle: '章節目錄',
+    comments: '留言',
     latestArticles: '最新文章',
     featuredArticle: '精選文章',
     previousFeatured: '上一則精選',

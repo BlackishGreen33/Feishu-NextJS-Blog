@@ -1,6 +1,7 @@
 @config '../../../tailwind.config.js';
 @import 'tailwindcss';
 @import 'tailwind-scrollbar-hide/v4';
+@import './article-reading.css';
 
 :root {
   --color-dark: #121212;
@@ -20,8 +21,13 @@
 }
 
 html {
-  scroll-behavior: smooth;
   letter-spacing: 0.3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 input,

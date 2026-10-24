@@ -93,6 +93,7 @@ export const feishuHtmlSanitizeSchema: RehypeSanitizeSchema = {
   attributes: {
     '*': commonAttributes,
     a: ['href'],
+    code: [['className', /^language-[\w+#.-]+$/], 'dataFeishuCodeBackground'],
     div: [
       'itemScope',
       'itemType',

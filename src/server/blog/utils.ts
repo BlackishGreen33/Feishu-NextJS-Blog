@@ -87,6 +87,15 @@ export const toStringArray = (value: unknown) => {
 export const stripMarkdown = (value: string) =>
   value
     .replace(/```[\s\S]*?```/g, ' ')
+    .replace(
+      /<pre><code\b([^>]*\bdata-feishu-code-background="[^"]*"[^>]*)>([\s\S]*?)<\/code><\/pre>/gi,
+      (_match: string, attributes: string, code: string) =>
+        attributes.includes('data-feishu-code-searchable="true"')
+          ? code.replace(/&#(10|13|124);/g, (_entity: string, point: string) =>
+              String.fromCharCode(Number(point)),
+            )
+          : ' ',
+    )
     .replace(/`([^`]+)`/g, '$1')
     .replace(/!\[[^\]]*]\(([^)]+)\)/g, ' ')
     .replace(/\[([^\]]+)]\(([^)]+)\)/g, '$1')

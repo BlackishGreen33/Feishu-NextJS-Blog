@@ -1,0 +1,214 @@
+/* Radix Colors slate 2/3/4/6/11/12 and teal 12 (light), 11 (dark).
+   https://github.com/radix-ui/colors — MIT; see THIRD_PARTY_NOTICES.md. */
+:root {
+  --reader-surface: #f9f9fb;
+  --reader-control: #f0f0f3;
+  --reader-hover: #e8e8ec;
+  --reader-border: #d9d9e0;
+  --reader-muted: #60646c;
+  --reader-text: #1c2024;
+  --reader-accent: #0d3d38;
+}
+
+.dark {
+  --reader-surface: #18191b;
+  --reader-control: #212225;
+  --reader-hover: #272a2d;
+  --reader-border: #363a3f;
+  --reader-muted: #b0b4ba;
+  --reader-text: #edeef0;
+  --reader-accent: #0bd8b6;
+}
+
+.code-block {
+  border: 0.5px solid var(--reader-border);
+  background: var(--reader-surface);
+}
+
+.code-toolbar {
+  color: var(--reader-muted);
+}
+
+.code-copy,
+.reader-theme-toggle {
+  color: var(--reader-muted);
+  outline-color: var(--reader-accent);
+  transition:
+    background-color 250ms ease-out,
+    color 250ms ease-out;
+}
+
+.reader-theme-toggle {
+  border: 0.5px solid var(--reader-border);
+  background: var(--reader-control);
+}
+
+.code-copy {
+  background: transparent;
+}
+
+.code-copy:hover,
+.reader-theme-toggle:hover {
+  background: var(--reader-hover);
+  color: var(--reader-text);
+}
+
+.code-copy[data-copied='true'] {
+  color: var(--reader-accent);
+}
+
+.rail-toc a {
+  color: var(--reader-muted);
+  outline-color: var(--reader-accent);
+}
+
+.rail-toc a[aria-current='location'],
+.rail-toc a:hover {
+  color: var(--reader-text);
+}
+
+.rail-toc-plane {
+  color: var(--reader-accent);
+}
+
+html[data-magicui-theme-vt='active']::view-transition-group(root) {
+  animation-duration: var(--magicui-theme-toggle-vt-duration);
+}
+
+html[data-magicui-theme-vt='active']::view-transition-old(root),
+html[data-magicui-theme-vt='active']::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-magicui-theme-vt='active']::view-transition-new(root) {
+  clip-path: var(--magicui-theme-vt-clip-from);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-copy,
+  .reader-theme-toggle,
+  .rail-toc a {
+    transition: none;
+  }
+}
+
+@layer base {
+  :is(
+      button,
+      select,
+      summary,
+      [role='button'],
+      [role='tab'],
+      [role='menuitem'],
+      [role='checkbox'],
+      [role='radio'],
+      [role='switch'],
+      input[type='button'],
+      input[type='submit'],
+      input[type='reset'],
+      input[type='checkbox'],
+      input[type='radio'],
+      input[type='file']
+    ):not(:disabled):not([aria-disabled='true']),
+  a[href]:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+:is(button, input, select, textarea):disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.article-content :is(h1, h2, h3)[id] {
+  scroll-margin-top: 12rem;
+}
+
+@media (min-width: 64rem) {
+  .article-content :is(h1, h2, h3)[id] {
+    scroll-margin-top: 7rem;
+  }
+}
+
+.code-block [class*='feishu-code-bg-'] {
+  background-color: var(--feishu-highlight-light);
+}
+.dark .code-block [class*='feishu-code-bg-'] {
+  background-color: var(--feishu-highlight-dark);
+}
+
+.feishu-code-bg-1 {
+  --feishu-highlight-light: #fce2e4;
+  --feishu-highlight-dark: #63353c;
+}
+
+.feishu-code-bg-2 {
+  --feishu-highlight-light: #ffead6;
+  --feishu-highlight-dark: #61432e;
+}
+
+.feishu-code-bg-3 {
+  --feishu-highlight-light: #fff0b3;
+  --feishu-highlight-dark: #58502a;
+}
+
+.feishu-code-bg-4 {
+  --feishu-highlight-light: #d9f0d4;
+  --feishu-highlight-dark: #304d36;
+}
+
+.feishu-code-bg-5 {
+  --feishu-highlight-light: #d9eafa;
+  --feishu-highlight-dark: #2d435d;
+}
+
+.feishu-code-bg-6 {
+  --feishu-highlight-light: #eedff7;
+  --feishu-highlight-dark: #4b365a;
+}
+
+.feishu-code-bg-7 {
+  --feishu-highlight-light: #e4e6e9;
+  --feishu-highlight-dark: #444851;
+}
+
+.feishu-code-bg-8 {
+  --feishu-highlight-light: #f8cdd1;
+  --feishu-highlight-dark: #743943;
+}
+
+.feishu-code-bg-9 {
+  --feishu-highlight-light: #ffdbb8;
+  --feishu-highlight-dark: #704b2f;
+}
+
+.feishu-code-bg-10 {
+  --feishu-highlight-light: #ffe68a;
+  --feishu-highlight-dark: #64572a;
+}
+
+.feishu-code-bg-11 {
+  --feishu-highlight-light: #bce5b5;
+  --feishu-highlight-dark: #365b3a;
+}
+
+.feishu-code-bg-12 {
+  --feishu-highlight-light: #bcd9fa;
+  --feishu-highlight-dark: #34527a;
+}
+
+.feishu-code-bg-13 {
+  --feishu-highlight-light: #dfc2ef;
+  --feishu-highlight-dark: #573e70;
+}
+
+.feishu-code-bg-14 {
+  --feishu-highlight-light: #d4d7dd;
+  --feishu-highlight-dark: #505561;
+}
+
+.feishu-code-bg-15 {
+  --feishu-highlight-light: #edf0f3;
+  --feishu-highlight-dark: #363b45;
+}

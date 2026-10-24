@@ -8,6 +8,8 @@ import { MdDarkMode, MdLightMode } from 'react-icons/md';
 import useHasMounted from '@/common/hooks/useHasMounted';
 import { useI18n } from '@/i18n';
 
+import AnimatedThemeToggler from './AnimatedThemeToggler';
+
 interface ThemeSwitcherProps {
   compact?: boolean;
 }
@@ -26,24 +28,19 @@ const ThemeSwitcher = ({ compact = false }: ThemeSwitcherProps) => {
   }
 
   const isDarkMode = resolvedTheme === 'dark';
-  const nextTheme = isDarkMode ? 'light' : 'dark';
 
   if (compact) {
     return (
-      <button
-        type='button'
-        onClick={() => setTheme(nextTheme)}
-        aria-label={messages.theme.toggleLabel}
+      <AnimatedThemeToggler
+        theme={isDarkMode ? 'dark' : 'light'}
+        onThemeChange={setTheme}
+        label={messages.theme.toggleLabel}
         title={
           isDarkMode
             ? messages.theme.switchToLight
             : messages.theme.switchToDark
         }
-        className='inline-flex aspect-square size-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100 text-neutral-700 transition-colors duration-200 hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:text-neutral-100'
-        data-umami-event={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}
-      >
-        {isDarkMode ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
-      </button>
+      />
     );
   }
 
