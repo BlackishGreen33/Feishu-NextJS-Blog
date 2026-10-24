@@ -17,9 +17,8 @@ const zhTWMessages: Messages = {
     homeServicesCardTitle: '一起合作吧！',
     homeServicesCardDescription:
       '我目前接受合作與開發項目，歡迎透過電子郵件與我聯繫，一起看看我們可以如何合作。',
-    aboutPageDescription: '這裡會整理關於我的介紹、履歷、經歷與教育背景。',
-    contactPageDescription:
-      '如果你想聯絡我，這裡會放常用社群、預約連結與留言表單。',
+    aboutPageDescription: '認識我，看我的經歷與成長軌跡。',
+    contactPageDescription: '想聊聊、合作交流，都可以從這裡找到我。',
     bookCallTitle: '預約飛書會議',
     bookCallDescription:
       '如果你想和我交流合作、聊聊技術或討論項目，之後可以透過飛書會議預約時間。',
@@ -51,13 +50,13 @@ const zhTWMessages: Messages = {
     blogTitle: '部落格',
     dashboardTitle: '儀表板',
     guestbookTitle: '留言板',
-    guestbookDescription: '如果你想留言、打招呼或留下建議，可以在這裡寫下來。',
+    guestbookDescription: '隨意留下一句問候，或是你的想法。',
     learnTitle: '學習筆記',
-    learnDescription:
-      '這裡收錄我正在整理的學習內容、筆記與一些持續更新的主題。',
+    learnDescription: '沿途累積的筆記、研究思考與不定期更新的主題。',
     projectsTitle: '作品',
-    projectsDescription: '這裡收錄我整理過的項目、實驗與一些長期維護中的作品。',
+    projectsDescription: '那些動手實作的專案、實驗與持續經營的作品。',
     playgroundTitle: 'JavaScript Playground',
+    playgroundDescription: '一處簡單的 JS 實驗空間，隨手寫程式、看結果',
     notFoundDescription: '這個頁面不存在，或是已經被移除。',
   },
   common: {
@@ -220,7 +219,7 @@ const zhTWMessages: Messages = {
     minutesRead: '分鐘閱讀',
   },
   dashboard: {
-    pageDescription: '這裡會整理程式活躍度、 GitHub 與一些個人統計資料。',
+    pageDescription: '開發足跡、程式活躍記錄與貢獻統計。',
     weeklyStats: '每週統計',
     weeklyStatsDescription: '最近 7 天的程式活躍統計。',
     source: '來源：',
@@ -274,9 +273,11 @@ const zhTWMessages: Messages = {
       externalLinks: '外部連結',
       appearance: '外觀',
     },
+    typeLabels: { Pages: '頁面', Link: '外連' },
     currentPage: '你在這裡',
     noResultIntro: '這個網站內找不到與',
     noResultOutro: '相關的結果。',
+    noResultSuggestion: '試試更短的關鍵字，或改用技術名稱搜尋。',
     askAiAssistant: '詢問 AI 助手',
     findInGoogle: '到 Google 搜尋',
     closeWindowHint: '按下 `ESC` 關閉視窗',

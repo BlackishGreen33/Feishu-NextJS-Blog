@@ -28,8 +28,7 @@ const QueryNotFound = ({
           {messages.commandPalette.noResultOutro}
         </p>
         <p className='text-neutral-600 dark:text-neutral-400'>
-          {messages.commandPalette.askAiAssistant} /{' '}
-          {messages.commandPalette.findInGoogle}
+          {messages.commandPalette.noResultSuggestion}
         </p>
       </div>
       <div className='flex w-full flex-col justify-center gap-3 lg:flex-row'>

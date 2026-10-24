@@ -17,9 +17,8 @@ const zhCNMessages: Messages = {
     homeServicesCardTitle: '一起合作吧！',
     homeServicesCardDescription:
       '我目前接受合作与开发项目，欢迎通过电子邮件联系我，一起看看我们可以如何合作。',
-    aboutPageDescription: '这里会整理关于我的介绍、简历、经历与教育背景。',
-    contactPageDescription:
-      '如果你想联系我，这里会放常用社群、预约链接与留言表单。',
+    aboutPageDescription: '认识我，看看我的经历与成长轨迹。',
+    contactPageDescription: '想聊聊、合作交流，都可以从这里找到我。',
     bookCallTitle: '预约飞书会议',
     bookCallDescription:
       '如果你想和我交流合作、聊聊技术或讨论项目，可以通过飞书会议预约时间。',
@@ -51,13 +50,13 @@ const zhCNMessages: Messages = {
     blogTitle: '博客',
     dashboardTitle: '仪表板',
     guestbookTitle: '留言板',
-    guestbookDescription: '如果你想留言、打招呼或留下建议，可以在这里写下来。',
+    guestbookDescription: '随意留下一句问候，或是你的想法。',
     learnTitle: '学习笔记',
-    learnDescription:
-      '这里收录我正在整理的学习内容、笔记与一些持续更新的主题。',
+    learnDescription: '沿途积累的笔记、研究思考与不定期更新的主题。',
     projectsTitle: '作品',
-    projectsDescription: '这里收录我整理过的项目、实验与一些长期维护中的作品。',
+    projectsDescription: '那些动手实践的项目、实验与持续经营的作品。',
     playgroundTitle: 'JavaScript Playground',
+    playgroundDescription: '一处简单的 JS 实验空间，随手写代码、看结果',
     notFoundDescription: '这个页面不存在，或者已经被移除。',
   },
   common: {
@@ -220,7 +219,7 @@ const zhCNMessages: Messages = {
     minutesRead: '分钟阅读',
   },
   dashboard: {
-    pageDescription: '这里会整理编码活跃度、GitHub 与一些个人统计数据。',
+    pageDescription: '开发足迹、代码活跃记录与贡献统计。',
     weeklyStats: '每周统计',
     weeklyStatsDescription: '最近 7 天的编码活跃统计。',
     source: '来源：',
@@ -274,9 +273,11 @@ const zhCNMessages: Messages = {
       externalLinks: '外部链接',
       appearance: '外观',
     },
+    typeLabels: { Pages: '页面', Link: '外链' },
     currentPage: '你在这里',
     noResultIntro: '这个网站内找不到与',
     noResultOutro: '相关的结果。',
+    noResultSuggestion: '试试更短的关键词，或改用技术名称搜索。',
     askAiAssistant: '询问 AI 助手',
     findInGoogle: '去 Google 搜索',
     closeWindowHint: '按下 `ESC` 关闭窗口',

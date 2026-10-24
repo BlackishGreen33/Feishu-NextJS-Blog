@@ -54,6 +54,7 @@ export type Messages = {
     projectsTitle: string;
     projectsDescription: string;
     playgroundTitle: string;
+    playgroundDescription: string;
     notFoundDescription: string;
   };
   common: {
@@ -200,9 +201,11 @@ export type Messages = {
       externalLinks: string;
       appearance: string;
     };
+    typeLabels: Record<'Pages' | 'Link', string>;
     currentPage: string;
     noResultIntro: string;
     noResultOutro: string;
+    noResultSuggestion: string;
     askAiAssistant: string;
     findInGoogle: string;
     closeWindowHint: string;
