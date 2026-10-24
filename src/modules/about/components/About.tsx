@@ -19,7 +19,7 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <AboutIcon size={17} /> {messages.about.tabs.story}
+          <AboutIcon size={17} aria-hidden='true' /> {messages.about.tabs.story}
         </TabLabel>
       ),
       children: <Story />,
@@ -27,7 +27,8 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <ResumeIcon size={17} /> {messages.about.tabs.resume}
+          <ResumeIcon size={17} aria-hidden='true' />{' '}
+          {messages.about.tabs.resume}
         </TabLabel>
       ),
       children: <Resume />,
@@ -35,7 +36,8 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <CareerIcon size={17} /> {messages.about.tabs.career}
+          <CareerIcon size={17} aria-hidden='true' />{' '}
+          {messages.about.tabs.career}
         </TabLabel>
       ),
       children: <CareerList />,
@@ -43,17 +45,20 @@ const About = () => {
     {
       label: (
         <TabLabel>
-          <EducationIcon size={17} /> {messages.about.tabs.education}
+          <EducationIcon size={17} aria-hidden='true' />{' '}
+          {messages.about.tabs.education}
         </TabLabel>
       ),
       children: <EducationList />,
     },
   ];
-  return <Tabs tabs={TABS} />;
+  return <Tabs tabs={TABS} label={messages.pages.aboutTitle} />;
 };
 
 export default About;
 
 const TabLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className='flex items-center justify-center gap-1.5'>{children}</div>
+  <span className='flex items-center justify-center gap-2 [&_svg]:hidden sm:[&_svg]:block'>
+    {children}
+  </span>
 );

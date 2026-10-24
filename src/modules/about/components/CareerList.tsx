@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 
 import EmptyState from '@/common/components/elements/EmptyState';
 import { getCareers } from '@/common/constant/careers';
+import { formatMonthYear } from '@/common/helpers';
 import { useI18n } from '@/i18n';
 
 import CareerCard from './CareerCard';
+import Timeline from './Timeline';
 
 const CareerList = () => {
   const { locale, messages } = useI18n();
@@ -36,13 +38,18 @@ const CareerList = () => {
   });
 
   return (
-    <section className='space-y-6'>
-      <div className='grid gap-3'>
-        {sortedCareers.map((career, index) => (
-          <CareerCard key={index} {...career} asOf={asOf} />
-        ))}
-      </div>
-    </section>
+    <Timeline
+      label={messages.about.tabs.career}
+      data={sortedCareers.map((career) => ({
+        id: `${career.company}-${career.start_date}`,
+        title: `${formatMonthYear(career.start_date, locale)} - ${
+          career.end_date
+            ? formatMonthYear(career.end_date, locale)
+            : messages.common.present
+        }`,
+        content: <CareerCard {...career} asOf={asOf} />,
+      }))}
+    />
   );
 };
 
