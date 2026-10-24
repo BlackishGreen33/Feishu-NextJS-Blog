@@ -61,6 +61,6 @@ export const getServerEnv = () => {
       clientSecret: normalizeEnv(process.env.SPOTIFY_CLIENT_SECRET),
       refreshToken: normalizeEnv(process.env.SPOTIFY_REFRESH_TOKEN),
     },
-    wakatimeApiKey: normalizeEnv(process.env.WAKATIME_API_KEY),
+    wakatimeAccessToken: normalizeEnv(process.env.WAKATIME_ACCESS_TOKEN),
   };
 };

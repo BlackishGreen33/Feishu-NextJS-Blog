@@ -233,7 +233,7 @@ const enMessages: Messages = {
     lastUpdated: 'Last updated:',
     wakatimeUnavailable: 'WakaTime stats are temporarily unavailable.',
     wakatimeNotConfigured:
-      'WakaTime API credentials are not configured yet, so coding stats cannot be shown.',
+      'A WakaTime OAuth token is not configured yet, so coding stats cannot be shown.',
     githubContributions: 'GitHub contributions',
     githubDescription:
       'A summary of my GitHub contribution activity over the past year.',

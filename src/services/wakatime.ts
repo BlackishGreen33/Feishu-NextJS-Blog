@@ -33,18 +33,16 @@ const createEmptyAllTime = (configured: boolean) => ({
 });
 
 export const getReadStats = async () => {
-  const apiKey = getServerEnv().wakatimeApiKey;
+  const accessToken = getServerEnv().wakatimeAccessToken;
 
-  if (!apiKey) {
+  if (!accessToken) {
     return { status: 200, data: createEmptyStats(false) };
   }
-
-  const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
     const response = await axios.get<unknown>(`${STATS_ENDPOINT}/last_7_days`, {
       headers: {
-        Authorization: authorizationHeader,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -95,18 +93,16 @@ export const getReadStats = async () => {
 };
 
 export const getAllTimeSinceToday = async () => {
-  const apiKey = getServerEnv().wakatimeApiKey;
+  const accessToken = getServerEnv().wakatimeAccessToken;
 
-  if (!apiKey) {
+  if (!accessToken) {
     return { status: 200, data: createEmptyAllTime(false) };
   }
-
-  const authorizationHeader = `Basic ${Buffer.from(apiKey).toString('base64')}`;
 
   try {
     const response = await axios.get<unknown>(ALL_TIME_SINCE_TODAY, {
       headers: {
-        Authorization: authorizationHeader,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 

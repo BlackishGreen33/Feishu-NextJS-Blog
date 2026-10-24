@@ -170,8 +170,18 @@ When Feishu credentials are configured, `predev` attempts one sync before the ap
 | `DEVTO_KEY`                                                             | Optional | dev.to read API key                                          |
 | `GITHUB_READ_USER_TOKEN_PERSONAL`                                       | Optional | GitHub GraphQL read token                                    |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | Optional | Spotify now playing and device data                          |
-| `WAKATIME_API_KEY`                                                      | Optional | WakaTime stats                                               |
+| `WAKATIME_ACCESS_TOKEN`                                                 | Optional | WakaTime OAuth access token (`read_stats`)                   |
 | `MINIMAX_SYSTEM_PROMPT`                                                 | Optional | System prompt override for Command Palette AI                |
+
+### WakaTime Authentication Migration
+
+WakaTime stats now use an OAuth access token. Both stats endpoints require the `read_stats` scope. To restrict permissions, create a private [OAuth App](https://wakatime.com/apps) and use the authorization-code flow with an explicit `scope=read_stats`; publishing the app is unnecessary. The personal token page at `/oauth` currently offers no scope selection and does not meet a stats-only requirement. See the [official authentication documentation](https://wakatime.com/developers#authentication).
+
+- Store the raw token in the server-only `WAKATIME_ACCESS_TOKEN` environment variable, without a `Bearer ` prefix or a `NEXT_PUBLIC_` variable. Use `.env.local` locally and secret environment variables on your hosting platform.
+- Configure the new variable before deploying the migrated code; restart the local server after changing it. The app no longer reads `WAKATIME_API_KEY` and never falls back to API key authentication.
+- Securely retain the OAuth App secret and refresh token separately, and renew the access token according to its returned expiry. The website only consumes the access token, does not refresh it automatically, and does not require deploying the App secret or refresh token.
+- Verify `/api/read-stats` contains real weekly stats and `all_time_since_today` data. HTTP 200 or `configured: true` alone does not prove authentication succeeded: 401/403 errors still return a safe unavailable state.
+- Keep the old API key for editor plugins that upload activity; do not revoke their key as part of this migration.
 
 ## Content Workflow
 
