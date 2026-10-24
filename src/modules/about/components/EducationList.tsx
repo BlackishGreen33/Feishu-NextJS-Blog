@@ -3,6 +3,7 @@ import { getEducation } from '@/common/constant/education';
 import { useI18n } from '@/i18n';
 
 import EducationCard from './EducationCard';
+import Timeline from './Timeline';
 
 const EducationList = () => {
   const { locale, messages } = useI18n();
@@ -24,13 +25,14 @@ const EducationList = () => {
   });
 
   return (
-    <section className='space-y-6'>
-      <div className='grid gap-4 md:grid-cols-1'>
-        {sortedEducation.map((item, index) => (
-          <EducationCard key={index} {...item} />
-        ))}
-      </div>
-    </section>
+    <Timeline
+      label={messages.about.tabs.education}
+      data={sortedEducation.map((item) => ({
+        id: `${item.school}-${item.start_year}`,
+        title: `${item.start_year} - ${item.end_year ?? messages.common.present}`,
+        content: <EducationCard {...item} />,
+      }))}
+    />
   );
 };
 

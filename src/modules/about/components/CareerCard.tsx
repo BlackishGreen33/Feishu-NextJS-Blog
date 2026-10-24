@@ -1,13 +1,8 @@
-import { useState } from 'react';
 import { differenceInMonths, differenceInYears } from 'date-fns';
-import { AnimatePresence, motion } from 'framer-motion';
 import { BsBuildings as CompanyIcon } from 'react-icons/bs';
 import { HiChevronRight } from 'react-icons/hi';
 
-import Card from '@/common/components/elements/Card';
 import Image from '@/common/components/elements/Image';
-import { formatMonthYear } from '@/common/helpers';
-import cn from '@/common/libs/cn';
 import { CareerProps } from '@/common/types/careers';
 import { useI18n } from '@/i18n';
 
@@ -26,14 +21,6 @@ const CareerCard = ({
   asOf,
 }: CareerProps & { asOf: number | null }) => {
   const { locale, messages } = useI18n();
-  const [isShowResponsibility, setIsShowResponsibility] =
-    useState<boolean>(false);
-
-  const startDateFormatted = formatMonthYear(start_date, locale);
-  const endDateFormatted = end_date
-    ? formatMonthYear(end_date, locale)
-    : messages.common.present;
-
   const durationEnd = end_date
     ? new Date(end_date)
     : asOf === null
@@ -55,102 +42,75 @@ const CareerCard = ({
   const hasResponsibilities = Boolean(responsibilities?.length);
 
   return (
-    <Card className='flex gap-5 border border-neutral-300 px-6 py-4 dark:border-neutral-900'>
-      <div className='mt-1.5 w-fit'>
-        {logo ? (
-          <Image
-            src={logo}
-            width={55}
-            height={55}
-            alt={company}
-            className='h-14 w-14 rounded-md object-contain hover:scale-110'
-          />
-        ) : (
-          <CompanyIcon size={50} />
-        )}
-      </div>
-      <div className='w-4/5 space-y-3'>
-        <div className='space-y-1'>
-          <h6>{position}</h6>
-          <div className='space-y-1 text-sm text-neutral-600 dark:text-neutral-400'>
-            <div className='flex flex-col gap-1 md:flex-row md:items-center md:gap-2'>
+    <div className='space-y-4 text-(--reader-text)'>
+      <div className='flex items-start gap-4'>
+        <div className='mt-1 shrink-0'>
+          {logo ? (
+            <Image
+              src={logo}
+              width={40}
+              height={40}
+              alt={company}
+              className='size-10 rounded-md object-contain'
+            />
+          ) : (
+            <CompanyIcon size={40} aria-hidden='true' />
+          )}
+        </div>
+        <div className='min-w-0 space-y-2'>
+          <h4 className='text-lg leading-7 font-semibold'>{position}</h4>
+          <div className='space-y-1 text-sm leading-6 text-(--reader-muted)'>
+            <div className='font-medium text-(--reader-text)'>
               {link ? (
                 <a
                   href={link}
                   target='_blank'
                   rel='noopener noreferrer'
                   data-umami-event={`Click Career Company Name: ${company}`}
+                  className='underline-offset-4 outline-offset-4 outline-(--reader-accent) hover:underline focus-visible:outline-2'
                 >
-                  <span className='hover:text-dark cursor-pointer underline-offset-2 hover:underline hover:dark:text-white'>
-                    {company}
-                  </span>
+                  {company}
                 </a>
               ) : (
                 <span>{company}</span>
               )}
+            </div>
+            <div className='flex flex-wrap gap-x-4 gap-y-1'>
               {companyMeta.map((item) => (
-                <div key={item} className='flex items-center gap-2'>
-                  <span className='hidden text-neutral-300 lg:block dark:text-neutral-700'>
-                    •
-                  </span>
-                  <span className='text-neutral-500'>{item}</span>
-                </div>
+                <span key={item}>{item}</span>
               ))}
             </div>
-            <div className='flex flex-col gap-2 md:flex-row md:text-[13px]'>
-              <div className='flex gap-1'>
-                <span>
-                  {startDateFormatted} - {endDateFormatted}
-                </span>
-              </div>
+            <div className='flex flex-wrap gap-x-4 gap-y-1'>
               {detailMeta.map((item) => (
-                <div key={item} className='flex items-center gap-2'>
-                  <span className='hidden text-neutral-300 lg:block dark:text-neutral-700'>
-                    •
-                  </span>
-                  <span className='text-neutral-500 dark:text-neutral-500'>
-                    {item}
-                  </span>
-                </div>
+                <span key={item}>{item}</span>
               ))}
             </div>
           </div>
         </div>
-        {hasResponsibilities ? (
-          <button
-            onClick={() => setIsShowResponsibility(!isShowResponsibility)}
-            className='mt-5 -ml-1 flex items-center gap-1 text-sm text-neutral-500'
-          >
+      </div>
+      {hasResponsibilities && (
+        <details className='group'>
+          <summary className='inline-flex min-h-9 list-none items-center gap-1 text-sm text-(--reader-muted) underline-offset-4 outline-offset-4 outline-(--reader-accent) hover:text-(--reader-text) focus-visible:outline-2 [&::-webkit-details-marker]:hidden'>
             <HiChevronRight
               size={18}
-              className={cn({
-                'rotate-90 transition-all duration-300': isShowResponsibility,
-              })}
+              aria-hidden='true'
+              className='transition-transform duration-250 ease-out group-open:rotate-90 motion-reduce:transition-none'
             />
-            {isShowResponsibility
-              ? messages.common.hideDetails
-              : messages.common.viewDetails}
-          </button>
-        ) : null}
-        <AnimatePresence>
-          {isShowResponsibility && hasResponsibilities && (
-            <motion.ul
-              className='ml-5 list-disc space-y-1 pb-2 text-sm leading-normal text-neutral-600 dark:text-neutral-400'
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-            >
-              {responsibilities?.map((item) => (
-                <motion.li key={item} layout>
-                  {item}
-                </motion.li>
-              ))}
-            </motion.ul>
-          )}
-        </AnimatePresence>
-      </div>
-    </Card>
+            <span className='group-open:hidden'>
+              {messages.common.viewDetails}
+            </span>
+            <span className='hidden group-open:inline'>
+              {messages.common.hideDetails}
+            </span>
+          </summary>
+          <ul className='mt-2 ml-5 list-disc space-y-2 text-sm leading-7 text-(--reader-muted)'>
+            {responsibilities?.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   );
 };
 
